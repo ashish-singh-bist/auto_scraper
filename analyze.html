@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <meta charset="utf-8" />
+    <style type="text/css">
+    pre { padding: 5px; margin: 5px; cursor: pointer;}
+    pre.prettyprint {
+      width: 95%;
+      margin: 1em auto;
+      padding: 1em;
+      white-space: pre-wrap;
+      background-color: #000;
+      border-radius: 8px;}
+    .string { color: green; cursor: default;}
+    .number { color: darkorange; cursor: default;}
+    .boolean { color: blue; cursor: default;}
+    .null { color: magenta; cursor: default;}
+    .key { color: red; cursor: default;}
+    .bracket { color: white; cursor: default;}
+    </style>
+</head>
+
+<body>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+
+    var data_array = [];
+
+    //Get the analysis information to be displayed from the server
+    fetch('/rtech/api/get_analysis_data', {
+        method: 'GET'
+    })
+    .then(response => response.text())
+    .then(data => {data_array = JSON.parse(data); run_func(data_array);})
+
+    //call this function to run a loop to display the different objects received
+    function run_func(arr){
+
+        if(arr.length === 0){
+            document.body.appendChild(document.createElement('h1')).innerHTML = 'No data available'
+        }else{
+            for(var i=0; i< arr.length; i++){
+                var str = JSON.stringify(arr[i], undefined, 4);
+                output(syntaxHighlight(str), i);
+            }
+        }
+        
+    }
+
+    //call this function to process the information, identify their type, and accordingly assign classes to them for display purpose
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/\,|\{|\}|("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }else if(/\,|\{|\}/.test(match)){
+                cls = 'bracket';
+            }
+        return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+
+    //call this function (finally) to write the refined data on html 
+    function output(inp, index) {
+        var pre = document.createElement('pre');
+        pre.setAttribute('id','quine_'+index);
+        pre.setAttribute('style','border: 4px solid #88c;');
+        pre.setAttribute('class', 'prettyprint');
+        pre.addEventListener("click", preClick);
+
+        pre.setAttribute('data-toggle', 'tooltip');
+        pre.setAttribute('data-placement', 'bottom');
+        pre.setAttribute('title', 'click to collapse');
+
+        //for cllapse-expand functionality
+        function preClick(event) {
+            if(event.target.tagName === 'PRE'){
+                event.target.querySelector('div').classList.remove('collapse');
+                event.target.style['background-color'] = '#000'; 
+
+                event.target.setAttribute('title', 'click to collapse');
+            }else if(event.target.tagName === 'DIV' && event.target.classList.length == 0){
+                event.target.classList.add('collapse');
+                event.target.parentElement.style['background-color'] = 'whitesmoke';
+
+                event.target.parentElement.setAttribute('title', 'click to expand');
+            }
+        }
+
+        var div_ = document.createElement('div');
+        div_.innerHTML = inp;
+
+        pre.appendChild(div_);
+        document.body.appendChild(pre)
+        
+    }
+    
+})
+</script>
+</body>
+</html>

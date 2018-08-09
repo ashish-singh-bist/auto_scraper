@@ -1,0 +1,168 @@
+@import url("//d2v52k3cl9vedd.cloudfront.net/basscss/4.1.7/basscss.min.css");
+
+input[type="file"] {
+    display: none;
+}
+.custom-file-upload {
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    outline: 1px beige solid;
+}
+
+#url {
+    outline: 1px beige solid;
+}
+
+#search_site_form > * {
+    min-height: 28px;
+    box-shadow: 2px 2px;
+}
+
+div#context ul, div#label_input ul {
+    list-style: none;
+    list-style-type: none;
+    list-style-position: outside;
+}
+
+div#context li, div#label_input li {
+    list-style: none;
+    box-shadow: 0 0 0 0 #800;
+    margin-bottom: -7px;
+}
+
+div#context li label, div#label_input li label,
+div#context li label input, div#label_input li label input {
+    display: block;
+}
+
+div#context li label input, div#label_input li label input {
+    text-align: left;
+    width: 100%;
+}
+
+div#label_input li a:hover {
+    box-shadow: 250px 0 0 0 #FF7A62 inset;
+}
+
+div#context, div#label_input {
+    width: 250px;
+    position: absolute;
+    z-index: 999999;
+    -webkit-transition: all .3s ease;
+    -o-transition: all .3s ease;
+    transition: all .3s ease;
+}
+
+#context, #label_input input {
+    padding: 10px 15px;
+    font-size: 14px;
+}
+
+.btn-default:hover,
+.btn-default:focus,
+.btn-default.focus,
+.btn-default:active,
+.btn-default.active,
+.open>.dropdown-toggle.btn-default {}
+
+/*______for aliging placeholder to center______*/
+
+::-webkit-input-placeholder {
+    text-align: center;
+}
+
+:-moz-placeholder {
+    /* Firefox 18- */
+    text-align: center;
+}
+
+::-moz-placeholder {
+    /* Firefox 19+ */
+    text-align: center;
+}
+
+:-ms-input-placeholder {
+    text-align: center;
+}
+
+
+
+/*______for selecting/unselecting elements_______*/
+
+/** {
+    cursor: default;
+    border: 1px solid transparent !important;
+}*/
+
+.option-selected,
+.option-selected:hover {
+    /*border: 3px solid #529c56 !important;*/
+    box-shadow: 0px 0px 0px 3px #529c56 inset !important;
+    cursor: default;
+}
+
+.hover-selected{
+    /*border: 1px solid #e42a78 !important;*/
+    box-shadow: 0px 0px 0px 1px #e42a78 inset !important;
+    /*outline: 1px solid orange;*/
+}
+
+/*______for textarea _______*/
+.textareabox {
+    width: 238px !important;
+    height: 50px !important;
+    background-color: #b2b2b2 !important;
+    color: #323232 !important;
+    font-size: 100%;
+}
+
+.label_input {
+    background-color: lavender;
+}
+
+input[type=button]{    
+    margin-bottom: .5rem; 
+    box-sizing:border-box;
+    cursor:pointer;
+    background-color:#e31837;
+    border:1px solid #e31837;
+    border-radius:5px;
+    color:#fff;
+    display:inline-block;
+    height:2.5rem;
+    letter-spacing:.2px;
+    padding:0 2.5rem;
+    text-align:center;
+    text-decoration:none;
+    font-family:brandon-grotesque,Arial,sans-serif;font-weight:700;
+    font-size:14px;
+    font-size:.875rem;
+    line-height:40px;
+    line-height:2.5rem
+}
+
+/*______for screen loader at amalysis page _______*/
+
+.loader {
+    border: 16px solid #fa6400 !important; 
+    border-top: 16px solid #f42121 !important; 
+    border-radius: 50% !important;
+    width: 160px !important;
+    height: 160px !important;
+    animation: spin 2s linear infinite !important;
+    top: 50% !important;
+    left: 50% !important;
+    position: fixed !important;
+    z-index: 99999;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
