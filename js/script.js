@@ -310,6 +310,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			var element_key	= obj.key;
 			var element_xpath	= obj.xpath;
 			var element_tag = obj.tag;
+            var element_index = obj.child_index;
 
 			var parent_attributes	= obj.parent_attributes;
 			var parent_xpath= obj.parent_xpath;
@@ -327,11 +328,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}else{
 				var condition_string = '';
 				for(var attribute in  element_attributes){
-					condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
+                    if(element_attributes[attribute] !== '')
+                        condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
 				}
-				if(condition_string != ''){
+                if(condition_string != ''){
 					var candidate_elements 	= document.querySelectorAll(element_tag+condition_string+'');
-					var candidate_parent 	= returnparent(parent_attributes, parent_xpath, parent_tag);
+                    var candidate_parent 	= returnparent(parent_attributes, parent_xpath, parent_tag);
 					if(candidate_elements.length === 1 && candidate_elements[0] != null){
 						element_flag = true;
 						autoSelectElement(candidate_elements[0], element_key, element_xpath);
@@ -351,7 +353,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 							autoSelectElement(candidate_element, element_key, element_xpath);
 						}
 					}
-				} 
+				}else{
+                    var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
+
+                    //check if parent attributes in config is equal to candidate parents extracted attributes
+                    if(candidate_parent && JSON.stringify(postGetAttr(candidate_parent)) === JSON.stringify(parent_attributes)){
+                        var candidate_element = candidate_parent.childNodes[element_index];
+                        autoSelectElement(candidate_element, element_key, element_xpath);
+                    }
+                    
+                }
 			}
 			
 			if(element_flag === false){
@@ -432,6 +443,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		}
 		return selected_parent;
 	}
+
+    /*to get the attributes of an element*/
+    function postGetAttr(ele){
+        let temp = {};
+        let arr  = [];
+        let attrlist = ele.attributes;
+        for(var i=0; i< attrlist.length; i++){
+            if(attrlist[i].name != 'href' && attrlist[i].name.match('ng-') == null && attrlist[i].name != 'labelkey' && attrlist[i].name != 'style' && (attrlist[i].value !== '' && attrlist[i].value !== ' '))
+                temp[attrlist[i].name] = attrlist[i].value.replace('option-selected', '').replace(/\s+$/, '');
+        }
+        return temp;
+    }
 
 	/* to calculate xpath of a given element */
 	function getXPathAutoScraper(element) {

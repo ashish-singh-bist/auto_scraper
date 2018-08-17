@@ -7,14 +7,19 @@ const fileSystem= require('fs');
 const cheerio	= require('cheerio');
 const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
+const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our headers from invalid characters
 
-var ind = 1;
+var server;
+var scraping_status = {
+	done: false,
+	success: false
+};
 //#================================================================CONFIGURING NODE `APP`
 	// parse application/x-www-form-urlencoded
-	app.use(bodyParser.urlencoded({ extended: false }))
+	app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
 	 
 	// parse application/json
-	app.use(bodyParser.json())
+	app.use(bodyParser.json({ limit: '50mb', extended: true }))
 
 	app.use(function(req, res, next) {
 	  res.header("Access-Control-Allow-Origin", "*");
@@ -47,14 +52,35 @@ var ind = 1;
 
 //#================================================================GET
 
+	//this will send the sttaus of the scrapper, whether completed or not
+	app.get('/rtech/api/check_scrape', (req, res) => {
+		if(scraping_status.done === true){
+			if(scraping_status.success){
+				scraping_status.done = false;
+		   		scraping_status.success = false;
+				res.send({status: 200, message: 'scraping done', success: true})
+			}
+			else{
+				scraping_status.done = false;
+		    	scraping_status.success = false;
+				res.send({status: 200, message: 'scraping done', success: false})
+			}
+		}else{
+			res.send({status: 500, message: 'scraping going on'})
+		}
+	})
+
+	//this will send the analysis of request/reponse we have collected to analysis page
 	app.get('/rtech/api/get_analysis_data', (req, res) => {
 		res.send(jsonArrayFromGET);
 	})
 
+	//this will send the html we have created for analysis page
 	app.get('/rtech/api/get_analysis', (req, res) => {
 		res.sendFile('analyze.html', {root: __dirname })
 	})
 
+	//this will handle all the GET requests we have redirected from the website's page to our server
 	app.get('/*', (req, res) => {
 
 		const {headers, url, method} = req;
@@ -78,10 +104,11 @@ var ind = 1;
 			headers: {
 					'connection': 'keep-alive',
 					'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
-					'Accept-Language': 'en-US,en;q=0.5',
+					// 'Accept-Language': 'en-US,en;q=0.5', 
 				},
 			url: target_url,
-			encoding: null
+			encoding: null,
+			jar: true //keep the cookies during the redirects;this was included while parsing `https://www.ulta.com/dose-of-colors-x-iluvsarahii-highlighter?productId=xlsImpprod18811035` 
 		}
 
 		if(analyze && analyze == 'true'){
@@ -93,7 +120,7 @@ var ind = 1;
 
 //#================================================================
 
-//#================================================================GET
+//#================================================================GET REQUEST HANDLER
 	async function sendRequest(req, res, host, options, config, new_url, analyze){
 		var headers, obj;
 
@@ -109,13 +136,6 @@ var ind = 1;
 			options['url'] = 'https:' + options['url']
 		}
 
-		//#================================================================TEMPORARY; FOR ANALYSIS
-		// let bridge = request(options);
-		// req.pipe(bridge);
-		// bridge.pipe(res);
-		//#================================================================
-
-		
 		request(options, function(error, response, body){
 
 			if (!error && response.statusCode == 200) {
@@ -124,18 +144,42 @@ var ind = 1;
 				headers = response.headers;
 				delete headers['content-length'];	//since we're going to manipulate the response content
 
+				//checking if headers do not contain invalid characters (like \u0001)
+				//this was included while parsing `https://www.hobbylobby.com/Home-Decor-Frames/Candles-Fragrance/Warmers-Wax-Melts/Pomegranate-Sorbet-Wickless-Fragrance-Cubes/p/80869733`
+				if(header.validHeaderName(headers) === false){
+					headers = header.cleanHeaderName(headers);
+				}
+
+				if(header.validHeaderValue(headers) === false){
+					headers = header.cleanHeaderValue(headers);
+				}
+
 				res.writeHead(200, headers);
 				//#================================================================
+
+				var jsonArrayFromGET_Item = {
+						uri: {},
+					};
+					jsonArrayFromGET_Item['uri']['protocol']= response.request.uri.protocol;
+					jsonArrayFromGET_Item['uri']['auth']	= response.request.uri.auth;
+					jsonArrayFromGET_Item['uri']['hostname']= response.request.uri.hostname;
+					jsonArrayFromGET_Item['uri']['port']	= response.request.uri.port;
+					jsonArrayFromGET_Item['uri']['query']	= response.request.uri.query;
+					jsonArrayFromGET_Item['uri']['pathname']= response.request.uri.pathname;
+					jsonArrayFromGET_Item['uri']['path']	= response.request.uri.path;
+					jsonArrayFromGET_Item['uri']['href']	= response.request.uri.href;
+
+					jsonArrayFromGET_Item['REQ_headers']	= response.request.headers;
+					jsonArrayFromGET_Item['RES_headers']	= response.headers;
 				
-				if (String(response.headers['content-type']).indexOf('text/html') !== -1){
+				if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0){
 					var $ = cheerio.load(body);
 
 					//#================================================================
-					//	1.	get all the elements with `href` or `src` attribute
+					//	1.	get all the elements with `href` or `data-href` attribute OR elements with script, style tags
 					//	2.	check if they belong to IGNORE_PREFIXES category
 					//		2.a. if yes, don't modify it
-					//		2.b. if no, check their extension and assign identifier accordingly 
-					//	3.	based on the identifier, rewrite their URL 
+					//		2.b. if no, add the reqired prefix
 					//#================================================================
 
 					//#================================================================SCRIPT
@@ -162,21 +206,7 @@ var ind = 1;
 							};
 							
 						}
-						// if($(this).html() && $(this).html().match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/)){
-						// 	let arr = $(this).html().match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
-						// 	let content = $(this).html();
-						// 	for(var i=0; i< arr.length; i++){
-						// 		let substr = arr[i];
-						// 		let newsubstr = new_url + substr;
-						// 		content = content.replace(substr, newsubstr)
-						// 		content = content.replace(/(http:\/\/localhost:3002\/)+/g, 'http://localhost:3002/')
-						// 	}
-						// 	// if(content.length > 1000)
-						// 	console.log('------------------------> ', $(this).html())
-						// 	console.log('\n+++++++++++++++++++++++> ', content)
-						// 		$(this).html(content);
-						// }
-						
+												
 					});
 
 					function starts_with(string, arr_or_prefix) {
@@ -247,6 +277,34 @@ var ind = 1;
 					    };
 					}
 					//#================================================================
+
+					//#================================================================IFRAME
+					$("iframe").each(function(){
+						if( $(this).attr('src') && $(this).attr('src') !== ''){
+							var value = $(this).attr('src');
+
+							if(!value && starts_with(value, 'javascript:')){
+								return;
+							};
+
+							var new_value;
+
+							if(starts_with(value, REL_PREFIX)){
+								new_value = new_url + 'https:'+value;
+								$(this).attr('src', new_value);
+								return ;
+							}
+
+							if(starts_with(value, VALID_PREFIXES)){
+								new_value = new_url + value;
+								$(this).attr('src', new_value);
+								return;
+							};
+							
+						}
+												
+					});
+					// //#================================================================
 
 					//#================================================================HREF
 					$("*[href]").each(function(){
@@ -340,28 +398,20 @@ var ind = 1;
 					$('body').append(flagDiv);
 					//#================================================================
 					if(analyze == true){
-						var loaderDiv = ' <div class="loader"></div>'
+						var loaderDiv = ' <div class="loader_analyze"></div>'
 						$('body').append(loaderDiv);
 					}
+
+					jsonArrayFromGET_Item['RES_body']	= body.toString();
+					jsonArrayFromGET_Item['method']			= response.request.method;
+
+					jsonArrayFromGET.push(jsonArrayFromGET_Item);
 
 					res.end($.html());
 					
 				}else {
 
-					var jsonArrayFromGET_Item = {
-						uri: {},
-					};
-					jsonArrayFromGET_Item['uri']['protocol']= response.request.uri.protocol;
-					jsonArrayFromGET_Item['uri']['auth']	= response.request.uri.auth;
-					jsonArrayFromGET_Item['uri']['hostname']= response.request.uri.hostname;
-					jsonArrayFromGET_Item['uri']['port']	= response.request.uri.port;
-					jsonArrayFromGET_Item['uri']['query']	= response.request.uri.query;
-					jsonArrayFromGET_Item['uri']['pathname']= response.request.uri.pathname;
-					jsonArrayFromGET_Item['uri']['path']	= response.request.uri.path;
-					jsonArrayFromGET_Item['uri']['href']	= response.request.uri.href;
-
-					jsonArrayFromGET_Item['REQ_headers']	= response.request.headers;
-					jsonArrayFromGET_Item['RES_headers']	= response.headers;
+					
 
 					if(String(response.headers['content-type']).indexOf('application/json') !== -1){
 						jsonArrayFromGET_Item['RES_body']	= JSON.parse(body.toString());
@@ -369,50 +419,45 @@ var ind = 1;
 
 						jsonArrayFromGET.push(jsonArrayFromGET_Item);
 
-						// fileSystem.writeFile(path.join(__dirname, 'json/data_'+ (file_index++) +'.json'), JSON.stringify(jsonArrayFromGET_Item), function(err) {
-						// 	if(err) {
-						// 		return console.log(err);
-						// 	}
-						// }); 
 					}else{
 						jsonArrayFromGET_Item['method']			= response.request.method;
 
 						jsonArrayFromGET.push(jsonArrayFromGET_Item);
 					}
 
-					// if(String(response.headers['content-type']).indexOf('application/javascript') !== -1 || String(response.headers['content-type']).indexOf('application/x-javascript') !== -1){
-						// var txt = body.toString();
-
-						// if(txt.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/)){
-						// 	let arr = txt.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
-						// 	for(var i=0; i< arr.length; i++){
-						// 		let substr = arr[i];
-						// 		let newsubstr = new_url + substr;
-						// 		txt = txt.replace(substr, newsubstr);
-						// 	}
-
-						// 	// body =txt;
-						// 	console.log('\n===================================================\n')
-						// 	console.log(txt);
-						// 	console.log('\n===================================================\n')
-						// }
-						// if(txt.indexOf('https') > -1){
-						// 	console.log('----> ', options['url']);
-						// }
-						// console.log('-> ', options['url'])
-						
-					// }
-
 					res.end(body);
 				}
 				
 			}else{
-				res.send({status: 500, error: error});
+				// res.send({status: 500, error: error.reason});
+				res.send({status: 500, error: 'Something went wrong'});
+
 			}
 		});
 	}
 
 //#================================================================POST
+	//this will start the scrapping process
+	app.post('/rtech/api/scrape_pages', (req, res) => {
+		var data = req.body;
+		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name], { shell: true });
+		
+		server.stderr.on('data', function (data) {
+		    scraping_status.done = true;
+		    scraping_status.success = false;
+		});
+
+		server.on('close', function (code){
+			scraping_status.done = true;
+		    scraping_status.success = true;
+		    
+		})
+		
+		res.send({status: 200, message: 'scraping started'})
+		
+	})
+
+	//this will receive the uploaded file of URLs
 	app.post('/rtech/api/post_file', (req, res) => {
 		var array_received = (req.body).join('\r\n');
 
@@ -426,6 +471,7 @@ var ind = 1;
 		
 	})
 
+	//this will check whether config exists for a particular host or not
 	app.post('/rtech/api/check_config', (req, res) => {
 		var url_ 	 = req.body.host;
 
@@ -438,6 +484,7 @@ var ind = 1;
 		
 	})
 
+	//this will create the config file
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
 		
@@ -448,6 +495,7 @@ var ind = 1;
 		res.send({})
 	})
 
+	//this will write the scrapped data on a csv file
 	app.post('/rtech/api/get_config', (req, res) => {
 			
 		//#================================================================FOR WRITING ON CSV FILE
@@ -465,7 +513,6 @@ var ind = 1;
 		var csvStream = csv.createWriteStream(options),
 	        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
 	    writableStream.on('finish', function(){
-	        console.log('DONE!');
 	    });
 
 	    csvStream.pipe(writableStream);
@@ -476,6 +523,7 @@ var ind = 1;
 		res.send({})
 	})
 
+	//this will handle all the POST requests we have redirected from the website's page to our server
 	app.post('/*', (req, res) => {
 
 		var options = {
@@ -516,11 +564,6 @@ var ind = 1;
 
 					jsonArrayFromGET.push(jsonArrayFromGET_Item);
 					
-					// fileSystem.writeFile(path.join(__dirname, 'json/data_'+ (file_index++) +'.json'), JSON.stringify(jsonArrayFromGET_Item), function(err) {
-					// 	if(err) {
-					// 		return console.log(err);
-					// 	}
-					// }); 
 				}else{
 					jsonArrayFromGET_Item['method']			= httpResponse.request.method;
 

@@ -1,3 +1,6 @@
+[OUTDATED]
+
+
 ### PART 1: index.php [root folder] 
 
 1) the first page of this application which is served.
