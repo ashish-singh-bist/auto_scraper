@@ -9,11 +9,6 @@ const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
 const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our headers from invalid characters
 
-var server;
-var scraping_status = {
-	done: false,
-	success: false
-};
 //#================================================================CONFIGURING NODE `APP`
 	// parse application/x-www-form-urlencoded
 	app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
@@ -41,6 +36,13 @@ var scraping_status = {
 	var file_index		= 0;
 	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;
 	var jsonArrayFromGET= [];
+
+	var server;
+	var scraping_status = {
+		done: false,
+		success: false
+	};
+	var inject_code_flag = false;
 	
 	var HTTP_PREFIX 	= "http://";
 	var HTTPS_PREFIX 	= "https://";
@@ -85,6 +87,12 @@ var scraping_status = {
 
 		const {headers, url, method} = req;
 		const {config, host, analyze} 	= req.query;
+
+		if(config){
+			inject_code_flag = true;
+		}else{
+			inject_code_flag = false;
+		}
 
 		if(analyze){
 			jsonArrayFromGET = [];
@@ -172,7 +180,7 @@ var scraping_status = {
 					jsonArrayFromGET_Item['REQ_headers']	= response.request.headers;
 					jsonArrayFromGET_Item['RES_headers']	= response.headers;
 				
-				if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0){
+				if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 && inject_code_flag){
 					var $ = cheerio.load(body);
 
 					//#================================================================
@@ -239,7 +247,10 @@ var scraping_status = {
 					    var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
 
 					    function style_replacer(match, n1, n2, n3, offset, string) {
-					        return n1 + rewrite_url(n2) + n3;
+					        if(rewrite_url(n2))
+					        	return n1 + rewrite_url(n2) + n3;
+					        else
+					        	return match + new_url
 					    }
 
 					    if (!value) {
@@ -371,12 +382,14 @@ var scraping_status = {
 					//#================================================================
 
 					//#================================================================INJECT JS CODE
+					//to disable link clicking on page
 					var scriptNode = '<script>window.setTimeout(function(){document.querySelectorAll("a").forEach((tag) => { if(tag.href)tag.addEventListener("click", e => {e.preventDefault(); e.stopPropagation()})});}, 5000);</script>' 
 					$('body').append(scriptNode);
 					$('body').attr('id', 'enable_right_click');
 					//#================================================================
 
 					//#================================================================INJECT CSS CODE
+					//for hover/selection border, and css for menu
 					var customcss = '<link href="http://'+use_ip+'/css/from-the-page.css" rel="stylesheet">'
 					$('head').append(customcss);
 					//#================================================================
@@ -394,7 +407,7 @@ var scraping_status = {
 					//#================================================================
 
 					//#================================================================INJECT ANALYZE FLAG
-					var flagDiv = '<div id="rtech_analyze">'+analyze+'</div>';
+					var flagDiv = '<div id="rtech_analyze" style="display:none;">'+analyze+'</div>';
 					$('body').append(flagDiv);
 					//#================================================================
 					if(analyze == true){

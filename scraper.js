@@ -13,7 +13,8 @@ var timeout_1, timeout_2;
 /*_________________________STEP 1____________________________________*/
 	async function run() {
 		//declaring the browser which will be opened
-	 	const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+	 	// const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); //for OVH
+	 	const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping)
 
 	 	//declaring the variables which will be used in the loop to run and open the pages
 	 	var batches =0, list_length =url_list_array.length, lower_limit =0, upper_limit =list_length >=10? 10:list_length, count=0;

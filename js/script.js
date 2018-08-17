@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         data_object = JSON.parse(document.querySelector('#scriptNodeWithJson').innerHTML).data;
         //call function for auto scraping
         autoDetect();
+        
     }
 
     //if it is an analysis request
@@ -304,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 /*_________________________for auto scraping detailed page_________________________________________________*/
     function autoDetect(){
-    	/* for auto parsing, first we parse the `data_object` which contains the saved config data */
+        /* for auto parsing, first we parse the `data_object` which contains the saved config data */
 		for(var obj of data_object){
 			var element_attributes	= obj.attributes;
 			var element_key	= obj.key;

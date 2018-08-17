@@ -71,3 +71,30 @@
 1) This file is used in `server.js` file. It includes functions which is used for removing unwanted/invalid characters from response headers.
 
 	NOTE: this code was available online for the above written purpose. There is nothing to be changed in it.
+
+#==================================================== PART 9: Common Git commands ===============================================
+#================================================================================================================================
+	git status
+
+	to add new files
+	git add .
+	or
+	git add filename
+
+	to commit all added and modified files
+	git commit .
+	or
+	git commit filename
+
+	#########################################
+	push all code to git 
+
+	git push origin branchname
+	git push origin tripti
+
+
+	username:- jitendraworking
+	Pass:- jitendraworking
+
+
+	git pull origin tripti
