@@ -3,3 +3,4 @@
 apachelog/
 node_modules/
 config/url_list_.txt
+config/config.js
