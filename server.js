@@ -500,7 +500,11 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	//this will create the config file
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
-		
+
+		if(typeof req.body.data === 'string'){
+			req.body.data = JSON.parse(req.body.data);
+		}
+
 		fileSystem.appendFile(path.join(__dirname, 'site_config/'+filename+'.json'), JSON.stringify(req.body), function (err) {
 			if (err) throw err;
 			console.log('Saved!');
@@ -528,6 +532,10 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	    writableStream.on('finish', function(){
 	    });
 
+	    if(typeof req.body.data === 'string'){
+	    	req.body.data = JSON.parse(req.body.data)
+	    }
+	    
 	    csvStream.pipe(writableStream);
 	    csvStream.write(req.body.data[0]);
 	    csvStream.end();

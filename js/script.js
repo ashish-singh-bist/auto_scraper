@@ -441,7 +441,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			candidate_parent = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 			if(candidate_parent != null)
 				selected_parent = candidate_parent;
-		}
+		}else{
+            var candidate_parent = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if(candidate_parent.tagName === tag.toUpperCase()){
+                return candidate_parent;
+            }
+        }
 		return selected_parent;
 	}
 

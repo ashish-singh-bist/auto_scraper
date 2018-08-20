@@ -98,3 +98,15 @@
 
 
 	git pull origin tripti
+
+#==================================================== PART 9: Running puppteer on RTECH =========================================
+#================================================================================================================================
+
+1) if you want to run puppteer without headless flag, i.e. want to see the output on browser, you'll have to download and install an extra software*.
+
+	- MobaXterm [ https://mobaxterm.mobatek.net/ ]
+	Like WinSCP, it also connects to the server [RTech in this case]. What it also provides is X11 forwarding, which we require in case we want to run puppeteer code from Rtech with headless flag off.
+
+	*The remote server [Rtech] has no display settings available with it, because of which the script is unable to find a browser for display. In that case, X11 forwarding helps to forward this request to the local machine's diaplay settings.
+
+	- So, download and install it, run the script normally from its command screen available
