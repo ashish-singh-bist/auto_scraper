@@ -34,7 +34,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	var split_url		= '';
 	var default_host	= '';
 	var file_index		= 0;
-	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;
+	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;	
 	var jsonArrayFromGET= [];
 
 	var server;
@@ -373,9 +373,20 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 					})
 					//#================================================================
 
+					//#================================================================REMOVING LINKS FROM IMG
+					$("img").each(function(){
+						if($(this).parent()[0].tagName === 'a'){
+							var ele = $(this)[0];
+							var required_parent = $(this).parent().parent()[0];
+							$(this).parent().remove();
+							$(required_parent).append(ele);
+						}
+					})
+					//#================================================================
+
 					//#================================================================CONFIG
-					if(config === 'true'){
-						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');
+					if(config === 'true'){						
+						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');						
 						var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
 						$('body').append(scriptNodeWithJson);
 					}
@@ -603,8 +614,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	
 //#================================================================
 
-
-app.listen(3002, () => console.log('Example app listening on port 3002!'));
+app.listen(4001, () => console.log('Example app listening on port 4001!'));
 
 //#================================================================for https
 // [STEPS]

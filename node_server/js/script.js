@@ -443,7 +443,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				selected_parent = candidate_parent;
 		}else{
             var candidate_parent = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if(candidate_parent.tagName === tag.toUpperCase()){
+            if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
                 return candidate_parent;
             }
         }
