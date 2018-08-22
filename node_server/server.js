@@ -512,7 +512,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
 
-		if(typeof req.body.data === 'string'){
+		if(typeof req.body.data === 'string') {			
 			req.body.data = JSON.parse(req.body.data);
 		}
 
@@ -540,6 +540,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 		}
 		var csvStream = csv.createWriteStream(options),
 	        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
+	        
 	    writableStream.on('finish', function(){
 	    });
 

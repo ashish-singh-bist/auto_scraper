@@ -19,9 +19,9 @@ var timeout_1, timeout_2;
 
 	 	//declaring the variables which will be used in the loop to run and open the pages
 	 	var batches =0, list_length =url_list_array.length, lower_limit =0, upper_limit =list_length >=10? 10:list_length, count=0;
+        	    
             
-            
-		if(list_length %10 ==0){
+		if(list_length %10 ==0) {
 		    myLoop();
 		    async function myLoop() {
 		        if(count < list_length){
@@ -87,7 +87,7 @@ var timeout_1, timeout_2;
 		            if(upper_limit === list_length-last_upper_limit){
 		                lower_limit = upper_limit;
 		                upper_limit += last_upper_limit;
-		            }else{
+		            } else{
 		                lower_limit = upper_limit;
 		                upper_limit += 10;
 		            }

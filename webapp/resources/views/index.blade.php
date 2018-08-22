@@ -14,6 +14,9 @@
                         Click to Upload File
                     </label>
                     <input id="file-upload" type="file" name="file-upload" />
+
+                    <textarea name="input-urls" placeholder="input URL's here....." id="text-input-urls" ></textarea>
+                    
                     <button style="display:none;" id="submit-btn" type="submit">Go</button><br>
                     <input id="file-analyze" type="checkbox" class="custom-file-upload" name="file-analyze" /> Analyze page traffic?
                 </form>

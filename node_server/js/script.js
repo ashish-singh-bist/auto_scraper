@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         data_object = JSON.parse(document.querySelector('#scriptNodeWithJson').innerHTML).data;
         //call function for auto scraping
         autoDetect();
-        
     }
 
     //if it is an analysis request
@@ -23,7 +22,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 .then(data => {document.open(); document.write(data); document.close();})
         },15000)
     }
-		
 /*_________________________for initializing required objects and functions_________________________________*/ 	
 	
     /*adding event handelors to javascript events*/

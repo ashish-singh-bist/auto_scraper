@@ -1,6 +1,8 @@
 $( document ).ready(function() {
 	//attaching event handlers to file input box and submit button
 	document.getElementById('file-upload').addEventListener('change', readFile, false);
+	document.getElementById('text-input-urls').addEventListener('change', loadInputUrls, false);
+
 	document.getElementById('submit-btn').addEventListener('click', submitform, false);
 
 	//declaring reqired variables
@@ -54,11 +56,56 @@ $( document ).ready(function() {
 		reader.readAsText(file);
 	}
 
+	function loadInputUrls (evt){
+
+		document.getElementById('submit-btn').setAttribute('style', 'display:visible;');
+		//document.getElementById('text-input-url').innerText= evt.target.text();		
+
+		let url_list_array_ = [];
+
+		let input_url = document.getElementById('text-input-urls').value;
+				
+		if (input_url){
+			url_list_array_  = input_url.split('\n');			
+
+			//a POST request will upload the file at server end for further processing
+			fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
+				body: JSON.stringify(url_list_array_),
+				headers: {
+					'content-type': 'application/json' 
+				},
+				method: 'POST'
+			})
+			.then(response => response.json())
+			.then(res => {
+				if(res.status == 200){
+					
+					//file upload was successfull
+					//document.getElementById('label-file-upload').style['background-color'] = '#459246';
+					//extracting file's contents i.e. URLs
+					url_list_array = res.file_content.split('\n');
+					
+					proceedWithUrls();
+				}else{
+					//file upload was unsuccessful
+					//document.getElementById('label-file-upload').style['background-color'] = 'tomato';
+					//document.getElementById('submit-btn').setAttribute('disabled', 'true');
+				}
+			})
+			.catch(() => {
+				//file upload was unsuccessful
+				//document.getElementById('label-file-upload').style['background-color'] = 'tomato';
+				//document.getElementById('submit-btn').setAttribute('disabled', 'true');
+			});					
+		}		
+	}
+
+
 	function  proceedWithUrls(){
 		//the following tasks are performed using this function
 		// 1) extract host name in `extracted_host_name`
 		// 2) check if config exists for that host
-
+		console.log(url_list_array);
 		for( let i=0; i< url_list_array.length; i++) {
 
 			let url = url_list_array[i]
