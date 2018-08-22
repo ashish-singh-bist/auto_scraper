@@ -23,7 +23,7 @@
     <script src="config/config.js"></script>
     
     <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    {{-- <link href="css/bootstrap.min.css" rel="stylesheet"> --}}
     <link href="css/jquery-ui.css" rel="stylesheet">
     <link href="css/from-the-page.css" rel="stylesheet">
     
