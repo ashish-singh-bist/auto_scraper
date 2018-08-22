@@ -35,21 +35,24 @@ $( document ).ready(function() {
 			})
 			.then(response => response.json())
 			.then(res => {
+				document.getElementById('label-file-upload').style['display'] = 'block';
 				if(res.status == 200){
 					//file upload was successfull
-					document.getElementById('label-file-upload').style['background-color'] = '#459246';
+					document.getElementById('label-file-upload').style['color'] = '#459246';
 					//extracting file's contents i.e. URLs
 					url_list_array = res.file_content.split('\r\n');
 					proceedWithUrls();
 				}else{
 					//file upload was unsuccessful
-					document.getElementById('label-file-upload').style['background-color'] = 'tomato';
+					document.getElementById('label-file-upload').style['color'] = 'tomato';
 					document.getElementById('submit-btn').setAttribute('disabled', 'true');
 				}
 			})
 			.catch(() => {
 				//file upload was unsuccessful
-				document.getElementById('label-file-upload').style['background-color'] = 'tomato';
+				document.getElementById('label-file-upload').style['display'] = 'block';
+				document.getElementById('label-file-upload').style['color'] = 'tomato';
+
 				document.getElementById('submit-btn').setAttribute('disabled', 'true');
 			})
 		}
