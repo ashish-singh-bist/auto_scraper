@@ -2,3 +2,30 @@ table tbody{
 	word-wrap: break-word;
     word-break: break-all;
 }
+#label-file-upload{
+    display: none;
+}
+.textInputUrls{
+    width: 100%;
+    resize: none;
+}
+.fileUpload{
+    display: none !important;
+    /*width: 100%;
+    text-align: center;*/
+}
+.fileUploadLabel{
+    cursor: pointer;
+    font-size: 15px;
+}
+.orDivderHr {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+.orDivder {
+    position: absolute;
+    width: 25px;
+    background-color: white;
+    margin-top: -51px;
+    margin-left: -13px;
+}
