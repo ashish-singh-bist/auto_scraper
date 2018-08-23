@@ -210,6 +210,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             document.getElementById('label_input').setAttribute('style', 'display:block; left:'+x+'px;top:'+y+'px;');
             document.getElementById('label_item_value').setAttribute('class','textareabox');
 
+            //for cases like one in `https://www.airbnb.co.in/rooms/20814508` where the <div> contains the image url in its `style` property
             let image   = (window.getComputedStyle(targetelement).backgroundImage);
             image       = image.substr(5, image.length-7);
 
@@ -218,7 +219,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             else if(targetelement.hasAttribute('src'))
                 document.getElementById('label_item_value').value = targetelement.src.replace(/(.)+3002\//, '');
             else
-                document.getElementById('label_item_value').value = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
+                document.getElementById('label_item_value').value = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
         }
 
     }
@@ -498,13 +499,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	/* extract selected element's properties */
 	function autoPostElement(label, targetelement, path){
         
+        //for cases like one in `https://www.airbnb.co.in/rooms/20814508` where the <div> contains the image url in its `style` property
         let image   = (window.getComputedStyle(targetelement).backgroundImage);
         image       = image.substr(5, image.length-7);
 
         if(image.length)
             printable_data[label] = image;
         else
-            printable_data[label] = targetelement.src? targetelement.src.replace(/(.)+3002\//, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').trim() : targetelement.value;
+            printable_data[label] = targetelement.src? targetelement.src.replace(/(.)+3002\//, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
 
         console.log(label, printable_data[label])
     }
@@ -539,11 +541,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
         })
         .then(response => response.json())
         .then((res) => {
-            // window.close();
             var ww = window.open('', '_self'); ww.close();
         })
         .catch(function() {
-            // window.close();
             var ww = window.open('', '_self'); ww.close();
         });
     }

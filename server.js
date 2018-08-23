@@ -7,7 +7,9 @@ const fileSystem= require('fs');
 const cheerio	= require('cheerio');
 const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
-const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our headers from invalid characters
+
+const header 	= require(path.join(__dirname, 'js/headers')); 			//code to clean our headers from invalid characters
+const rtech_config	= require(path.join(__dirname, 'config/config'));	//application config
 
 //#================================================================CONFIGURING NODE `APP`
 	// parse application/x-www-form-urlencoded
@@ -30,7 +32,6 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 //#================================================================
 
 //#================================================================VARIABLE(S) DECLARATION
-	var rtech_config	= require(path.join(__dirname, 'config/config'));
 	var split_url		= '';
 	var default_host	= '';
 	var file_index		= 0;
@@ -373,6 +374,17 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 					})
 					//#================================================================
 
+					//#================================================================REMOVING LINKS FROM IMG
+					$("img").each(function(){
+						if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
+							var ele = $(this)[0];
+							var required_parent = $(this).parent().parent()[0];
+							$(this).parent().remove();
+							$(required_parent).append(ele);
+						}
+					})
+					//#================================================================
+
 					//#================================================================CONFIG
 					if(config === 'true'){
 						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');
@@ -604,7 +616,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 //#================================================================
 
 
-app.listen(3002, () => console.log('Example app listening on port 3002!'));
+app.listen(rtech_config.root_port, () => console.log('Example app listening on port '+rtech_config.root_port));
 
 //#================================================================for https
 // [STEPS]

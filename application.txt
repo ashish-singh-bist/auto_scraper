@@ -25,7 +25,7 @@
 
 2) It also handles the GET/POST requests we send to run the application. When it receives the request to start the scrapping process, it runs the scrapper (scraper.js) [puppeteer headless code] on rtech.
 
-#==================================================== PART 2: scrapper.js [root folder] ===========================================
+#==================================================== PART 2: scrapper.js [root folder] =========================================
 #================================================================================================================================
 
 1) This script will receive the required arguments from `server.js`, process them, and then run the headless browser and open-scrape the links it receives.
@@ -110,7 +110,3 @@
 	*The remote server [Rtech] has no display settings available with it, because of which the script is unable to find a browser for display. In that case, X11 forwarding helps to forward this request to the local machine's diaplay settings.
 
 	- So, download and install it, run the script normally from its command screen available
-
-
-var image = window.getComputedStyle(ele).backgroundImage
-image.substr(5, image.length-7)
