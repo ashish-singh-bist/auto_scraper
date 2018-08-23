@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     //if it is an analysis request
     var analyzeFlag = document.getElementById('rtech_analyze').innerHTML; //we inject this information through server.js
     if(analyzeFlag === 'true'){
-        //this function gets a html page from server which is then displayed on rowser with information of  request-response
+        //this function gets a html page from server which is then displayed on browser with information/analysis of  request-response
         setTimeout(() => {
                fetch('/rtech/api/get_analysis', {
                 method: 'GET'
@@ -209,8 +209,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             /* if not selected, select it and display the label input box, so that user can enter a label */
             document.getElementById('label_input').setAttribute('style', 'display:block; left:'+x+'px;top:'+y+'px;');
             document.getElementById('label_item_value').setAttribute('class','textareabox');
-            
-            if(targetelement.hasAttribute('src'))
+
+            let image   = (window.getComputedStyle(targetelement).backgroundImage);
+            image       = image.substr(5, image.length-7);
+
+            if(image.length)
+                document.getElementById('label_item_value').value = image;
+            else if(targetelement.hasAttribute('src'))
                 document.getElementById('label_item_value').value = targetelement.src.replace(/(.)+3002\//, '');
             else
                 document.getElementById('label_item_value').value = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
@@ -443,7 +448,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				selected_parent = candidate_parent;
 		}else{
             var candidate_parent = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if(candidate_parent.tagName === tag.toUpperCase()){
+            if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
                 return candidate_parent;
             }
         }
@@ -492,7 +497,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	/* extract selected element's properties */
 	function autoPostElement(label, targetelement, path){
-		printable_data[label] = targetelement.src? targetelement.src.replace(/(.)+3002\//, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').trim() : targetelement.value;
+        
+        let image   = (window.getComputedStyle(targetelement).backgroundImage);
+        image       = image.substr(5, image.length-7);
+
+        if(image.length)
+            printable_data[label] = image;
+        else
+            printable_data[label] = targetelement.src? targetelement.src.replace(/(.)+3002\//, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').trim() : targetelement.value;
+
+        console.log(label, printable_data[label])
     }
 /*_________________________for sending scraped data____________________________________________________*/
 	

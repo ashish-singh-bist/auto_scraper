@@ -110,3 +110,7 @@
 	*The remote server [Rtech] has no display settings available with it, because of which the script is unable to find a browser for display. In that case, X11 forwarding helps to forward this request to the local machine's diaplay settings.
 
 	- So, download and install it, run the script normally from its command screen available
+
+
+var image = window.getComputedStyle(ele).backgroundImage
+image.substr(5, image.length-7)
