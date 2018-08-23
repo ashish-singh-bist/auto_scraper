@@ -3,6 +3,8 @@ $( document ).ready(function() {
 	document.getElementById('file-upload').addEventListener('change', readFile, false);
 	document.getElementById('text-input-urls').addEventListener('change', loadInputUrls, false);
 
+	document.getElementById('text-input-urls').addEventListener('input', onInputUrls, false);
+
 	document.getElementById('submit-btn').addEventListener('click', submitform, false);
 
 	//declaring reqired variables
@@ -249,5 +251,10 @@ $( document ).ready(function() {
 				}                
 			});
 		}, 10000)
+	}
+
+	function onInputUrls() {
+		document.getElementById('submit-btn').setAttribute('style', 'display:visible;');	
+		//document.getElementById('submit-btn').setAttribute('disabled', 'false');		
 	}
 });
