@@ -7,7 +7,9 @@ const fileSystem= require('fs');
 const cheerio	= require('cheerio');
 const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
-const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our headers from invalid characters
+
+const header 	= require(path.join(__dirname, 'js/headers')); 			//code to clean our headers from invalid characters
+const rtech_config	= require(path.join(__dirname, 'config/config'));	//application config
 
 //#================================================================CONFIGURING NODE `APP`
 	// parse application/x-www-form-urlencoded
@@ -30,11 +32,10 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 //#================================================================
 
 //#================================================================VARIABLE(S) DECLARATION
-	var rtech_config	= require(path.join(__dirname, 'config/config'));
 	var split_url		= '';
 	var default_host	= '';
 	var file_index		= 0;
-	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;	
+	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;
 	var jsonArrayFromGET= [];
 
 	var server;
@@ -181,6 +182,10 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 					jsonArrayFromGET_Item['RES_headers']	= response.headers;
 				
 				if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 && inject_code_flag){
+					console.log('++++++++++++++++++++++++++++++++++++>');
+					console.log(options['url']);
+					console.log('++++++++++++++++++++++++++++++++++++>\n');
+
 					var $ = cheerio.load(body);
 
 					//#================================================================
@@ -375,7 +380,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 
 					//#================================================================REMOVING LINKS FROM IMG
 					$("img").each(function(){
-						if($(this).parent()[0].tagName === 'a'){
+						if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
 							var ele = $(this)[0];
 							var required_parent = $(this).parent().parent()[0];
 							$(this).parent().remove();
@@ -385,11 +390,54 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 					//#================================================================
 
 					//#================================================================CONFIG
-					if(config === 'true'){						
-						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');						
+					if(config === 'true'){
+						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');
 						var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
 						$('body').append(scriptNodeWithJson);
 					}
+					//#================================================================
+
+					//#================================================================META
+					$("meta").each(function(){
+						if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
+							let content = $(this).attr('content');
+							let redirect_host = content.split('/')[2];
+							let redirect_protocol = '';
+
+							if(content.indexOf('https') > -1)
+								redirect_protocol = 'https://';
+							else
+								redirect_protocol = 'http://';
+
+							let redirect_config = 'false';
+
+							if(redirect_host){
+								if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+redirect_host.replace(/\./g, '_')+'.json'))) {
+									redirect_config= 'true';
+								}else{
+									redirect_config = 'false';
+								}
+
+								if(analyze === true){
+									let url 	= content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
+									$(this).attr('content', url);
+								}else{
+									let url 	= content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
+									$(this).attr('content', url);
+								}
+								
+							}
+							
+						}
+
+						if($(this).attr('name') && $(this).attr('name') === 'referrer'){
+							$(this).attr('content', 'no-referrer-when-downgrade')
+						}
+
+						if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
+							$(this).attr('content', '_content')
+						}
+					})
 					//#================================================================
 
 					//#================================================================INJECT JS CODE
@@ -431,11 +479,13 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 
 					jsonArrayFromGET.push(jsonArrayFromGET_Item);
 
+					// console.log('=======================================>');
+					// console.log($.html());
+					// console.log('=======================================>\n');
+
 					res.end($.html());
 					
 				}else {
-
-					
 
 					if(String(response.headers['content-type']).indexOf('application/json') !== -1){
 						jsonArrayFromGET_Item['RES_body']	= JSON.parse(body.toString());
@@ -512,7 +562,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
 
-		if(typeof req.body.data === 'string') {			
+		if(typeof req.body.data === 'string'){
 			req.body.data = JSON.parse(req.body.data);
 		}
 
@@ -540,7 +590,6 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 		}
 		var csvStream = csv.createWriteStream(options),
 	        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
-	        
 	    writableStream.on('finish', function(){
 	    });
 
@@ -608,14 +657,12 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 			}else{
 				res.writeHead(500);
 				res.end(err);
-			}
-			
+			}			
 		})
 	})
-	
 //#================================================================
 
-app.listen(4001, () => console.log('Example app listening on port 4001!'));
+app.listen(rtech_config.root_port, () => console.log('Example app listening on port '+rtech_config.root_port));
 
 //#================================================================for https
 // [STEPS]
