@@ -5,7 +5,6 @@ node_server/.htpasswd
 node_server/apachelog/
 node_server/node_modules/
 node_server/config/url_list_.txt
-node_server/config/config.js
 
 /webapp/node_modules
 /webapp/public/hot
