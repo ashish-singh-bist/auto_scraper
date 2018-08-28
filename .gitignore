@@ -4,6 +4,7 @@ node_server/.htaccess
 node_server/.htpasswd
 node_server/apachelog/
 node_server/node_modules/
+node_server/config/config.js
 node_server/config/url_list_.txt
 
 /webapp/node_modules
