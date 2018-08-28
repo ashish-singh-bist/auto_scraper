@@ -2,7 +2,7 @@ table tbody{
 	word-wrap: break-word;
     word-break: break-all;
 }
-#label-file-upload{
+#label-file-upload, #fileResponseContainer{
     display: none;
 }
 .textInputUrls{
@@ -54,3 +54,18 @@ table tbody{
     vertical-align: middle;
     max-width: 100%;
 }
+.capitalised th {
+    text-transform: capitalize;
+}
+
+/* css for error msg*/
+.success{
+    color: #fff !important;
+    background-color: #00a65a !important;
+}
+.error{
+    color: #fff !important;
+    background-color: #dd4b39 !important;
+}
+
+/* css for error msg*/

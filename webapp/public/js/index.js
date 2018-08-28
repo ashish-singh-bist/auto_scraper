@@ -1,92 +1,64 @@
 $( document ).ready(function(){
-	//attaching event handlers to file input box and submit button
-	document.getElementById('file-upload').addEventListener('change', readFile, false);
-	document.getElementById('text-input-urls').addEventListener('change', loadInputUrls, false);
-	document.getElementById('text-input-urls').addEventListener('input', onInputUrls, false);
-	document.getElementById('submit-btn').addEventListener('click', submitform, false);
-
+	$('#file_upload').val('');
+	$('#text_input_urls').val('');
+	document.getElementById('submit_btn').setAttribute('disabled', 'true');
 
 	//declaring reqired variables
 	var url_list_array = [];
 	var extracted_host_name, flag, process_host_name, argument_analyze_;
+	var parsedJson = [{'title':'abc','price':'2.992'},{'title':'abc','price':'2.992'},{'title':'abc','price':'2.992'},{'title':'abc','price':'2.992'}];
 	var windowOpenWith = 'http://' + config.root_ip + ':' + config.root_port;
 
-	//this function will be triggered as soon as you select a file. After selecting file, if this input box turns green, you're good to go. If it turns red, means there is some problem at the server end.
-	function readFile (evt) {
-		document.getElementById('submit-btn').setAttribute('style', 'display:visible;');
-		document.getElementById('label-file-upload').innerText= evt.target.files[0].name;
-		let url_list_array_ = [], url_list_string;
-		let files = evt.target.files;
-		let file = files[0];           
-		let reader = new FileReader();
-		reader.onload = function(event) {
-			url_list_string = event.target.result;
-			url_list_array_  = url_list_string.split('\r\n');
-			//a POST request will upload the file at server end for further processing
-			fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
-				body: JSON.stringify(url_list_array_),
-				headers: {
-					'content-type': 'application/json' 
-				},
-				method: 'POST'
-			})
-			.then(response => response.json())
-			.then(res => {
-				document.getElementById('label-file-upload').style['display'] = 'block';
-				if(res.status == 200){
-					//file upload was successfull
-					document.getElementById('label-file-upload').style['color'] = '#459246';
-					//extracting file's contents i.e. URLs
-					url_list_array = res.file_content.split('\r\n');
-					proceedWithUrls();
-				}else{
-					//file upload was unsuccessful
-					document.getElementById('label-file-upload').style['color'] = 'tomato';
-					document.getElementById('submit-btn').setAttribute('disabled', 'true');
-				}
-			})
-			.catch(() => {
-				//file upload was unsuccessful
-				document.getElementById('label-file-upload').style['display'] = 'block';
-				document.getElementById('label-file-upload').style['color'] = 'tomato';
-				document.getElementById('submit-btn').setAttribute('disabled', 'true');
-			})
-		}
-		reader.readAsText(file);
-	}
-
-	function loadInputUrls (evt){
-		document.getElementById('submit-btn').setAttribute('style', 'display:visible;');
-		//document.getElementById('text-input-url').innerText= evt.target.text();		
+	function fileUpload( param ) {
+		document.getElementById('submit_btn').setAttribute('style', 'display:visible;');
 		let url_list_array_ = [];
-		let input_url = document.getElementById('text-input-urls').value;
-		if (input_url){
-			url_list_array_  = input_url.split('\n');
-			//a POST request will upload the file at server end for further processing
-			fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
-				body: JSON.stringify(url_list_array_),
-				headers: {
-					'content-type': 'application/json' 
-				},
-				method: 'POST'
-			})
-			.then(response => response.json())
-			.then(res => {
-				if(res.status == 200){
-					//extracting file's contents i.e. URLs
-					url_list_array = res.file_content.split('\n');
-					proceedWithUrls();
-				}
-			})
-			.catch(() => {
-				//file upload was unsuccessful
-				document.getElementById('label-file-upload').style['display'] = 'block';
-				document.getElementById('label-file-upload').style['color'] = 'tomato';
-				document.getElementById('submit-btn').setAttribute('disabled', 'true');
-			});
-		}		
-	}
+		let msg = 'abc';
 
+		if( param == 'textarea'){
+			let input_url = document.getElementById('text_input_urls').value;
+			url_list_array_  = input_url.split('\n');
+			fileUploadAjax(url_list_array_);
+		}else{
+			let file = document.getElementById('file_upload').files[0];
+			let reader = new FileReader();
+			reader.readAsText(file);
+			reader.onload = function(event) {
+				url_list_string = event.target.result;
+				url_list_array_  = url_list_string.split('\r\n');
+				fileUploadAjax(url_list_array_);
+			};
+		}
+	}	
+
+	function fileUploadAjax(url_list_array_){
+		// a POST request will upload the file at server end for further processing
+		fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
+			body: JSON.stringify(url_list_array_),
+			headers: {
+				'content-type': 'application/json' 
+			},
+			method: 'POST'
+		})
+		.then(response => response.json())
+		.then(res => {
+			if(res.status == 200){
+				//file upload was successfull
+				document.getElementById('label_file_upload').style['color'] = '#459246';
+				url_list_array = res.file_content.split('\r\n');
+				proceedWithUrls();
+			}else{
+				//file upload was unsuccessful
+				document.getElementById('label_file_upload').style['color'] = 'tomato';
+				document.getElementById('submit_btn').setAttribute('disabled', 'true');
+			}
+		})
+		.catch(() => {
+			//file upload was unsuccessful
+			document.getElementById('label_file_upload').style['display'] = 'block';
+			document.getElementById('label_file_upload').style['color'] = 'tomato';
+			document.getElementById('submit_btn').setAttribute('disabled', 'true');
+		})
+	}
 
 	function  proceedWithUrls(){
 		//the following tasks are performed using this function
@@ -124,6 +96,7 @@ $( document ).ready(function(){
 			//`process_host_name` will hold the host part of the URL and is different from `extracted_host_name`. eg.
 			//`process_host_name` could be `www_gnc_com`, but extracted host name will be `http://www.gnc.com`
 			process_host_name = res.extracted_host_name;
+			proceedForParsing(flag, process_host_name, url_list_array);
 		})
 		.catch(err => {
 			//flag will hold value true or false, representing whether config exists or not, respectively.
@@ -134,16 +107,40 @@ $( document ).ready(function(){
 		});
 	}
 
+	$('#file_upload').change(function(evt){
+		document.getElementById('label_file_upload').innerText = evt.target.files[0].name;
+		if ( document.getElementById('file_upload').files[0] ) {
+			$('#submit_btn').prop('disabled', false);
+		}else{
+			$('#submit_btn').prop('disabled', true);
+		}
+	});
+
+	$('#text_input_urls').bind('input propertychange', function() {
+		if( $('#text_input_urls').val().length > 0 ){
+			$('#submit_btn').prop('disabled', false);
+		}else{
+			$('#submit_btn').prop('disabled', true);
+		}
+	});
+
 	//function called on clicking submit button
-	function submitform(evt) {
-		//prevent automatic refresh of page on submit
+	$('#submit_btn').click(function(evt){
 		evt.preventDefault();
-		proceedForParsing(flag, process_host_name, url_list_array);
-	}
+		if( $('#text_input_urls').val().length > 0 ){
+			fileUpload('textarea');
+			// console.debug('textarea have value');		//debug msg
+		}else{
+			if ( document.getElementById('file_upload').files[0] ) {
+				fileUpload('file');	
+				// console.debug('file have fileobject');		//debug msg
+			}
+		}
+	});
 
 	//calling function for opening link in browsers
 	function proceedForParsing (flag, process_host_name, url_list_array) {
-		argument_analyze_ = document.getElementById('file-analyze').checked;
+		argument_analyze_ = document.getElementById('file_analyze').checked;
 		//from here we'll divide all the URLs into batches to be executed
 		if(flag && !argument_analyze_){
 			//case: config exists and we have to only scrape data
@@ -201,14 +198,51 @@ $( document ).ready(function(){
 			.then(response => response.json())
 			.then(res => {
 				if(res.status === 200){
+					var html = "";
+					if(res.data.length > 0){
+						parsedJson = res.data;
+				 		html = "<table class='table table-bordered capitalised'>"
+						parsedJson.forEach(function (obj, index) {
+							if( index == 0 ){
+								html += "<tr>";
+								for (var key in obj) {
+									if (obj.hasOwnProperty(key)) 
+										html += "<th>" + key + "</th>";					
+								}
+								html += "</tr>";
+							}
+							
+							html += "<tr>";
+							for (var key in obj) {
+								if (obj.hasOwnProperty(key))
+									html += "<td>" + obj[key] + "</td>";
+							}
+							html += "</tr>";
+						});
+						html += "</table>";
+						$('#fileUploadContainer').hide();
+						$('#fileResponseContainer').show();
+						$('#fileResponseContainerData').html( html );
+					}
+					else{
+						$('#fileUploadContainer').hide();
+						$('#fileResponseContainer').show();
+						$('#fileResponseContainerData').html( 'No data found' );	
+					}
 					document.getElementById('progress_bar').style['display'] = 'none';
 					clearInterval(myInterval);
 				}                
 			});
 		}, 10000)
 	}
-	function onInputUrls() {
-		document.getElementById('submit-btn').setAttribute('style', 'display:visible;');
-		//document.getElementById('submit-btn').setAttribute('disabled', 'false');
-    }
+ 	
+ 	function showMsg( type, msg, duration = 5000 ){
+ 		$('#msgBox').show();
+ 		$('#msgBox').addClass(type);
+ 		$('#msgBoxMessage').html(msg);
+ 		setTimeout(function(){ 
+ 			$('#msgBox').fadeOut();
+ 			$('#msgBox').removeClass(type);
+ 		}, duration);
+ 	}
 });
