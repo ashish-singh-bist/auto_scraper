@@ -8,12 +8,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
         data_object = JSON.parse(document.querySelector('#scriptNodeWithJson').innerHTML).data;
         //call function for auto scraping
         autoDetect();
+        
     }
 
     //if it is an analysis request
     var analyzeFlag = document.getElementById('rtech_analyze').innerHTML; //we inject this information through server.js
     if(analyzeFlag === 'true'){
-        //this function gets a html page from server which is then displayed on rowser with information of  request-response
+        //this function gets a html page from server which is then displayed on browser with information/analysis of  request-response
         setTimeout(() => {
                fetch('/rtech/api/get_analysis', {
                 method: 'GET'
@@ -22,6 +23,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 .then(data => {document.open(); document.write(data); document.close();})
         },15000)
     }
+		
 /*_________________________for initializing required objects and functions_________________________________*/ 	
 	
     /*adding event handelors to javascript events*/
@@ -207,11 +209,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
             /* if not selected, select it and display the label input box, so that user can enter a label */
             document.getElementById('label_input').setAttribute('style', 'display:block; left:'+x+'px;top:'+y+'px;');
             document.getElementById('label_item_value').setAttribute('class','textareabox');
-            
-            if(targetelement.hasAttribute('src'))
-                document.getElementById('label_item_value').value = targetelement.src.replace(/(.)+3002\//, '');
+
+            //for cases like one in `https://www.airbnb.co.in/rooms/20814508` where the <div> contains the image url in its `style` property
+            let image   = (window.getComputedStyle(targetelement).backgroundImage);
+            image       = image.substr(5, image.length-7);
+
+            let replace = '(.)+'+config.root_port+'\/';     
+            let re      = new RegExp(replace, "g");
+
+            if(image.length)
+                document.getElementById('label_item_value').value = image;
+            else if(targetelement.hasAttribute('src'))
+                document.getElementById('label_item_value').value = targetelement.src.replace(re, ''); //targetelement.src.replace(/(.)+3002\//, '');
             else
-                document.getElementById('label_item_value').value = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
+                document.getElementById('label_item_value').value = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
         }
 
     }
@@ -490,13 +501,28 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	/* extract selected element's properties */
 	function autoPostElement(label, targetelement, path){
-		printable_data[label] = targetelement.src? targetelement.src.replace(/(.)+3002\//, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').trim() : targetelement.value;
+        
+        //for cases like one in `https://www.airbnb.co.in/rooms/20814508` where the <div> contains the image url in its `style` property
+        let image   = (window.getComputedStyle(targetelement).backgroundImage);
+        image       = image.substr(5, image.length-7);
+
+        let replace = '(.)+'+config.root_port+'\/';     
+        let re      = new RegExp(replace, "g");
+
+        if(image.length)
+            printable_data[label] = image;
+        else
+            printable_data[label] = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
+
+        console.log(label, printable_data[label])
     }
 /*_________________________for sending scraped data____________________________________________________*/
 	
     if(data_object.length > 0){
         var host    = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'').replace(/_/g,'.');
-        var url     = (window.location.href).replace(window.location.search, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
+        var url     = (window.location.href).replace(/\&config(.)+/, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
+        // the below regex was removing all the query string from a href, and in cases like `https://www.youtube.com/watch?v=D5drYkLiLI8` we need them. Therefore above is the corrected regex.
+        // var url     = (window.location.href).replace(window.location.search, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
         
         var final_data_for_csv = {}
         for(var i=0; i< data_object.length; i++){
@@ -523,11 +549,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
         })
         .then(response => response.json())
         .then((res) => {
-            // window.close();
             var ww = window.open('', '_self'); ww.close();
         })
         .catch(function() {
-            // window.close();
             var ww = window.open('', '_self'); ww.close();
         });
     }

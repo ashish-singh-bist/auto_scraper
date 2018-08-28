@@ -7,7 +7,9 @@ const fileSystem= require('fs');
 const cheerio	= require('cheerio');
 const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
-const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our headers from invalid characters
+
+const header 	= require(path.join(__dirname, 'js/headers')); 			//code to clean our headers from invalid characters
+const rtech_config	= require(path.join(__dirname, 'config/config'));	//application config
 
 //#================================================================CONFIGURING NODE `APP`
 	// parse application/x-www-form-urlencoded
@@ -30,11 +32,10 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 //#================================================================
 
 //#================================================================VARIABLE(S) DECLARATION
-	var rtech_config	= require(path.join(__dirname, 'config/config'));
 	var split_url		= '';
 	var default_host	= '';
 	var file_index		= 0;
-	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;	
+	var use_ip 			= rtech_config.root_ip + ':' + rtech_config.root_port;
 	var jsonArrayFromGET= [];
 
 	var server;
@@ -49,18 +50,21 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	var REL_PREFIX 		= "//";
 	var VALID_PREFIXES 	= [HTTP_PREFIX, HTTPS_PREFIX, REL_PREFIX];
 	var IGNORE_PREFIXES = ["#", "about:", "data:", "mailto:", "javascript:", "{", "*"];
+	var readJsonFileArr = [];
 
 //#================================================================
 
-//#================================================================GET
-
+//#================================================================GET	
 	//this will send the sttaus of the scrapper, whether completed or not
 	app.get('/rtech/api/check_scrape', (req, res) => {
 		if(scraping_status.done === true){
 			if(scraping_status.success){
 				scraping_status.done = false;
 		   		scraping_status.success = false;
-				res.send({status: 200, message: 'scraping done', success: true})
+		   		var temp_parsed_data = readJsonFileArr;
+		   		readJsonFileArr = [];		   		
+				res.send({status: 200, message: 'scraping done', success: true, data: temp_parsed_data} )
+
 			}
 			else{
 				scraping_status.done = false;
@@ -147,7 +151,13 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 		request(options, function(error, response, body){
 
 			if (!error && response.statusCode == 200) {
-
+				console.log('++++++++++++++++++++++++++++++++++++>');
+				console.log(options['url']);
+				console.log(String(response.headers['content-type']));
+				console.log(body.toString().length);
+				console.log(inject_code_flag)
+				console.log('++++++++++++++++++++++++++++++++++++>\n');
+		
 				//#================================================================RESPONSE HEADERS
 				headers = response.headers;
 				delete headers['content-length'];	//since we're going to manipulate the response content
@@ -375,7 +385,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 
 					//#================================================================REMOVING LINKS FROM IMG
 					$("img").each(function(){
-						if($(this).parent()[0].tagName === 'a'){
+						if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
 							var ele = $(this)[0];
 							var required_parent = $(this).parent().parent()[0];
 							$(this).parent().remove();
@@ -385,11 +395,54 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 					//#================================================================
 
 					//#================================================================CONFIG
-					if(config === 'true'){						
-						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');						
+					if(config === 'true'){
+						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');
 						var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
 						$('body').append(scriptNodeWithJson);
 					}
+					//#================================================================
+
+					//#================================================================META
+					$("meta").each(function(){
+						if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
+							let content = $(this).attr('content');
+							let redirect_host = content.split('/')[2];
+							let redirect_protocol = '';
+
+							if(content.indexOf('https') > -1)
+								redirect_protocol = 'https://';
+							else
+								redirect_protocol = 'http://';
+
+							let redirect_config = 'false';
+
+							if(redirect_host){
+								if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+redirect_host.replace(/\./g, '_')+'.json'))) {
+									redirect_config= 'true';
+								}else{
+									redirect_config = 'false';
+								}
+
+								if(analyze === true){
+									let url 	= content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
+									$(this).attr('content', url);
+								}else{
+									let url 	= content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
+									$(this).attr('content', url);
+								}
+								
+							}
+							
+						}
+
+						if($(this).attr('name') && $(this).attr('name') === 'referrer'){
+							$(this).attr('content', 'no-referrer-when-downgrade')
+						}
+
+						if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
+							$(this).attr('content', '_content')
+						}
+					})
 					//#================================================================
 
 					//#================================================================INJECT JS CODE
@@ -431,11 +484,13 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 
 					jsonArrayFromGET.push(jsonArrayFromGET_Item);
 
+					// console.log('=======================================>');
+					// console.log($.html());
+					// console.log('=======================================>\n');
+
 					res.end($.html());
 					
 				}else {
-
-					
 
 					if(String(response.headers['content-type']).indexOf('application/json') !== -1){
 						jsonArrayFromGET_Item['RES_body']	= JSON.parse(body.toString());
@@ -468,7 +523,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 		
 		server.stderr.on('data', function (data) {
 		    scraping_status.done = true;
-		    scraping_status.success = false;
+		    scraping_status.success = false;		    
 		});
 
 		server.on('close', function (code){
@@ -512,7 +567,7 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
 
-		if(typeof req.body.data === 'string') {			
+		if(typeof req.body.data === 'string'){
 			req.body.data = JSON.parse(req.body.data);
 		}
 
@@ -532,6 +587,8 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 			filename = (req.body.url).split('_')[1];
 		}
 
+		scraping_status.filename = filename;
+
 		var options = {includeEndRowDelimiter:true};
 		if(fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.csv'))){
 			options['headers'] = false;
@@ -540,7 +597,6 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 		}
 		var csvStream = csv.createWriteStream(options),
 	        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
-	        
 	    writableStream.on('finish', function(){
 	    });
 
@@ -549,10 +605,30 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	    }
 	    
 	    csvStream.pipe(writableStream);
-	    csvStream.write(req.body.data[0]);
-	    csvStream.end();
-		//#================================================================
+	    csvStream.write(req.body.data[0]);    	    
+	    if ( fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.json')) ){
+	    	var readJsonData = 	fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
+	    	//console.log(readJsonData);
+	    	if(typeof readJsonData === 'string'){
+	    		readJsonData = JSON.parse(readJsonData);
+	    		readJsonData.push(req.body.data[0]);
+	    	}
+	    	readJsonFileArr = readJsonData;
+	    	//console.log(readJsonData);	    		    	
+	    }
+	    else{
+	    	readJsonFileArr.push(req.body.data[0]);
+	    }
+	    
+	    //console.log(readJsonFileArr);
 
+	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(readJsonFileArr), function (err) {
+			if (err) throw err;
+			console.log('Json file Saved!');
+		});
+
+	    //console.log(req.body.data[0]);
+	    csvStream.end();				
 		res.send({})
 	})
 
@@ -615,7 +691,8 @@ const header 	= require(path.join(__dirname, 'js/headers')); //code to clean our
 	
 //#================================================================
 
-app.listen(4001, () => console.log('Example app listening on port 4001!'));
+
+app.listen(rtech_config.root_port, () => console.log('Example app listening on port '+rtech_config.root_port));
 
 //#================================================================for https
 // [STEPS]
