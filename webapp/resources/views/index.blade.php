@@ -6,7 +6,6 @@
 @section('content')
 <div class="">
     <div class="row">
-        
         <div class="col-md-12">
             <form method="post" id="search_site_form" class="text-center">
                 <div class="box box-primary">
@@ -38,4 +37,13 @@
         </div>
     </div>
 </div>
+@endsection
+@section('adminlte_js')
+    <script type="text/javascript">
+        var config = {
+            "root_ip": "{{ env('NODE_SERVER_IP')}}",
+            "root_port": "{{ env('NODE_SERVER_PORT')}}",
+        };
+    </script>
+    <script src="js/index.js"></script>
 @endsection

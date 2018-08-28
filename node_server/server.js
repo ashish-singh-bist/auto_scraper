@@ -191,6 +191,10 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 					jsonArrayFromGET_Item['RES_headers']	= response.headers;
 				
 				if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 && inject_code_flag){
+					console.log('++++++++++++++++++++++++++++++++++++>');
+					console.log(options['url']);
+					console.log('++++++++++++++++++++++++++++++++++++>\n');
+
 					var $ = cheerio.load(body);
 
 					//#================================================================
@@ -684,13 +688,10 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			}else{
 				res.writeHead(500);
 				res.end(err);
-			}
-			
+			}			
 		})
 	})
-	
 //#================================================================
-
 
 app.listen(rtech_config.root_port, () => console.log('Example app listening on port '+rtech_config.root_port));
 

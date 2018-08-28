@@ -29,3 +29,28 @@ table tbody{
     margin-top: -51px;
     margin-left: -13px;
 }
+.progress-bar {
+    display: none;
+    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    cursor: pointer;
+    z-index: 9999;
+}
+.progress-bar-popup {
+    width: 120px;
+    height: 120px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -35px;
+    margin-left: -35px;
+}
+.progress-bar-popup img {
+    vertical-align: middle;
+    max-width: 100%;
+}

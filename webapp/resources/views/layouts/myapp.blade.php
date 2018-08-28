@@ -29,7 +29,7 @@
     
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="js/index.js"></script>
+    @yield('stylesheet')
 </head>
 <body>
     <div id="app">
@@ -85,6 +85,7 @@
         <main class="py-4">
             @yield('content')
         </main>
+        @yield('javascript')
     </div>
 </body>
 </html>
