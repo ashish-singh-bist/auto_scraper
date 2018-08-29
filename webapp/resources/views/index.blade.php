@@ -37,7 +37,7 @@
                                 </label>
                             </div>
                             <div><hr class="orDivderHr"><span class="orDivder">OR</span></div>
-                            <textarea class="textInputUrls" name="input-urls" placeholder="Input URL's here....." id="text_input_urls" rows="10" ></textarea>
+                            <textarea class="textInputUrls form-control" name="input-urls" placeholder="Input URL's here....." id="text_input_urls" rows="10" ></textarea>
                         </div>
                         <div class="box-footer">
                             <button id="submit_btn" disabled="" class="btn btn-primary">Process Urls</button>
@@ -50,8 +50,8 @@
                     <div class="box-header with-border">
                         <h3 class="box-title">Parsed Data</h3>
                     </div>
-                    <div class="box-body">
-                        <div id="fileResponseContainerData"></div>
+                    <div class="box-body no-padding">
+                        <div id="fileResponseContainerData" class="table-responsive"></div>
                     </div>
                     <div class="box-footer">
                         <a href="/" class="btn btn btn-primary">Back</a>

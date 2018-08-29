@@ -4,16 +4,13 @@ $( document ).ready(function(){
 	document.getElementById('submit_btn').setAttribute('disabled', 'true');
 
 	//declaring reqired variables
-	var url_list_array = [];
-	var extracted_host_name, flag, process_host_name, argument_analyze_;
-	var parsedJson = [{'title':'abc','price':'2.992'},{'title':'abc','price':'2.992'},{'title':'abc','price':'2.992'},{'title':'abc','price':'2.992'}];
+	var url_list_array = [], parsedJson = [];
+	var extracted_host_name, flag, process_host_name, argument_analyze_, url_post_part;
 	var windowOpenWith = 'http://' + config.root_ip + ':' + config.root_port;
 
 	function fileUpload( param ) {
 		document.getElementById('submit_btn').setAttribute('style', 'display:visible;');
 		let url_list_array_ = [];
-		let msg = 'abc';
-
 		if( param == 'textarea'){
 			let input_url = document.getElementById('text_input_urls').value;
 			url_list_array_  = input_url.split('\n');
@@ -31,7 +28,6 @@ $( document ).ready(function(){
 	}	
 
 	function fileUploadAjax(url_list_array_){
-		// a POST request will upload the file at server end for further processing
 		fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
 			body: JSON.stringify(url_list_array_),
 			headers: {
@@ -42,69 +38,31 @@ $( document ).ready(function(){
 		.then(response => response.json())
 		.then(res => {
 			if(res.status == 200){
-				//file upload was successfull
-				document.getElementById('label_file_upload').style['color'] = '#459246';
 				url_list_array = res.file_content.split('\r\n');
+				flag = res.config_exist 							// true or false
+				extracted_host_name = res.extracted_host_name;  	// domain name eg- http://google.co.in
+				process_host_name = res.process_host_name;  		// domain name eg- google_co_in
 				proceedWithUrls();
 			}else{
-				//file upload was unsuccessful
-				document.getElementById('label_file_upload').style['color'] = 'tomato';
+				showMsg('error', 'Something going wrong refresh the window');
 				document.getElementById('submit_btn').setAttribute('disabled', 'true');
 			}
 		})
 		.catch(() => {
-			//file upload was unsuccessful
-			document.getElementById('label_file_upload').style['display'] = 'block';
-			document.getElementById('label_file_upload').style['color'] = 'tomato';
+			showMsg('error', 'Somthing going wrong refresh the window');
 			document.getElementById('submit_btn').setAttribute('disabled', 'true');
 		})
 	}
 
 	function  proceedWithUrls(){
-		//the following tasks are performed using this function
-		// 1) extract host name in `extracted_host_name`
-		// 2) check if config exists for that host
 		console.log(url_list_array);
-		for( let i=0; i< url_list_array.length; i++) {
-			let url = url_list_array[i]
-			if( i==0 ){
-				let temporary_url_split = url.split('/');
-				while(temporary_url_split.length != 3){
-					temporary_url_split.pop();
-				}
-				extracted_host_name = temporary_url_split.join('/');
-			}
-			url_list_array[i]   = url_list_array[i].replace(extracted_host_name, '');
+		if ( url_list_array.length > 0 ) {
+			url_post_part   = url_list_array[0].replace(extracted_host_name, '');
+			proceedForParsing(flag, process_host_name, url_post_part);
 		}
-		let data = {
-			host: extracted_host_name
+		else{
+			showMsg('error', 'Something going wrong refresh the page.');
 		}
-		//this POST request will send the exracted host name to the server and check whether a config exists for the extracted host name.
-		//if exists, it will start scraping the URLs.
-		//if not, it will select the first URL from the list and open it to `create config`
-		fetch('http://'+ config.root_ip + ':' + config.root_port +'/rtech/api/check_config', {
-			body: JSON.stringify(data),
-			headers: {
-				'content-type': 'application/json' 
-			},
-			method: 'POST'
-		})
-		.then(response => response.json())
-		.then(res => {
-			//`flag` will hold value true or false, representing whether config exists or not, respectively.
-			flag = res.exists;
-			//`process_host_name` will hold the host part of the URL and is different from `extracted_host_name`. eg.
-			//`process_host_name` could be `www_gnc_com`, but extracted host name will be `http://www.gnc.com`
-			process_host_name = res.extracted_host_name;
-			proceedForParsing(flag, process_host_name, url_list_array);
-		})
-		.catch(err => {
-			//flag will hold value true or false, representing whether config exists or not, respectively.
-			flag = res.exists;
-			//`process_host_name` will hold the host part of the URL and is different from `extracted_host_name`. eg.
-			//`process_host_name` could be `www_gnc_com`, but extracted host name will be `http://www.gnc.com
-			process_host_name = res.extracted_host_name;
-		});
 	}
 
 	$('#file_upload').change(function(evt){
@@ -129,17 +87,15 @@ $( document ).ready(function(){
 		evt.preventDefault();
 		if( $('#text_input_urls').val().length > 0 ){
 			fileUpload('textarea');
-			// console.debug('textarea have value');		//debug msg
 		}else{
 			if ( document.getElementById('file_upload').files[0] ) {
 				fileUpload('file');	
-				// console.debug('file have fileobject');		//debug msg
 			}
 		}
 	});
 
 	//calling function for opening link in browsers
-	function proceedForParsing (flag, process_host_name, url_list_array) {
+	function proceedForParsing (flag, process_host_name, url_post_part) {
 		argument_analyze_ = document.getElementById('file_analyze').checked;
 		//from here we'll divide all the URLs into batches to be executed
 		if(flag && !argument_analyze_){
@@ -165,7 +121,7 @@ $( document ).ready(function(){
 			});
 		}else if(argument_analyze_){
 			//case: analysis has been requested
-			let url_ = windowOpenWith + url_list_array[0].replace(/\;/g,'');
+			let url_ = windowOpenWith + url_post_part.replace(/\;/g,'');
 			if(url_.indexOf('?') > -1){
 				var str = url_+'&config=false'+'&host='+process_host_name+'&analyze=true';
 				window.open(str,'_blank');
@@ -175,7 +131,7 @@ $( document ).ready(function(){
 			}
 		}else{
 			//case: config doesn't exists and we have to create one
-			let url_ = windowOpenWith + url_list_array[0];
+			let url_ = windowOpenWith + url_post_part;
 			if(url_.indexOf('?') > -1){
 				var str = url_+'&config='+flag+'&host='+process_host_name;
 				window.open(str,'_blank');
@@ -201,7 +157,7 @@ $( document ).ready(function(){
 					var html = "";
 					if(res.data.length > 0){
 						parsedJson = res.data;
-				 		html = "<table class='table table-bordered capitalised'>"
+				 		html = "<table class='table table-bordered table-striped capitalised'>"
 						parsedJson.forEach(function (obj, index) {
 							if( index == 0 ){
 								html += "<tr>";
@@ -236,6 +192,9 @@ $( document ).ready(function(){
 		}, 10000)
 	}
  	
+ 	// type - success | errror
+ 	// msg - a message in string form want to show 
+ 	// duration - adjust the duration of message shown
  	function showMsg( type, msg, duration = 5000 ){
  		$('#msgBox').show();
  		$('#msgBox').addClass(type);
