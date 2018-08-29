@@ -547,27 +547,34 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 	//this will receive the uploaded file of URLs
 	app.post('/rtech/api/post_file', (req, res) => {
-		var url_ 	 = req.body.host;
-		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
-		var config_exist;
+        if(req.body.length>0){
+    		var url_ 	 = req.body[0];
+            var split_ar = url_.split('/');
+            var host_url = split_ar[0] + '//' + split_ar[2];
+    		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
+    		var config_exist;
 
-		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
-			config_exist = true;
-			//res.send({'exists': true, 'extracted_host_name': filename_})
-		}else{
-			config_exist = false;
-			//res.send({'exists': false, 'extracted_host_name': filename_})
-		}
+    		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
+    			config_exist = true;
+    			//res.send({'exists': true, 'extracted_host_name': filename_})
+    		}else{
+    			config_exist = false;
+    			//res.send({'exists': false, 'extracted_host_name': filename_})
+    		}
 
-		var array_received = (req.body).join('\r\n');
+    		var array_received = (req.body).join('\r\n');
 
-		fileSystem.writeFile(path.join(__dirname, 'config/url_list_.txt'), array_received, 'utf-8', function(err) {
-			if(err) {
-				res.send({status: 500, file_location: err, 'config_exist':config_exist, 'process_host_name':filename_ , 'extracted_host_name':url_ });
-			}else{
-				res.send({status: 200, file_location: 'config/url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : url_ });
-			}
-		}); 		
+    		fileSystem.writeFile(path.join(__dirname, 'config/url_list_.txt'), array_received, 'utf-8', function(err) {
+    			if(err) {
+    				res.send({status: 500, file_location: err, 'config_exist':config_exist, 'process_host_name':filename_ , 'extracted_host_name':host_url });
+    			}else{
+    				res.send({status: 200, file_location: 'config/url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url });
+    			}
+    		});
+        }
+        else{
+            res.send({status: 500, file_location: err});
+        }
 	})
 
 	//this will check whether config exists for a particular host or not
