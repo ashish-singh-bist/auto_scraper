@@ -571,16 +571,16 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	})
 
 	//this will check whether config exists for a particular host or not
-	app.post('/rtech/api/check_config', (req, res) => {
-		var url_ 	 = req.body.host;
-		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
-		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
-			res.send({'exists': true, 'extracted_host_name': filename_})
-		}else{
-			res.send({'exists': false, 'extracted_host_name': filename_})
-		}
+	// app.post('/rtech/api/check_config', (req, res) => {
+	// 	var url_ 	 = req.body.host;
+	// 	var filename_= (url_.split('/'))[2].replace(/\./g,'_');
+	// 	if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
+	// 		res.send({'exists': true, 'extracted_host_name': filename_})
+	// 	}else{
+	// 		res.send({'exists': false, 'extracted_host_name': filename_})
+	// 	}
 		
-	})
+	// })
 
 	//this will create the config file
 	app.post('/rtech/api/done_config', (req, res) => {
