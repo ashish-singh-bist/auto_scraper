@@ -51,6 +51,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	var VALID_PREFIXES 	= [HTTP_PREFIX, HTTPS_PREFIX, REL_PREFIX];
 	var IGNORE_PREFIXES = ["#", "about:", "data:", "mailto:", "javascript:", "{", "*"];
 	var readJsonFileArr = [];
+	var readJsonData = [];
 
 //#================================================================
 
@@ -59,12 +60,16 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	app.get('/rtech/api/check_scrape', (req, res) => {
 		if(scraping_status.done === true){
 			if(scraping_status.success){
+				var fs = require('fs');
 				scraping_status.done = false;
 		   		scraping_status.success = false;
-		   		var temp_parsed_data = readJsonFileArr;
-		   		readJsonFileArr = [];		   		
-				res.send({status: 200, message: 'scraping done', success: true, data: temp_parsed_data} )
 
+		   		var temp_parsed_data = readJsonFileArr;
+		   		readJsonFileArr = [];	
+		   		readJsonData = [];
+		   		
+		   		fs.unlinkSync(path.join(__dirname, 'site_output/'+scraping_status.filename+'_temp.json'));
+				res.send({status: 200, message: 'scraping done', success: true, data: temp_parsed_data} )
 			}
 			else{
 				scraping_status.done = false;
@@ -151,12 +156,12 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		request(options, function(error, response, body){
 
 			if (!error && response.statusCode == 200) {
-				console.log('++++++++++++++++++++++++++++++++++++>');
-				console.log(options['url']);
-				console.log(String(response.headers['content-type']));
-				console.log(body.toString().length);
-				console.log(inject_code_flag)
-				console.log('++++++++++++++++++++++++++++++++++++>\n');
+				// console.log('++++++++++++++++++++++++++++++++++++>');
+				// console.log(options['url']);
+				// console.log(String(response.headers['content-type']));
+				// console.log(body.toString().length);
+				// console.log(inject_code_flag)
+				// console.log('++++++++++++++++++++++++++++++++++++>\n');
 		
 				//#================================================================RESPONSE HEADERS
 				headers = response.headers;
@@ -191,9 +196,9 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 					jsonArrayFromGET_Item['RES_headers']	= response.headers;
 				
 				if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 && inject_code_flag){
-					console.log('++++++++++++++++++++++++++++++++++++>');
-					console.log(options['url']);
-					console.log('++++++++++++++++++++++++++++++++++++>\n');
+					// console.log('++++++++++++++++++++++++++++++++++++>');
+					// console.log(options['url']);
+					// console.log('++++++++++++++++++++++++++++++++++++>\n');
 
 					var $ = cheerio.load(body);
 
@@ -542,22 +547,32 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 	//this will receive the uploaded file of URLs
 	app.post('/rtech/api/post_file', (req, res) => {
+		var url_ 	 = req.body.host;
+		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
+		var config_exist;
+
+		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
+			config_exist = true;
+			//res.send({'exists': true, 'extracted_host_name': filename_})
+		}else{
+			config_exist = false;
+			//res.send({'exists': false, 'extracted_host_name': filename_})
+		}
+
 		var array_received = (req.body).join('\r\n');
 
 		fileSystem.writeFile(path.join(__dirname, 'config/url_list_.txt'), array_received, 'utf-8', function(err) {
-						if(err) {
-							res.send({status: 500, file_location: err});
-						}else{
-							res.send({status: 200, file_location: 'config/url_list_.txt', file_content: array_received});
-						}
-		}); 
-		
+			if(err) {
+				res.send({status: 500, file_location: err, 'config_exist':config_exist, 'process_host_name':filename_ , 'extracted_host_name':url_ });
+			}else{
+				res.send({status: 200, file_location: 'config/url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : url_ });
+			}
+		}); 		
 	})
 
 	//this will check whether config exists for a particular host or not
 	app.post('/rtech/api/check_config', (req, res) => {
 		var url_ 	 = req.body.host;
-
 		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
 		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
 			res.send({'exists': true, 'extracted_host_name': filename_})
@@ -610,8 +625,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    
 	    csvStream.pipe(writableStream);
 	    csvStream.write(req.body.data[0]);    	    
-	    if ( fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.json')) ){
-	    	var readJsonData = 	fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
+	    if ( fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'_temp.json')) ){
+	    	readJsonData = 	fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'_temp.json'), 'utf8');
 	    	//console.log(readJsonData);
 	    	if(typeof readJsonData === 'string'){
 	    		readJsonData = JSON.parse(readJsonData);
@@ -629,6 +644,10 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(readJsonFileArr), function (err) {
 			if (err) throw err;
 			console.log('Json file Saved!');
+		});
+
+		fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'_temp.json'), JSON.stringify(readJsonFileArr), function (err) {
+			if (err) throw err;
 		});
 
 	    //console.log(req.body.data[0]);
