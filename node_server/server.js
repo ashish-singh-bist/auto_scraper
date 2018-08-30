@@ -50,8 +50,9 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	var REL_PREFIX 		= "//";
 	var VALID_PREFIXES 	= [HTTP_PREFIX, HTTPS_PREFIX, REL_PREFIX];
 	var IGNORE_PREFIXES = ["#", "about:", "data:", "mailto:", "javascript:", "{", "*"];
-	var readJsonFileArr = [];
-	var readJsonData = [];
+	var readJsonFileArr = [];	
+	var debugMode = true;
+	var debugLogArr = [];
 
 //#================================================================
 
@@ -69,15 +70,27 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		   		readJsonData = [];
 		   		
 		   		fs.unlinkSync(path.join(__dirname, 'site_output/'+scraping_status.filename+'_temp.json'));
-				res.send({status: 200, message: 'scraping done', success: true, data: temp_parsed_data} )
+		   		if (debugMode === true) {
+					console.log("Scraping is done\n");
+					debugLogArr.push("Scraping is done");
+				}
+				var temp_debugLogArr = debugLogArr;
+				debugLogArr = [];
+				res.send({status: 200, message: 'scraping done', success: true, data: temp_parsed_data, logs: JSON.stringify(temp_debugLogArr)} )
 			}
 			else{
 				scraping_status.done = false;
 		    	scraping_status.success = false;
-				res.send({status: 200, message: 'scraping done', success: false})
+		    	readJsonFileArr = [];	
+		   		readJsonData = [];
+		   		var temp_debugLogArr = debugLogArr;
+				debugLogArr = [];
+				res.send({status: 200, message: 'scraping done', success: false, logs: JSON.stringify(temp_debugLogArr)})
 			}
 		}else{
-			res.send({status: 500, message: 'scraping going on'})
+			var temp_debugLogArr = debugLogArr;
+			debugLogArr = [];
+			res.send({status: 500, message: 'scraping going on', logs: JSON.stringify(temp_debugLogArr)})
 		}
 	})
 
@@ -529,6 +542,11 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	app.post('/rtech/api/scrape_pages', (req, res) => {
 		var data = req.body;
 		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name], { shell: true });
+
+		if (debugMode === true) {
+			console.log("\nScraping start for : "+data.extracted_host_name);
+			debugLogArr.push('Scraping start for : '+data.extracted_host_name);
+		}
 		
 		server.stderr.on('data', function (data) {
 		    scraping_status.done = true;
@@ -541,7 +559,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		    
 		})
 		
-		res.send({status: 200, message: 'scraping started'})
+		res.send({status: 200, message: "Scraping start for : "+data.extracted_host_name })
 		
 	})
 
@@ -631,7 +649,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    }
 	    
 	    csvStream.pipe(writableStream);
-	    csvStream.write(req.body.data[0]);    	    
+	    csvStream.write(req.body.data[0]);  		
+		var readJsonData = [];
 	    if ( fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'_temp.json')) ){
 	    	readJsonData = 	fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'_temp.json'), 'utf8');
 	    	//console.log(readJsonData);
@@ -649,13 +668,17 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    //console.log(readJsonFileArr);
 
 	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(readJsonFileArr), function (err) {
-			if (err) throw err;
-			console.log('Json file Saved!');
+			if (err) throw err;			
 		});
 
 		fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'_temp.json'), JSON.stringify(readJsonFileArr), function (err) {
 			if (err) throw err;
 		});
+
+		if (debugMode === true) {
+			console.log("Extracting data for : "+req.body.data[0].url);			
+			debugLogArr.push("Extracting data for : "+req.body.data[0].url);
+		}
 
 	    //console.log(req.body.data[0]);
 	    csvStream.end();				
