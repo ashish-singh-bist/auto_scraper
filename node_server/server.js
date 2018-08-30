@@ -50,7 +50,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	var REL_PREFIX 		= "//";
 	var VALID_PREFIXES 	= [HTTP_PREFIX, HTTPS_PREFIX, REL_PREFIX];
 	var IGNORE_PREFIXES = ["#", "about:", "data:", "mailto:", "javascript:", "{", "*"];
-	var readJsonFileArr = [];	
+	var parsedDataArray = [];	
 	var debugMode = true;
 	var debugLogArr = [];
 
@@ -60,16 +60,13 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	//this will send the sttaus of the scrapper, whether completed or not
 	app.get('/rtech/api/check_scrape', (req, res) => {
 		if(scraping_status.done === true){
-			if(scraping_status.success){
-				var fs = require('fs');
+			if(scraping_status.success){				
 				scraping_status.done = false;
 		   		scraping_status.success = false;
 
-		   		var temp_parsed_data = readJsonFileArr;
-		   		readJsonFileArr = [];	
-		   		readJsonData = [];
-		   		
-		   		fs.unlinkSync(path.join(__dirname, 'site_output/'+scraping_status.filename+'_temp.json'));
+		   		var temp_parsed_data = parsedDataArray;
+		   		parsedDataArray = [];	
+		   			
 		   		if (debugMode === true) {
 					console.log("Scraping is done\n");
 					debugLogArr.push("Scraping is done");
@@ -81,16 +78,15 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			else{
 				scraping_status.done = false;
 		    	scraping_status.success = false;
-		    	readJsonFileArr = [];	
-		   		readJsonData = [];
+		    	parsedDataArray = [];	
 		   		var temp_debugLogArr = debugLogArr;
 				debugLogArr = [];
-				res.send({status: 200, message: 'scraping done', success: false, logs: JSON.stringify(temp_debugLogArr)})
+				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: JSON.stringify(temp_debugLogArr)})
 			}
 		}else{
 			var temp_debugLogArr = debugLogArr;
 			debugLogArr = [];
-			res.send({status: 500, message: 'scraping going on', logs: JSON.stringify(temp_debugLogArr)})
+			res.send({status: 500, message: 'scraping going on', data:[], logs: JSON.stringify(temp_debugLogArr)})
 		}
 	})
 
@@ -623,7 +619,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	})
 
 	//this will write the scrapped data on a csv file
-	app.post('/rtech/api/get_config', (req, res) => {
+	app.post('/rtech/api/save_scraped_data', (req, res) => {
 			
 		//#================================================================FOR WRITING ON CSV FILE
 		var filename = (req.body.url).split('_')[0];
@@ -649,35 +645,19 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    }
 	    
 	    csvStream.pipe(writableStream);
-	    csvStream.write(req.body.data[0]);  		
-		var readJsonData = [];
-	    if ( fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'_temp.json')) ){
-	    	readJsonData = 	fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'_temp.json'), 'utf8');
-	    	//console.log(readJsonData);
-	    	if(typeof readJsonData === 'string'){
-	    		readJsonData = JSON.parse(readJsonData);
-	    		readJsonData.push(req.body.data[0]);
-	    	}
-	    	readJsonFileArr = readJsonData;
-	    	//console.log(readJsonData);	    		    	
-	    }
-	    else{
-	    	readJsonFileArr.push(req.body.data[0]);
-	    }
-	    
-	    //console.log(readJsonFileArr);
+	    csvStream.write(req.body.data[0]);  				
+		parsedDataArray.push(req.body.data[0]);
+    
+	    //console.log(parsedDataArray);
 
-	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(readJsonFileArr), function (err) {
+	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(parsedDataArray), function (err) {
 			if (err) throw err;			
 		});
 
-		fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'_temp.json'), JSON.stringify(readJsonFileArr), function (err) {
-			if (err) throw err;
-		});
 
 		if (debugMode === true) {
-			console.log("Extracting data for : "+req.body.data[0].url);			
-			debugLogArr.push("Extracting data for : "+req.body.data[0].url);
+			console.log("Scraped data for : "+req.body.data[0].url);			
+			debugLogArr.push("Scraped data for : "+req.body.data[0].url);
 		}
 
 	    //console.log(req.body.data[0]);

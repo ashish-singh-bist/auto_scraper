@@ -520,7 +520,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	
     if(data_object.length > 0){
         var host    = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'').replace(/_/g,'.');
-        var url     = (window.location.href).replace(/(\?|\&)*config(.)+/, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
+        var url     = (window.location.href).replace(/\&*config(.)+/, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
         // the below regex was removing all the query string from a href, and in cases like `https://www.youtube.com/watch?v=D5drYkLiLI8` we need them. Therefore above is the corrected regex.
         // var url     = (window.location.href).replace(window.location.search, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
         
@@ -540,7 +540,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             url: window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'')
         }
         
-        fetch('/rtech/api/get_config', {
+        fetch('/rtech/api/save_scraped_data', {
             body: JSON.stringify(data),
             headers: {
                 'content-type': 'application/json' 
