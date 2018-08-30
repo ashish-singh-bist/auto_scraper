@@ -3,6 +3,9 @@
 input[type="file"] {
     display: none;
 }
+#context * , #label_input * {
+    box-shadow: none !important;
+}
 .custom-file-upload {
     display: inline-block;
     padding: 6px 12px;
@@ -23,6 +26,12 @@ div#context ul, div#label_input ul {
     list-style: none;
     list-style-type: none;
     list-style-position: outside;
+    padding: 10px;
+    margin: 0;
+    box-shadow: none !important;
+    background: white;
+    border: 2px solid #e31837;
+    border-radius: 5px;
 }
 
 div#context li, div#label_input li {
@@ -37,8 +46,9 @@ div#context li label input, div#label_input li label input {
 }
 
 div#context li label input, div#label_input li label input {
-    text-align: left;
+    text-align: center;
     width: 100%;
+    padding: 0 5px;
 }
 
 div#label_input li a:hover {
@@ -46,7 +56,7 @@ div#label_input li a:hover {
 }
 
 div#context, div#label_input {
-    width: 250px;
+    width: 240px;
     position: absolute;
     z-index: 999999;
     -webkit-transition: all .3s ease;
@@ -110,11 +120,15 @@ div#context, div#label_input {
 
 /*______for textarea _______*/
 .textareabox {
-    width: 238px !important;
+    width: 100% !important;
     height: 50px !important;
-    background-color: #b2b2b2 !important;
+    background-color: lightgray;
     color: #323232 !important;
     font-size: 100%;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    transition: box-shadow .2s ease;
+    padding: 0 5px;
 }
 
 .label_input {
