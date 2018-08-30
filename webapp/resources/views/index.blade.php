@@ -16,7 +16,8 @@
 
     <div class="row">
         <div class="col-md-12">
-            <div id="fileUploadContainer">
+            {{-- <div id="fileUploadContainer" style="display: none;"> --}}
+            <div id="fileUploadContainer" >
                 <form id="search_site_form" class="text-center">
                     <div class="box box-primary">
                         <div class="box-header with-border">
@@ -24,7 +25,7 @@
                         </div>
                         <div class="box-body">
                             <div class="form-group">
-                                <label for=file_upload class="fileUploadLabel">
+                                <label for=file_upload class="fileUploadLabel" title="Click to file upload">
                                     <img width="142" height="142" src="img/ic_open_in_browser_black_48dp_2x.png" />
                                     <div>Click to file upload</div>
                                 </label>
@@ -32,18 +33,34 @@
                                 <p class="help-block" id="label_file_upload"></p>
                             </div>
                             <div class="checkbox">
-                                <label>
+                                <label title="Click Analyze page traffic">
                                     <input id="file_analyze" type="checkbox" class="custom-file-upload" name="file-analyze" /> Analyze page traffic?
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label title="Click Activate Debugger">
+                                    <input id="is_debug" type="checkbox" class="custom-file-upload" name="isDebugger"/> Debugger ?
                                 </label>
                             </div>
                             <div><hr class="orDivderHr"><span class="orDivder">OR</span></div>
                             <textarea class="textInputUrls form-control" name="input-urls" placeholder="Input URL's here....." id="text_input_urls" rows="10" ></textarea>
                         </div>
                         <div class="box-footer">
-                            <button id="submit_btn" disabled="" class="btn btn-primary">Process Urls</button>
+                            <button id="submit_btn" disabled="" class="btn btn-primary" title="Click process urls">Process Urls</button>
                         </div>
                     </div>            
                 </form>
+            </div>
+            
+            <div id="debuggerContainer">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Debugger</h3>
+                    </div>
+                    <div class="box-body">
+                        <div id="debugger_console" class="debugger-console"></div>
+                    </div>
+                </div>
             </div>
             <div id="fileResponseContainer">
                 <div class="box box-primary">
@@ -57,8 +74,8 @@
                         <a href="/" class="btn btn btn-primary">Back</a>
                     </div>
                 </div>
-
             </div>
+
         </div>
     </div>
 </div>
