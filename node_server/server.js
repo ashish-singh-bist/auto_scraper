@@ -64,7 +64,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 				scraping_status.done = false;
 		   		scraping_status.success = false;
 
-		   		var temp_parsed_data = parsedDataArray;
+		   		var tempParsedDataArr = parsedDataArray;
 		   		parsedDataArray = [];	
 		   			
 		   		if (debugMode === true) {
@@ -73,7 +73,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 				}
 				var temp_debugLogArr = debugLogArr;
 				debugLogArr = [];
-				res.send({status: 200, message: 'scraping done', success: true, data: temp_parsed_data, logs: JSON.stringify(temp_debugLogArr)} )
+				res.send({status: 200, message: 'scraping done', success: true, data: tempParsedDataArr, logs: temp_debugLogArr})
 			}
 			else{
 				scraping_status.done = false;
@@ -81,12 +81,12 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		    	parsedDataArray = [];	
 		   		var temp_debugLogArr = debugLogArr;
 				debugLogArr = [];
-				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: JSON.stringify(temp_debugLogArr)})
+				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: temp_debugLogArr})
 			}
 		}else{
 			var temp_debugLogArr = debugLogArr;
 			debugLogArr = [];
-			res.send({status: 500, message: 'scraping going on', data:[], logs: JSON.stringify(temp_debugLogArr)})
+			res.send({status: 500, message: 'scraping going on', data:[], logs: temp_debugLogArr})
 		}
 	})
 
