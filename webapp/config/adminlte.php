@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 2',
+    'title' => 'Auto Scraper',
 
     'title_prefix' => '',
 
@@ -30,9 +30,9 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>Auto</b>Scraper',
 
-    'logo_mini' => '<b>A</b>LT',
+    'logo_mini' => '<b>A</b>S',
 
     /*
     |--------------------------------------------------------------------------
@@ -110,6 +110,11 @@ return [
     'menu' => [
         'MAIN NAVIGATION',
         [
+            'text'       => 'Auto Scraper',
+            'url'        => '/',
+            'icon_color' => 'aqua',
+        ],
+        /*[
             'text' => 'Blog',
             'url'  => 'admin/blog',
             'can'  => 'manage-blog',
@@ -182,7 +187,7 @@ return [
         [
             'text'       => 'Information',
             'icon_color' => 'aqua',
-        ],
+        ],*/
     ],
 
     /*
