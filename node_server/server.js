@@ -50,23 +50,23 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	var REL_PREFIX 		= "//";
 	var VALID_PREFIXES 	= [HTTP_PREFIX, HTTPS_PREFIX, REL_PREFIX];
 	var IGNORE_PREFIXES = ["#", "about:", "data:", "mailto:", "javascript:", "{", "*"];
-	var parsedDataArray = [];	
+	var parsedDataArray = [];
 	var debugMode = true;
 	var debugLogArr = [];
 
 //#================================================================
 
-//#================================================================GET	
+//#================================================================GET
 	//this will send the sttaus of the scrapper, whether completed or not
 	app.post('/rtech/api/check_scrape', (req, res) => {
 		var user_id = req.body.user_id;
 		if(scraping_status.done === true){
-			if(scraping_status.success){				
+			if(scraping_status.success){
 				scraping_status.done = false;
 		   		scraping_status.success = false;
 
 		   		var tempParsedDataArr = parsedDataArray;
-		   		parsedDataArray = [];	
+		   		parsedDataArray = [];
 		   			
 		   		if (debugMode === true) {
 					console.log("Scraping is done\n");
@@ -79,7 +79,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			else{
 				scraping_status.done = false;
 		    	scraping_status.success = false;
-		    	parsedDataArray = [];	
+		    	parsedDataArray = [];
 		   		var temp_debugLogArr = debugLogArr;
 				debugLogArr = [];
 				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: temp_debugLogArr})
@@ -105,7 +105,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	app.get('/*', (req, res) => {
 
 		const {headers, url, method} = req;
-		const {config, host, analyze} 	= req.query;
+		const {config, host, uid, analyze} 	= req.query;
 
 		if(config){
 			inject_code_flag = true;
@@ -139,16 +139,16 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		}
 
 		if(analyze && analyze == 'true'){
-			sendRequest(req, res, host, options, config, new_url, true);
+			sendRequest(req, res, host, uid, options, config, new_url, true);
 		}else{
-			sendRequest(req, res, host, options, config, new_url, false);
+			sendRequest(req, res, host, uid, options, config, new_url, false);
 		}
 	})
 
 //#================================================================
 
 //#================================================================GET REQUEST HANDLER
-	async function sendRequest(req, res, host, options, config, new_url, analyze){
+	async function sendRequest(req, res, host, uid, options, config, new_url, analyze){
 		var headers, obj;
 
 		if(options['url'].indexOf('https') === -1){
@@ -241,9 +241,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 								$(this).attr('src', new_value);
 								return;
 							};
-							
 						}
-												
 					});
 
 					function starts_with(string, arr_or_prefix) {
@@ -340,18 +338,14 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 								$(this).attr('src', new_value);
 								return;
 							};
-							
 						}
-												
 					});
 					// //#================================================================
 
 					//#================================================================HREF
 					$("*[href]").each(function(){
 						var link = $(this).attr('href');
-
 						if(!link.match(new_url)){
-
 							if(starts_with(link, IGNORE_PREFIXES)){
 								return ;
 							}
@@ -415,7 +409,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 					//#================================================================CONFIG
 					if(config === 'true'){
-						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'.json'), 'utf8');
+						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'_'+uid+'.json'), 'utf8');
 						var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
 						$('body').append(scriptNodeWithJson);
 					}
@@ -436,7 +430,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 							let redirect_config = 'false';
 
 							if(redirect_host){
-								if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+redirect_host.replace(/\./g, '_')+'.json'))) {
+								if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+redirect_host.replace(/\./g, '_')+'_'+uid+'.json'))) {
 									redirect_config= 'true';
 								}else{
 									redirect_config = 'false';
@@ -537,7 +531,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 //#================================================================POST
 	//this will start the scrapping process
 	app.post('/rtech/api/scrape_pages', (req, res) => {
-		var data = req.body;		
+		var data = req.body;
 		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
 
 		if (debugMode === true) {
@@ -547,13 +541,12 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		
 		server.stderr.on('data', function (data) {
 		    scraping_status.done = true;
-		    scraping_status.success = false;		    
+		    scraping_status.success = false;
 		});
 
 		server.on('close', function (code){
 			scraping_status.done = true;
 		    scraping_status.success = true;
-		    
 		})
 		
 		res.send({status: 200, message: "Scraping start for : "+data.extracted_host_name })
@@ -571,7 +564,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
     		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
     		var config_exist;
 
-    		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
+    		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'_'+user_id+'.json'))) {
     			config_exist = true;
     			//res.send({'exists': true, 'extracted_host_name': filename_})
     		}else{
@@ -597,12 +590,13 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	//this will create the config file
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
+		var user_id = req.body.user_id;
 
 		if(typeof req.body.data === 'string'){
 			req.body.data = JSON.parse(req.body.data);
 		}
 
-		fileSystem.appendFile(path.join(__dirname, 'site_config/'+filename+'.json'), JSON.stringify(req.body), function (err) {
+		fileSystem.appendFile(path.join(__dirname, 'site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
 			if (err) throw err;
 			console.log('Saved!');
 		});
@@ -636,23 +630,21 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    }
 	    
 	    csvStream.pipe(writableStream);
-	    csvStream.write(req.body.data[0]);  				
+	    csvStream.write(req.body.data[0]);
 		parsedDataArray.push(req.body.data[0]);
     
 	    //console.log(parsedDataArray);
 
 	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(parsedDataArray), function (err) {
-			if (err) throw err;			
+			if (err) throw err;
 		});
 
-
 		if (debugMode === true) {
-			console.log("Scraped data for : "+req.body.data[0].url);			
+			console.log("Scraped data for : "+req.body.data[0].url);
 			debugLogArr.push("Scraped data for : "+req.body.data[0].url);
 		}
-
 	    //console.log(req.body.data[0]);
-	    csvStream.end();				
+	    csvStream.end();
 		res.send({})
 	})
 
@@ -708,7 +700,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			}else{
 				res.writeHead(500);
 				res.end(err);
-			}			
+			}
 		})
 	})
 //#================================================================

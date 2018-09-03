@@ -23,7 +23,25 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 .then(data => {document.open(); document.write(data); document.close();})
         },15000)
     }
-		
+	
+    // method to filter parameter in url
+    var getUrlParameter = function getUrlParameter(sParam) {
+        var a = document.createElement('a');
+        a.href = window.location;
+        var ret = {}, seg = a.search.replace(/^\?/, '').split('&'), len = seg.length, i = 0, s;
+        for (; i < len; i++) {
+            if (!seg[i]) {
+                continue;
+            }
+            s = seg[i].split('=');
+            ret[s[0]] = s[1];
+        }
+        for(var key in ret){
+            if (key === sParam) {
+                return ret[key];    
+            }
+        }
+    };
 /*_________________________for initializing required objects and functions_________________________________*/ 	
 	
     /*adding event handelors to javascript events*/
@@ -137,10 +155,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             document.getElementById('context').style.display = 'none';
         }else if(action === 'done_config'){
             
-            var url = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'');
+            // var url = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'');
+            var url = getUrlParameter('host');
+            var user_id = getUrlParameter('uid');
             var data = {
                 data: data_object,
-                url: url
+                url: url,
+                user_id: user_id
             }
                         
     		fetch('/rtech/api/done_config', {

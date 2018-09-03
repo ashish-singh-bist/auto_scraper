@@ -6,7 +6,8 @@ const config 	= require(path.join(__dirname, 'config/config.js'));
 var windowOpenWith 	= 'http://' + config.root_ip + ':' + config.root_port ;
 var process_host_name 	= process.argv[2];
 var extracted_host_name = process.argv[3];
-var config.user_id = process.argv[4];
+config.user_id = process.argv[4];
+
 var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'config/'+process_host_name+'_'+config.user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
 
 var timeout_1, timeout_2;
@@ -31,13 +32,13 @@ var timeout_1, timeout_2;
 
 		                if(url_list_array[i].indexOf('?') > -1){
 		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'&config=true&host='+process_host_name ;
+		                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id ;
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                    
 		                }else{
 		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'?config=true&host='+process_host_name ;
+		                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id ;
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                }
@@ -71,13 +72,13 @@ var timeout_1, timeout_2;
 
 		                if(url_list_array[i].indexOf('?') > -1){
 		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'&config=true&host='+process_host_name;
+		                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id;
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                
 		                }else{
 		                	let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'?config=true&host='+process_host_name;
+		                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id;
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                }

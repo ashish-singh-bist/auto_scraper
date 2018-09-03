@@ -82,6 +82,9 @@
 @endsection
 @section('adminlte_js')
     <script type="text/javascript">
+
+        var USER_ID = {{ Auth::user()->id }};
+
         var config = {
             "root_ip": "{{ env('NODE_SERVER_IP')}}",
             "root_port": "{{ env('NODE_SERVER_PORT')}}",
