@@ -1,6 +1,8 @@
 $( document ).ready(function(){
 	$('#file_upload').val('');
 	$('#text_input_urls').val('');
+	$('#file_analyze').prop('checked', false);
+	$('#is_debug').prop('checked', true);
 	document.getElementById('submit_btn').setAttribute('disabled', 'true');
 
 	//declaring reqired variables
@@ -21,7 +23,7 @@ $( document ).ready(function(){
 			reader.readAsText(file);
 			reader.onload = function(event) {
 				url_list_string = event.target.result;
-				url_list_array_  = url_list_string.split('\r\n');
+				url_list_array_  = url_list_string.split('\n');
 				fileUploadAjax(url_list_array_);
 			};
 		}
@@ -103,7 +105,16 @@ $( document ).ready(function(){
 		//from here we'll divide all the URLs into batches to be executed
 		if(flag && !argument_analyze_){
 			//case: config exists and we have to only scrape data
-			document.getElementById('progress_bar').style['display'] = 'block';
+
+			if(document.getElementById('is_debug').checked){
+				$('#debuggerContainer').show();
+				$('#fileUploadContainer').hide();
+				// alert('12345');
+			}
+			else{
+				document.getElementById('progress_bar').style['display'] = 'block';	
+			}
+			
 			//eg {process_host_name: 'www_gnc_com', extracted_host_name: 'http://www.gnc.com'}
 			let data = {
 				process_host_name: process_host_name,
@@ -121,6 +132,7 @@ $( document ).ready(function(){
 			.then(response => response.json())
 			.then(res => {
 				//if scraping started successfully, call the below function which will check every 10 seconds the status of scraping
+				setFetchingStatus();
 				check_scraping_status();
 			});
 		}else if(argument_analyze_){
@@ -161,9 +173,13 @@ $( document ).ready(function(){
 			})
 			.then(response => response.json())
 			.then(res => {
+				if( res.hasOwnProperty('logs') && res.logs.length > 0){
+					refreshConsoleLog(0, res.logs);
+				}
+
 				if(res.status === 200){
 					var html = "";
-					if(res.data.length > 0){
+					if(res.hasOwnProperty('data') && res.data.length > 0){
 						parsedJson = res.data;
 				 		html = "<table class='table table-bordered table-striped capitalised'>"
 						parsedJson.forEach(function (obj, index) {
@@ -171,7 +187,7 @@ $( document ).ready(function(){
 								html += "<tr>";
 								for (var key in obj) {
 									if (obj.hasOwnProperty(key)) 
-										html += "<th>" + key + "</th>";					
+										html += "<th>" + key + "</th>";
 								}
 								html += "</tr>";
 							}
@@ -191,13 +207,13 @@ $( document ).ready(function(){
 					else{
 						$('#fileUploadContainer').hide();
 						$('#fileResponseContainer').show();
-						$('#fileResponseContainerData').html( 'No data found' );	
+						$('#fileResponseContainerData').html( '<h4 class="no-data">No data found</h4>' );
 					}
 					document.getElementById('progress_bar').style['display'] = 'none';
 					clearInterval(myInterval);
 				}                
 			});
-		}, 10000)
+		}, 1000)
 	}
  	
  	// type - success | errror
@@ -212,4 +228,28 @@ $( document ).ready(function(){
  			$('#msgBox').removeClass(type);
  		}, duration);
  	}
+    
+    function setFetchingStatus(){
+    	$("#debugger_console").append("<p> Fetching ... </p>");
+    }
+
+    function setScrolling(){
+		var height = $('#debugger_console')[0].scrollHeight;
+		var scrollAmount = height;
+		jQuery('#debugger_console').animate({
+			scrollTop: height,
+		}, 10);
+	}
+    
+	function refreshConsoleLog(i, data_arr){
+		var data = data_arr;
+		$("#debugger_console").append("<p>" + data[i] + "</p>");
+		setScrolling();
+		if (i < (data.length - 1)) {
+			setTimeout(function(){ 
+				i++;
+				refreshConsoleLog(i, data);
+			}, 100);
+		}
+	}
 });

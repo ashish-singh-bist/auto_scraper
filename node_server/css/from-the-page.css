@@ -6,6 +6,12 @@ input[type="file"] {
 #context * , #label_input * {
     box-shadow: none !important;
 }
+#context .form-check,
+#context .form-check-label, 
+#label_input .form-check,
+#label_input .form-check-label{
+    margin: 0;
+}
 .custom-file-upload {
     display: inline-block;
     padding: 6px 12px;
@@ -26,12 +32,12 @@ div#context ul, div#label_input ul {
     list-style: none;
     list-style-type: none;
     list-style-position: outside;
-    padding: 10px;
-    margin: 0;
+    padding: 10px !important;
+    margin: 0 !important;
     box-shadow: none !important;
-    background: white;
-    border: 2px solid #e31837;
-    border-radius: 5px;
+    background: white !important;
+    border: 2px solid #e31837 !important;
+    border-radius: 5px !important;
 }
 
 div#context li, div#label_input li {
@@ -46,9 +52,14 @@ div#context li label input, div#label_input li label input {
 }
 
 div#context li label input, div#label_input li label input {
-    text-align: center;
-    width: 100%;
-    padding: 0 5px;
+    text-align: center !important;
+    width: 100% !important;
+    padding: 0 5px !important;
+    height: 32px !important;
+    line-height: 1 !important;
+    margin: 0 0 .6rem 0 !important;
+    font-size: 14px;
+    border-radius: 5px !important;
 }
 
 div#label_input li a:hover {
@@ -62,11 +73,6 @@ div#context, div#label_input {
     -webkit-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
-}
-
-#context, #label_input input {
-    padding: 10px 15px;
-    font-size: 14px;
 }
 
 .btn-default:hover,
@@ -119,41 +125,38 @@ div#context, div#label_input {
 }
 
 /*______for textarea _______*/
-.textareabox {
+#label_input textarea {
     width: 100% !important;
-    height: 50px !important;
-    background-color: lightgray;
+    min-height: 50px !important;
+    background-color: lightgray !important;
     color: #323232 !important;
-    font-size: 100%;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    transition: box-shadow .2s ease;
-    padding: 0 5px;
+    font-size: 14px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 5px !important;
+    transition: box-shadow .2s ease !important;
+    padding: 0 5px !important;
+    box-sizing: border-box !important;
+    line-height: 1.25 !important;
+    font-weight: normal;
+    margin-top: 0 !important;
+    margin-bottom: .5rem !important;
 }
 
-.label_input {
-    background-color: lavender;
+#label_input .label_input {
+    background-color: lavender !important;
+    font-weight: normal !important;
 }
 
-input[type=button]{    
-    margin-bottom: .5rem; 
-    box-sizing:border-box;
-    cursor:pointer;
-    background-color:#e31837;
-    border:1px solid #e31837;
-    border-radius:5px;
-    color:#fff;
-    display:inline-block;
-    height:2.5rem;
-    letter-spacing:.2px;
-    padding:0 2.5rem;
-    text-align:center;
-    text-decoration:none;
-    font-family:brandon-grotesque,Arial,sans-serif;font-weight:700;
-    font-size:14px;
-    font-size:.875rem;
-    line-height:40px;
-    line-height:2.5rem
+#label_input input[type=button], #context input[type=button]{    
+    box-sizing:border-box !important;
+    cursor:pointer !important;
+    background-color:#e31837 !important;
+    border: 1px solid #e31837 !important;
+    color:#fff !important;
+    display:inline-block !important;
+    letter-spacing:.2px !important;
+    text-decoration:none !important;
+    font-family:brandon-grotesque,Arial,sans-serif;font-weight:700 !important;
 }
 
 /*______for screen loader at amalysis page _______*/
