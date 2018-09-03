@@ -58,7 +58,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 //#================================================================GET	
 	//this will send the sttaus of the scrapper, whether completed or not
-	app.get('/rtech/api/check_scrape', (req, res) => {
+	app.post('/rtech/api/check_scrape', (req, res) => {
+		var user_id = req.body.user_id;
 		if(scraping_status.done === true){
 			if(scraping_status.success){				
 				scraping_status.done = false;
@@ -536,8 +537,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 //#================================================================POST
 	//this will start the scrapping process
 	app.post('/rtech/api/scrape_pages', (req, res) => {
-		var data = req.body;
-		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name], { shell: true });
+		var data = req.body;		
+		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
 
 		if (debugMode === true) {
 			console.log("\nScraping start for : "+data.extracted_host_name);
@@ -561,8 +562,10 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 	//this will receive the uploaded file of URLs
 	app.post('/rtech/api/post_file', (req, res) => {
-        if(req.body.length>0){
-    		var url_ 	 = req.body[0];
+		var data = req.body;
+        if(data.url_list.length>0){
+        	var user_id  = data.user_id;
+    		var url_ 	 = data.url_list[0];
             var split_ar = url_.split('/');
             var host_url = split_ar[0] + '//' + split_ar[2];
     		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
@@ -576,13 +579,13 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
     			//res.send({'exists': false, 'extracted_host_name': filename_})
     		}
 
-    		var array_received = (req.body).join('\r\n');
+    		var array_received = (data.url_list).join('\r\n');
 
-    		fileSystem.writeFile(path.join(__dirname, 'config/url_list_.txt'), array_received, 'utf-8', function(err) {
+    		fileSystem.writeFile(path.join(__dirname, 'config/'+filename_+'_'+user_id+'_url_list_.txt'), array_received, 'utf-8', function(err) {
     			if(err) {
     				res.send({status: 500, file_location: err, 'config_exist':config_exist, 'process_host_name':filename_ , 'extracted_host_name':host_url });
     			}else{
-    				res.send({status: 200, file_location: 'config/url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url });
+    				res.send({status: 200, file_location: 'config/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url });
     			}
     		});
         }
@@ -590,18 +593,6 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
             res.send({status: 500, file_location: err});
         }
 	})
-
-	//this will check whether config exists for a particular host or not
-	// app.post('/rtech/api/check_config', (req, res) => {
-	// 	var url_ 	 = req.body.host;
-	// 	var filename_= (url_.split('/'))[2].replace(/\./g,'_');
-	// 	if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'.json'))) {
-	// 		res.send({'exists': true, 'extracted_host_name': filename_})
-	// 	}else{
-	// 		res.send({'exists': false, 'extracted_host_name': filename_})
-	// 	}
-		
-	// })
 
 	//this will create the config file
 	app.post('/rtech/api/done_config', (req, res) => {

@@ -3,10 +3,11 @@ const path 		= require('path');
 const fileSystem= require('fs');
 const config 	= require(path.join(__dirname, 'config/config.js'));
 
-var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'config/url_list_.txt'), 'utf8')).split('\r\n');
 var windowOpenWith 	= 'http://' + config.root_ip + ':' + config.root_port ;
 var process_host_name 	= process.argv[2];
 var extracted_host_name = process.argv[3];
+var config.user_id = process.argv[4];
+var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'config/'+process_host_name+'_'+config.user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
 
 var timeout_1, timeout_2;
 

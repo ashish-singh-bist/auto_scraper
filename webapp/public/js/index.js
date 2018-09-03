@@ -28,8 +28,11 @@ $( document ).ready(function(){
 	}	
 
 	function fileUploadAjax(url_list_array_){
+		var data = {};
+		data.url_list = url_list_array_;
+		data.user_id = 123;
 		fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
-			body: JSON.stringify(url_list_array_),
+			body: JSON.stringify(data),
 			headers: {
 				'content-type': 'application/json' 
 			},
@@ -104,7 +107,8 @@ $( document ).ready(function(){
 			//eg {process_host_name: 'www_gnc_com', extracted_host_name: 'http://www.gnc.com'}
 			let data = {
 				process_host_name: process_host_name,
-				extracted_host_name: extracted_host_name
+				extracted_host_name: extracted_host_name,
+				user_id:123
 			}
 			//POST request which will tell the server to start scraping the URLs from the file uploaded earlier via readFile() method
 			fetch('http://'+ config.root_ip + ':' + config.root_port +'/rtech/api/scrape_pages', {
@@ -144,12 +148,16 @@ $( document ).ready(function(){
 
 	//function which'll check the status of scraping every 10 seconds. If scrapping completed successfully, it removes the loader and overlay from screen
 	function check_scraping_status(){
+		var data ={};
+		data.user_id = 123;
+		data.host_name = process_host_name;
 		var myInterval = setInterval(() => {
 			fetch('http://'+ config.root_ip + ':' + config.root_port +'/rtech/api/check_scrape', {
+				body: JSON.stringify(data),
 				headers: {
 					'content-type': 'application/json' 
 				},
-				method: 'GET'
+				method: 'POST'
 			})
 			.then(response => response.json())
 			.then(res => {
