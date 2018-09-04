@@ -19,7 +19,6 @@
             {{-- <div id="fileUploadContainer" style="display: none;"> --}}
             <div id="fileUploadContainer" >
                 <form id="search_site_form" class="text-center">
-                    <input id="file_analyze" type="checkbox" name="file-analyze" /> {{-- Analyze page traffic? --}}
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <h3 class="box-title">File Upload</h3>
@@ -42,8 +41,8 @@
                             <textarea class="textInputUrls form-control" name="input-urls" placeholder="Input URL's here....." id="text_input_urls" rows="10" ></textarea>
                         </div>
                         <div class="box-footer">
-                            <button id="submit_btn" disabled="" class="btn btn-primary" title="Click process urls">Process Urls</button>
-                            <button id="analysis_btn" disabled="" class="btn btn-primary" title="Click process urls">Analysis Url</button>
+                            <button id="submit_btn" disabled="" class="btn btn-primary parse-btn" title="Click process urls">Process Urls</button>
+                            <button id="analysis_btn" disabled="" class="btn btn-primary parse-btn" title="Click process urls">Analysis Url</button>
                         </div>
                     </div>            
                 </form>
