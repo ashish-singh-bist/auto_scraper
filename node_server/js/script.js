@@ -540,8 +540,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 /*_________________________for sending scraped data____________________________________________________*/
 	
     if(data_object.length > 0){
-        var host    = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'').replace(/_/g,'.');
+        // var host    = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'').replace(/_/g,'.');
+        var host    = getUrlParameter('host');
+        host        = host.replace(/_/g,'.');
         var url     = (window.location.href).replace(/(\?|\&)*config(.)+/, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
+        // var url     = getUrlParameter('host');
         // the below regex was removing all the query string from a href, and in cases like `https://www.youtube.com/watch?v=D5drYkLiLI8` we need them. Therefore above is the corrected regex.
         // var url     = (window.location.href).replace(window.location.search, '').replace(/^http(s)*\:\/\//, '').replace(config.root_ip+':'+config.root_port, host);
         
@@ -558,8 +561,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
         var data = {
             data: [final_data_for_csv],
-            user_id : config.user_id,
-            url: window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'')
+            user_id : getUrlParameter('uid'),
+            // url: window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'')
+            url: getUrlParameter('host') // www_youtube_com
         }
         
         fetch('/rtech/api/save_scraped_data', {            
