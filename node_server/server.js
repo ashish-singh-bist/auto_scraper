@@ -605,13 +605,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 	//this will write the scrapped data on a csv file
 	app.post('/rtech/api/save_scraped_data', (req, res) => {
-			
 		//#================================================================FOR WRITING ON CSV FILE
-		var filename = (req.body.url).split('_')[0];
-		if(filename === 'www'){
-			filename = (req.body.url).split('_')[1];
-		}
-
+		var filename = req.body.url+'_'+req.body.user_id;
 		scraping_status.filename = filename;
 
 		var options = {includeEndRowDelimiter:true};
