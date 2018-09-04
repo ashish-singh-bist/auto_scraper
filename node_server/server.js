@@ -8,6 +8,7 @@ const cheerio	= require('cheerio');
 const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
 
+
 const header 	= require(path.join(__dirname, 'js/headers')); 			//code to clean our headers from invalid characters
 const rtech_config	= require(path.join(__dirname, 'config/config'));	//application config
 
@@ -39,10 +40,10 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	var jsonArrayFromGET= [];
 
 	var server;
-	var scraping_status = {
-		done: false,
-		success: false
-	};
+	// var scraping_status = {
+	// 	done: false,
+	// 	success: false
+	// };
 	var inject_code_flag = false;
 	
 	var HTTP_PREFIX 	= "http://";
@@ -53,41 +54,57 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	var parsedDataArray = [];
 	var debugMode = true;
 	var debugLogArr = [];
+	var sess = {
+		done: false,
+		success: false
+	};
 
 //#================================================================
-
 //#================================================================GET
 	//this will send the sttaus of the scrapper, whether completed or not
-	app.post('/rtech/api/check_scrape', (req, res) => {
-		var user_id = req.body.user_id;
-		if(scraping_status.done === true){
-			if(scraping_status.success){
-				scraping_status.done = false;
-		   		scraping_status.success = false;
+	app.post('/rtech/api/check_scrape', (req, res) => {		
+		var user_id = req.body.user_id;		
+		var logFileContent;
+		var filename  = req.body.host_name+'_'+user_id;		
+		//console.log(sess);
+		if(sess.done === true){
+			if(sess.success){
+				sess.done = false;
+		   		sess.success = false;		   				   				   		
 
-		   		var tempParsedDataArr = parsedDataArray;
-		   		parsedDataArray = [];
-		   			
-		   		if (debugMode === true) {
-					console.log("Scraping is done\n");
-					debugLogArr.push("Scraping is done");
+				var scrapedData = fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
+				logFileContent = readLogFile(filename);				
+				if (logFileContent){
+					fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
 				}
-				var temp_debugLogArr = debugLogArr;
-				debugLogArr = [];
-				res.send({status: 200, message: 'scraping done', success: true, data: tempParsedDataArr, logs: temp_debugLogArr})
+
+				fileSystem.rename(path.join(__dirname, 'site_output/'+filename+'.json'), path.join(__dirname, 'history_data/'+filename+'.json'), function (err) {
+					if (err) throw err
+					//console.log('Successfully renamed')
+				})				
+
+				res.send({status: 200, message: 'scraping done', success: true, data: JSON.parse(scrapedData), logs: logFileContent})
 			}
 			else{
-				scraping_status.done = false;
-		    	scraping_status.success = false;
+				sess.done = false;
+		    	sess.success = false;
 		    	parsedDataArray = [];
 		   		var temp_debugLogArr = debugLogArr;
 				debugLogArr = [];
-				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: temp_debugLogArr})
+				logFileContent = readLogFile(filename);
+				if (logFileContent){
+					fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
+				}				
+				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: temp_debugLogArr});
 			}
 		}else{
 			var temp_debugLogArr = debugLogArr;
 			debugLogArr = [];
-			res.send({status: 500, message: 'scraping going on', data:[], logs: temp_debugLogArr})
+			logFileContent = readLogFile(filename);
+			if (logFileContent){
+				fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
+			}						
+			res.send({status: 500, message: 'scraping going on', data:[], logs: logFileContent});
 		}
 	})
 
@@ -528,25 +545,53 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		});
 	}
 
+	
+	function writeLogFile(filename,logContent){		
+		fileSystem.appendFile(path.join(__dirname, 'site_output/log_'+filename+'.txt'), logContent, function (err) {
+			if (err) throw err;
+			//console.log('Saved!');
+		});
+	}
+
+
+	function readLogFile(filename){				
+		if(fileSystem.existsSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'))){
+			var logFileContent = fileSystem.readFileSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'), 'utf8');
+			return logFileContent.split('\n');		
+		}else{
+			return '';
+		}
+	}
+
 //#================================================================POST
 	//this will start the scrapping process
-	app.post('/rtech/api/scrape_pages', (req, res) => {
+	app.post('/rtech/api/scrape_pages', (req, res) => {		
 		var data = req.body;
 		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
 
+		var filename  = data.process_host_name+'_'+data.user_id;
+
 		if (debugMode === true) {
-			console.log("\nScraping start for : "+data.extracted_host_name);
-			debugLogArr.push('Scraping start for : '+data.extracted_host_name);
+			console.log("\nScraping start for : "+data.extracted_host_name);			
+			writeLogFile(filename, "Scraping start for : "+data.extracted_host_name);			
 		}
 		
 		server.stderr.on('data', function (data) {
-		    scraping_status.done = true;
-		    scraping_status.success = false;
+		    sess.done = true;
+		    sess.success = false;
+	    	if (debugMode === true) {
+				console.log("Scraping is done\n");
+				writeLogFile(filename,"Scraping is done");
+			}
 		});
 
 		server.on('close', function (code){
-			scraping_status.done = true;
-		    scraping_status.success = true;
+			sess.done = true;
+		    sess.success = true;
+		    if (debugMode === true) {
+				console.log("Scraping is done\n");
+				writeLogFile(filename,"Scraping is done");
+			}
 		})
 		
 		res.send({status: 200, message: "Scraping start for : "+data.extracted_host_name })
@@ -555,6 +600,9 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 	//this will receive the uploaded file of URLs
 	app.post('/rtech/api/post_file', (req, res) => {
+		sess.success =false;
+		sess.done =false;
+		//console.log(sess);
 		var data = req.body;
         if(data.url_list.length>0){
         	var user_id  = data.user_id;
@@ -604,10 +652,10 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	})
 
 	//this will write the scrapped data on a csv file
-	app.post('/rtech/api/save_scraped_data', (req, res) => {
+	app.post('/rtech/api/save_scraped_data', (req, res) => {		
 		//#================================================================FOR WRITING ON CSV FILE
-		var filename = req.body.url+'_'+req.body.user_id;
-		scraping_status.filename = filename;
+		var filename = req.body.url+'_'+req.body.user_id;		
+		//sess.filename = filename;
 
 		var options = {includeEndRowDelimiter:true};
 		if(fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.csv'))){
@@ -615,31 +663,37 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		}else{
 			options['headers'] = true;
 		}
-		var csvStream = csv.createWriteStream(options),
-	        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
-	    writableStream.on('finish', function(){
-	    });
+		// var csvStream = csv.createWriteStream(options),
+	 //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
+	 //    writableStream.on('finish', function(){
+	 //    });
 
 	    if(typeof req.body.data === 'string'){
 	    	req.body.data = JSON.parse(req.body.data)
 	    }
 	    
-	    csvStream.pipe(writableStream);
-	    csvStream.write(req.body.data[0]);
-		parsedDataArray.push(req.body.data[0]);
-    
+	    // csvStream.pipe(writableStream);
+	    // csvStream.write(req.body.data[0]);
+		//parsedDataArray.push(req.body.data[0]);
 	    //console.log(parsedDataArray);
+	    
+	    var scrapedContent = [];
+		if(fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.json'))){
+			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
+			scrapedContent = JSON.parse(scrapedContent);
+		}
+		scrapedContent.push(req.body.data[0]);
 
-	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(parsedDataArray), function (err) {
+	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
 			if (err) throw err;
 		});
 
 		if (debugMode === true) {
-			console.log("Scraped data for : "+req.body.data[0].url);
-			debugLogArr.push("Scraped data for : "+req.body.data[0].url);
+			var logData = "Scraped data for : "+req.body.data[0].url+"\n";
+			writeLogFile(filename,logData);
 		}
 	    //console.log(req.body.data[0]);
-	    csvStream.end();
+	    // csvStream.end();
 		res.send({})
 	})
 
