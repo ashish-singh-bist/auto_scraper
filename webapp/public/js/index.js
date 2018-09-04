@@ -4,6 +4,7 @@ $( document ).ready(function(){
 	$('#file_analyze').prop('checked', false);
 	$('#is_debug').prop('checked', true);
 	document.getElementById('submit_btn').setAttribute('disabled', 'true');
+	document.getElementById('analysis_btn').setAttribute('disabled', 'true');
 
 	//declaring reqired variables
 	var url_list_array = [], parsedJson = [];
@@ -12,6 +13,7 @@ $( document ).ready(function(){
 
 	function fileUpload( param ) {
 		document.getElementById('submit_btn').setAttribute('style', 'display:visible;');
+		document.getElementById('analysis_btn').setAttribute('style', 'display:visible;');
 		let url_list_array_ = [];
 		if( param == 'textarea'){
 			let input_url = document.getElementById('text_input_urls').value;
@@ -51,11 +53,13 @@ $( document ).ready(function(){
 			}else{
 				showMsg('error', 'Something going wrong refresh the window');
 				document.getElementById('submit_btn').setAttribute('disabled', 'true');
+				document.getElementById('analysis_btn').setAttribute('disabled', 'true');
 			}
 		})
 		.catch(() => {
 			showMsg('error', 'Somthing going wrong refresh the window');
 			document.getElementById('submit_btn').setAttribute('disabled', 'true');
+			document.getElementById('analysis_btn').setAttribute('disabled', 'true');
 		})
 	}
 
@@ -74,27 +78,45 @@ $( document ).ready(function(){
 		document.getElementById('label_file_upload').innerText = evt.target.files[0].name;
 		if ( document.getElementById('file_upload').files[0] ) {
 			$('#submit_btn').prop('disabled', false);
+			$('#analysis_btn').prop('disabled', false);
 		}else{
 			$('#submit_btn').prop('disabled', true);
+			$('#analysis_btn').prop('disabled', true);
 		}
 	});
 
 	$('#text_input_urls').bind('input propertychange', function() {
 		if( $('#text_input_urls').val().length > 0 ){
 			$('#submit_btn').prop('disabled', false);
+			$('#analysis_btn').prop('disabled', false);
 		}else{
 			$('#submit_btn').prop('disabled', true);
+			$('#analysis_btn').prop('disabled', true);
 		}
 	});
 
 	//function called on clicking submit button
 	$('#submit_btn').click(function(evt){
 		evt.preventDefault();
+		$('#file_analyze').prop('checked', false);
 		if( $('#text_input_urls').val().length > 0 ){
 			fileUpload('textarea');
 		}else{
 			if ( document.getElementById('file_upload').files[0] ) {
-				fileUpload('file');	
+				fileUpload('file');
+			}
+		}
+	});
+
+	//function called on clicking analysis button
+	$('#analysis_btn').click(function(evt){
+		evt.preventDefault();
+		$('#file_analyze').prop('checked', true);
+		if( $('#text_input_urls').val().length > 0 ){
+			fileUpload('textarea');
+		}else{
+			if ( document.getElementById('file_upload').files[0] ) {
+				fileUpload('file');
 			}
 		}
 	});

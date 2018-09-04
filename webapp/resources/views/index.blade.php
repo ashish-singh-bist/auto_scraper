@@ -19,6 +19,7 @@
             {{-- <div id="fileUploadContainer" style="display: none;"> --}}
             <div id="fileUploadContainer" >
                 <form id="search_site_form" class="text-center">
+                    <input id="file_analyze" type="checkbox" name="file-analyze" /> {{-- Analyze page traffic? --}}
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <h3 class="box-title">File Upload</h3>
@@ -33,11 +34,6 @@
                                 <p class="help-block" id="label_file_upload"></p>
                             </div>
                             <div class="checkbox">
-                                <label title="Click Analyze page traffic">
-                                    <input id="file_analyze" type="checkbox" class="custom-file-upload" name="file-analyze" /> Analyze page traffic?
-                                </label>
-                            </div>
-                            <div class="checkbox">
                                 <label title="Click Activate Debugger">
                                     <input id="is_debug" type="checkbox" class="custom-file-upload" name="isDebugger"/> Debugger ?
                                 </label>
@@ -47,6 +43,7 @@
                         </div>
                         <div class="box-footer">
                             <button id="submit_btn" disabled="" class="btn btn-primary" title="Click process urls">Process Urls</button>
+                            <button id="analysis_btn" disabled="" class="btn btn-primary" title="Click process urls">Analysis Url</button>
                         </div>
                     </div>            
                 </form>
