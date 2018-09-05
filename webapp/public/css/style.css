@@ -73,6 +73,9 @@ table tbody{
 .no-data{
     padding: 0 15px;
 }
+#file_analyze{
+    visibility:  hidden;
+}
 /* css for error msg*/
 .success{
     color: #fff !important;

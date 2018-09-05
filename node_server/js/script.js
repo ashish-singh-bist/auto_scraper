@@ -2,6 +2,28 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     var data_object = [], printable_data = {};
 
+    // method to filter parameter in url
+    var getUrlParameter = function getUrlParameter(sParam) {
+        var a = document.createElement('a');
+        a.href = window.location;
+        var ret = {}, seg = a.search.replace(/^\?/, '').split('&'), len = seg.length, i = 0, s;
+        for (; i < len; i++) {
+            if (!seg[i]) {
+                continue;
+            }
+            s = seg[i].split('=');
+            ret[s[0]] = s[1];
+        }
+        for(var key in ret){
+            if (key === sParam) {
+                return ret[key];
+            }
+        }
+    };
+
+    var editmode = getUrlParameter('editmode');             // check want to edit the config
+    var config_file_status = getUrlParameter('config');          // check config file status
+
     //if config exists and it is a data scraping request
     var getScriptWithJson = document.querySelector('#scriptNodeWithJson');//we inject this information through client.js
     if(getScriptWithJson){
@@ -24,24 +46,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         },15000)
     }
 	
-    // method to filter parameter in url
-    var getUrlParameter = function getUrlParameter(sParam) {
-        var a = document.createElement('a');
-        a.href = window.location;
-        var ret = {}, seg = a.search.replace(/^\?/, '').split('&'), len = seg.length, i = 0, s;
-        for (; i < len; i++) {
-            if (!seg[i]) {
-                continue;
-            }
-            s = seg[i].split('=');
-            ret[s[0]] = s[1];
-        }
-        for(var key in ret){
-            if (key === sParam) {
-                return ret[key];    
-            }
-        }
-    };
 /*_________________________for initializing required objects and functions_________________________________*/ 	
 	
     /*adding event handelors to javascript events*/
@@ -517,7 +521,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		var targetelement = ele;
 		targetelement.classList.add('option-selected');
 		targetelement.setAttribute('labelkey', label);
-		autoPostElement(label, targetelement, path);
+        if(editmode == undefined){
+            autoPostElement(label, targetelement, path);
+        }
 	}
 
 	/* extract selected element's properties */
@@ -538,8 +544,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
         console.log(label, printable_data[label])
     }
 /*_________________________for sending scraped data____________________________________________________*/
-	
-    if(data_object.length > 0){
+
+    if(data_object.length > 0 && editmode == undefined){
         // var host    = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'').replace(/_/g,'.');
         var host    = getUrlParameter('host');
         host        = host.replace(/_/g,'.');
