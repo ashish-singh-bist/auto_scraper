@@ -65,17 +65,27 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	app.post('/rtech/api/check_scrape', (req, res) => {		
 		var user_id = req.body.user_id;		
 		var logFileContent;
-		var filename  = req.body.host_name+'_'+user_id;		
-		//console.log(sess);
-		if(sess.done === true){
-			if(sess.success){
-				sess.done = false;
-		   		sess.success = false;		   				   				   		
+		var filename  = req.body.host_name+'_'+user_id;
+		
+		var tempDone = req.body.host_name+'_done';
+		var tempSucess = req.body.host_name+'_success';
+
+		var sess = readSession(user_id);
+		console.log(sess);
+
+		if(sess[tempDone] === true){
+			if(sess[tempSucess]){
+				//sess.done = false;
+		   		//sess.success = false;		   				   				   		
 
 				var scrapedData = fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
 				logFileContent = readLogFile(filename);				
 				if (logFileContent){
 					fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
+				}
+
+				if(fileSystem.existsSync(path.join(__dirname, 'sess_dir/session_'+user_id+'.json'))) {
+					fileSystem.unlinkSync(path.join(__dirname, 'sess_dir/session_'+user_id+'.json'));
 				}
 
 				fileSystem.rename(path.join(__dirname, 'site_output/'+filename+'.json'), path.join(__dirname, 'history_data/'+filename+'.json'), function (err) {
@@ -86,8 +96,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 				res.send({status: 200, message: 'scraping done', success: true, data: JSON.parse(scrapedData), logs: logFileContent})
 			}
 			else{
-				sess.done = false;
-		    	sess.success = false;
+				//sess.done = false;
+		    	//sess.success = false;
 		    	parsedDataArray = [];
 		   		var temp_debugLogArr = debugLogArr;
 				debugLogArr = [];
@@ -103,7 +113,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			logFileContent = readLogFile(filename);
 			if (logFileContent){
 				fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
-			}						
+			}			
 			res.send({status: 500, message: 'scraping going on', data:[], logs: logFileContent});
 		}
 	})
@@ -563,22 +573,58 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		}
 	}
 
+
+	function writeSession(userId, writeSess){		
+		var session = readSession(userId);		
+		if (session === ''){	
+			session = {};
+		}		
+		for (var key in writeSess) {			
+		    if (writeSess.hasOwnProperty(key)) {           
+		        session[key] = writeSess[key];
+		        //console.log(key, writeSess[key]);
+
+		    }			    
+		}			
+		fileSystem.writeFile(path.join(__dirname, 'sess_dir/session_'+userId+'.json'), JSON.stringify(session), function (err) {
+		if (err) throw err;
+			//console.log('Saved!');
+		});		
+	}
+
+	function readSession(userId){
+		if(fileSystem.existsSync(path.join(__dirname, 'sess_dir/session_'+userId+'.json'))){
+			var sessContent = fileSystem.readFileSync(path.join(__dirname, 'sess_dir/session_'+userId+'.json'), 'utf8');
+			return JSON.parse(sessContent);			
+		}else{
+			return '';
+		}
+
+	}
+
 //#================================================================POST
 	//this will start the scrapping process
 	app.post('/rtech/api/scrape_pages', (req, res) => {		
 		var data = req.body;
 		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
 
-		var filename  = data.process_host_name+'_'+data.user_id;
+		var filename  = data.process_host_name+'_'+data.user_id;		
 
 		if (debugMode === true) {
 			console.log("\nScraping start for : "+data.extracted_host_name);			
 			writeLogFile(filename, "Scraping start for : "+data.extracted_host_name);			
 		}
 		
-		server.stderr.on('data', function (data) {
-		    sess.done = true;
-		    sess.success = false;
+		var temp = {};
+		//var success = data.process_host_name+'success';
+		//var done = data.process_host_name+'done';
+
+		server.stderr.on('data', function (data) {		    
+		    //sess.success = false;
+		    //sess.done = true;
+		    temp[data.process_host_name+'_success']  = false;
+			temp[data.process_host_name+'_done']  = true;
+		    writeSession(data.user_id, temp );
 	    	if (debugMode === true) {
 				console.log("Scraping is done\n");
 				writeLogFile(filename,"Scraping is done");
@@ -586,10 +632,13 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		});
 
 		server.on('close', function (code){
-			sess.done = true;
-		    sess.success = true;
+			//sess.done = true;
+		    //sess.success = true;
+			temp[data.process_host_name+'_success']  = true;
+			temp[data.process_host_name+'_done']  = true;
+		    writeSession(data.user_id, temp );
 		    if (debugMode === true) {
-				console.log("Scraping is done\n");
+				console.log("Scraping is done\n");				
 				writeLogFile(filename,"Scraping is done");
 			}
 		})
@@ -599,17 +648,23 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	})
 
 	//this will receive the uploaded file of URLs
-	app.post('/rtech/api/post_file', (req, res) => {
-		sess.success =false;
-		sess.done =false;
-		//console.log(sess);
+	app.post('/rtech/api/post_file', (req, res) => {		
 		var data = req.body;
-        if(data.url_list.length>0){
-        	var user_id  = data.user_id;
-    		var url_ 	 = data.url_list[0];
+		var user_id  = data.user_id;
+		var url_ 	 = data.url_list[0];
+		var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
+		
+		var temp= {};
+
+		temp[filename_+'_success']  = false;
+		temp[filename_+'_done']  = false;
+
+		writeSession(user_id, temp);
+
+		//console.log(sess);		
+        if(data.url_list.length>0){        	    		
             var split_ar = url_.split('/');
-            var host_url = split_ar[0] + '//' + split_ar[2];
-    		var filename_= (url_.split('/'))[2].replace(/\./g,'_');
+            var host_url = split_ar[0] + '//' + split_ar[2];    		
     		var config_exist;
 
     		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'_'+user_id+'.json'))) {
