@@ -136,7 +136,7 @@ $( document ).ready(function(){
 		.then(response => response.json())
 		.then(res => {
 			//if scraping started successfully, call the below function which will check every 10 seconds the status of scraping
-			setFetchingStatus();
+			setFetchingStatus();		// add initial message in debugger window ex- "Fetching ..."
 			check_scraping_status();
 		});
 	}
@@ -144,21 +144,21 @@ $( document ).ready(function(){
 	function proceedForAnalysis(){
 		let url_ = windowOpenWith + url_post_part.replace(/\;/g,'');
 		if(url_.indexOf('?') > -1){
-			var str = url_+'&config=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+			var str = url_+'&config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
 			window.open(str,'_blank');
 		}else{
-			var str = url_+'?config=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+			var str = url_+'?config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
 			window.open(str,'_blank');
 		}
 	}
 
-	function proceedForConfig(){
+	function proceedForConfig(editmode = false){
 		let url_ = windowOpenWith + url_post_part;
 		if(url_.indexOf('?') > -1){
-			var str = url_+'&config='+flag+'&host='+process_host_name+'&uid='+USER_ID;
+			var str = url_+'&config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID;
 			window.open(str,'_blank');
 		}else{
-			var str = url_+'?config='+flag+'&host='+process_host_name+'&uid='+USER_ID;
+			var str = url_+'?config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID;
 			window.open(str,'_blank');
 		}
 	}
@@ -166,10 +166,18 @@ $( document ).ready(function(){
 	//calling function for opening link in browsers
 	function proceedForParsing () {
 		//from here we'll divide all the URLs into batches to be executed
-		if(flag && !argument_analyze_){
-			proceedForScraping();			//case: config exists and we have to only scrape data
-		}else if(argument_analyze_){
+
+		if(argument_analyze_){
 			proceedForAnalysis();			//case: analysis has been requested
+		}else if(flag ){
+			alertify.confirm("Do you want edit config file.",
+				function(){
+					proceedForConfig(true);
+				},
+				function(){
+					proceedForScraping();			//case: config exists and we have to only scrape data
+				}
+			).setHeader('Edit Config').set('labels', {ok:'Yes !', cancel:'Continue Parsing !'}).set('titles', {ok:'Hi', cancel:'Bye'}); 
 		}else{
 			proceedForConfig();				//case: config doesn't exists and we have to create one
 		}

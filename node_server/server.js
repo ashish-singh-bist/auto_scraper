@@ -596,7 +596,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			req.body.data = JSON.parse(req.body.data);
 		}
 
-		fileSystem.appendFile(path.join(__dirname, 'site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
+		fileSystem.writeFile(path.join(__dirname, 'site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
 			if (err) throw err;
 			console.log('Saved!');
 		});
