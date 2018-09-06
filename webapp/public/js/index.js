@@ -234,8 +234,12 @@ $( document ).ready(function(){
 							
 							html += "<tr>";
 							for (var key in obj) {
-								if (obj.hasOwnProperty(key))
-									html += "<td>" + obj[key] + "</td>";
+								if (obj.hasOwnProperty(key)){
+									if( key == 'url' )
+										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + obj[key] + "</a></td>";
+									else
+										html += "<td>" + obj[key] + "</td>";
+								}
 							}
 							html += "</tr>";
 						});
