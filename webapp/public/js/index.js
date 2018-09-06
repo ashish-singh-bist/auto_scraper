@@ -235,9 +235,12 @@ $( document ).ready(function(){
 							html += "<tr>";
 							for (var key in obj) {
 								if (obj.hasOwnProperty(key)){
-									if( key == 'url' )
-										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + obj[key] + "</a></td>";
-									else
+									if( key == 'url' ){
+										var trim_title = obj[key];
+										if (trim_title.length > 29 )
+											trim_title = trim_title.substring(0, 28)+"...";
+										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + trim_title + "</a></td>";
+									}else
 										html += "<td>" + obj[key] + "</td>";
 								}
 							}

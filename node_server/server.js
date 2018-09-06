@@ -670,6 +670,17 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
     		if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+user_id+'.json'))) {
     			config_exist = true;
     			//res.send({'exists': true, 'extracted_host_name': filename_})
+			}else if (fileSystem.existsSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'))) {
+				var scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'), 'utf8');
+				scrapedContent = JSON.parse(scrapedContent);
+				scrapedContent.user_id = user_id;
+				fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename_+'_'+user_id+'.json'), JSON.stringify(scrapedContent), 'utf-8', function(err) {
+					if(err) {
+						config_exist = false;
+					}else{
+						config_exist = true;
+					}
+				});
     		}else{
     			config_exist = false;
     			//res.send({'exists': false, 'extracted_host_name': filename_})
