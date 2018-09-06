@@ -78,17 +78,17 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 				//sess.done = false;
 		   		//sess.success = false;		   				   				   		
 
-				var scrapedData = fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
+				var scrapedData = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
 				logFileContent = readLogFile(filename);				
 				if (logFileContent){
-					fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
+					fileSystem.unlinkSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'));			
 				}
 
-				if(fileSystem.existsSync(path.join(__dirname, 'sess_dir/session_'+user_id+'.json'))) {
-					fileSystem.unlinkSync(path.join(__dirname, 'sess_dir/session_'+user_id+'.json'));
+				if(fileSystem.existsSync(path.join(__dirname, 'storage/sess_dir/session_'+user_id+'.json'))) {
+					fileSystem.unlinkSync(path.join(__dirname, 'storage/sess_dir/session_'+user_id+'.json'));
 				}
 
-				fileSystem.rename(path.join(__dirname, 'site_output/'+filename+'.json'), path.join(__dirname, 'history_data/'+filename+'.json'), function (err) {
+				fileSystem.rename(path.join(__dirname, 'storage/site_output/'+filename+'.json'), path.join(__dirname, 'storage/history_data/'+filename+'.json'), function (err) {
 					if (err) throw err
 					//console.log('Successfully renamed')
 				})				
@@ -103,7 +103,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 				debugLogArr = [];
 				logFileContent = readLogFile(filename);
 				if (logFileContent){
-					fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
+					fileSystem.unlinkSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'));			
 				}				
 				res.send({status: 200, message: 'scraping done', success: false, data:[], logs: temp_debugLogArr});
 			}
@@ -112,7 +112,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			debugLogArr = [];
 			logFileContent = readLogFile(filename);
 			if (logFileContent){
-				fileSystem.unlinkSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'));			
+				fileSystem.unlinkSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'));			
 			}			
 			res.send({status: 500, message: 'scraping going on', data:[], logs: logFileContent});
 		}
@@ -436,7 +436,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 					//#================================================================CONFIG
 					if(config === 'true'){
-						obj = fileSystem.readFileSync(path.join(__dirname,'site_config/'+host+'_'+uid+'.json'), 'utf8');
+						obj = fileSystem.readFileSync(path.join(__dirname,'storage/site_config/'+host+'_'+uid+'.json'), 'utf8');
 						var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
 						$('body').append(scriptNodeWithJson);
 					}
@@ -457,7 +457,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 							let redirect_config = 'false';
 
 							if(redirect_host){
-								if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+redirect_host.replace(/\./g, '_')+'_'+uid+'.json'))) {
+								if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+redirect_host.replace(/\./g, '_')+'_'+uid+'.json'))) {
 									redirect_config= 'true';
 								}else{
 									redirect_config = 'false';
@@ -557,7 +557,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 	
 	function writeLogFile(filename,logContent){		
-		fileSystem.appendFile(path.join(__dirname, 'site_output/log_'+filename+'.txt'), logContent, function (err) {
+		fileSystem.appendFile(path.join(__dirname, 'storage/log/log_'+filename+'.txt'), logContent, function (err) {
 			if (err) throw err;
 			//console.log('Saved!');
 		});
@@ -565,8 +565,8 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 
 	function readLogFile(filename){				
-		if(fileSystem.existsSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'))){
-			var logFileContent = fileSystem.readFileSync(path.join(__dirname, 'site_output/log_'+filename+'.txt'), 'utf8');
+		if(fileSystem.existsSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'))){
+			var logFileContent = fileSystem.readFileSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'), 'utf8');
 			return logFileContent.split('\n');		
 		}else{
 			return '';
@@ -586,15 +586,15 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
 		    }			    
 		}			
-		fileSystem.writeFile(path.join(__dirname, 'sess_dir/session_'+userId+'.json'), JSON.stringify(session), function (err) {
+		fileSystem.writeFile(path.join(__dirname, 'storage/sess_dir/session_'+userId+'.json'), JSON.stringify(session), function (err) {
 		if (err) throw err;
 			//console.log('Saved!');
 		});		
 	}
 
 	function readSession(userId){
-		if(fileSystem.existsSync(path.join(__dirname, 'sess_dir/session_'+userId+'.json'))){
-			var sessContent = fileSystem.readFileSync(path.join(__dirname, 'sess_dir/session_'+userId+'.json'), 'utf8');
+		if(fileSystem.existsSync(path.join(__dirname, 'storage/sess_dir/session_'+userId+'.json'))){
+			var sessContent = fileSystem.readFileSync(path.join(__dirname, 'storage/sess_dir/session_'+userId+'.json'), 'utf8');
 			return JSON.parse(sessContent);			
 		}else{
 			return '';
@@ -667,7 +667,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
             var host_url = split_ar[0] + '//' + split_ar[2];    		
     		var config_exist;
 
-    		if (fileSystem.existsSync(path.join(__dirname, 'site_config/'+filename_+'_'+user_id+'.json'))) {
+    		if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+user_id+'.json'))) {
     			config_exist = true;
     			//res.send({'exists': true, 'extracted_host_name': filename_})
     		}else{
@@ -677,11 +677,11 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 
     		var array_received = (data.url_list).join('\r\n');
 
-    		fileSystem.writeFile(path.join(__dirname, 'config/'+filename_+'_'+user_id+'_url_list_.txt'), array_received, 'utf-8', function(err) {
+    		fileSystem.writeFile(path.join(__dirname, 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt'), array_received, 'utf-8', function(err) {
     			if(err) {
     				res.send({status: 500, file_location: err, 'config_exist':config_exist, 'process_host_name':filename_ , 'extracted_host_name':host_url });
     			}else{
-    				res.send({status: 200, file_location: 'config/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url });
+    				res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url });
     			}
     		});
         }
@@ -699,7 +699,7 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			req.body.data = JSON.parse(req.body.data);
 		}
 
-		fileSystem.writeFile(path.join(__dirname, 'site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
+		fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
 			if (err) throw err;
 			console.log('Saved!');
 		});
@@ -713,13 +713,13 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 		//sess.filename = filename;
 
 		var options = {includeEndRowDelimiter:true};
-		if(fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.csv'))){
+		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.csv'))){
 			options['headers'] = false;
 		}else{
 			options['headers'] = true;
 		}
 		// var csvStream = csv.createWriteStream(options),
-	 //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'site_output/'+filename+'.csv'), {flags: 'a'});
+	 //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'storage/site_output/'+filename+'.csv'), {flags: 'a'});
 	 //    writableStream.on('finish', function(){
 	 //    });
 
@@ -733,13 +733,13 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 	    //console.log(parsedDataArray);
 	    
 	    var scrapedContent = [];
-		if(fileSystem.existsSync(path.join(__dirname, 'site_output/'+filename+'.json'))){
-			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'site_output/'+filename+'.json'), 'utf8');
+		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
+			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
 			scrapedContent = JSON.parse(scrapedContent);
 		}
 		scrapedContent.push(req.body.data[0]);
 
-	    fileSystem.writeFile(path.join(__dirname, 'site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
+	    fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
 			if (err) throw err;
 		});
 
