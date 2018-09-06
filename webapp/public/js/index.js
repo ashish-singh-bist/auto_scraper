@@ -1,3 +1,4 @@
+$.noConflict();
 $( document ).ready(function(){
 	$('#file_upload').val('');
 	$('#text_input_urls').val('');
@@ -166,18 +167,32 @@ $( document ).ready(function(){
 	//calling function for opening link in browsers
 	function proceedForParsing () {
 		//from here we'll divide all the URLs into batches to be executed
-
 		if(argument_analyze_){
 			proceedForAnalysis();			//case: analysis has been requested
 		}else if(flag ){
-			alertify.confirm("Do you want edit config file.",
-				function(){
-					proceedForConfig(true);
-				},
-				function(){
-					proceedForScraping();			//case: config exists and we have to only scrape data
+			$.confirm({
+				closeIcon: true,
+				icon: 'fa fa-warning',
+				title: 'Edit Config Confirm!',
+				content: 'Do you want edit config file ?',
+				columnClass: 'col-md-5 col-md-offset-4',
+				buttons: {
+					editConfig: {
+						text: 'Yes!',
+						btnClass: 'btn-warning',
+						action: function(){
+							proceedForConfig(true);		//case: config exists and we have to edit config
+						}
+					},
+					ContinueParsing: {
+						text: 'Continue Parsing!',
+						btnClass: 'btn-success',
+						action: function(){
+							proceedForScraping();		//case: config exists and we have to only scrape data
+						}
+					}
 				}
-			).setHeader('Edit Config').set('labels', {ok:'Yes !', cancel:'Continue Parsing !'}).set('titles', {ok:'Hi', cancel:'Bye'}); 
+			});
 		}else{
 			proceedForConfig();				//case: config doesn't exists and we have to create one
 		}
