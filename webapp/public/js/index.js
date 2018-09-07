@@ -10,11 +10,34 @@ $( document ).ready(function(){
 	var extracted_host_name, flag, process_host_name, argument_analyze_, url_post_part;
 	var windowOpenWith = 'http://' + config.root_ip + ':' + config.root_port;
 
+	function removeSpaces(input_url){
+		var url_array  = input_url.split('\n');
+		var filter_urls_array = [];
+		var filter_str = '';
+		for (key in url_array) {
+			filter_str = url_array[key].replace(/\s+/g, '');
+			if (filter_str){
+				filter_urls_array.push(filter_str);}
+		}
+		return filter_urls_array;
+
+		// regex solution for filter url, regex solution increase the responce time of removeSpaces()
+		// var url_array = input_url;
+		// url_array = url_array.replace(/(^\s*)|(\s*$)/gi,"");
+		// url_array = url_array.replace(/[ ]{0,}/gi,"");
+		// url_array = url_array.replace(/\t+/g,"");
+		// url_array = url_array.replace(/\n+/g,"\n");
+		// url_array = url_array.split('\n');
+		// return url_array;
+	}
+
 	function fileUpload( param ) {
+		$('#progress_bar').show();
 		let url_list_array_ = [];
 		if( param == 'textarea'){
 			let input_url = document.getElementById('text_input_urls').value;
-			url_list_array_  = input_url.split('\n');
+			url_list_array_ = removeSpaces(input_url);
+			// console.log(url_list_array_);
 			fileUploadAjax(url_list_array_);
 		}else{
 			let file = document.getElementById('file_upload').files[0];
@@ -22,7 +45,8 @@ $( document ).ready(function(){
 			reader.readAsText(file);
 			reader.onload = function(event) {
 				url_list_string = event.target.result;
-				url_list_array_  = url_list_string.split('\n');
+				url_list_array_ = removeSpaces(url_list_string);
+				// console.log(url_list_array_);
 				fileUploadAjax(url_list_array_);
 			};
 		}
@@ -42,6 +66,7 @@ $( document ).ready(function(){
 		.then(response => response.json())
 		.then(res => {
 			if(res.status == 200){
+				$('#progress_bar').hide();
 				url_list_array = res.file_content.split('\r\n');
 				flag = res.config_exist 							// true or false
 				extracted_host_name = res.extracted_host_name;  	// domain name eg- http://google.co.in
