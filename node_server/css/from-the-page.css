@@ -147,7 +147,8 @@ div#context, div#label_input {
     font-weight: normal !important;
 }
 
-#label_input input[type=button], #context input[type=button]{    
+#label_input input[type=button], #context input[type=button],
+#panel input[type=button]{    
     box-sizing:border-box !important;
     cursor:pointer !important;
     background-color:#e31837 !important;
@@ -157,6 +158,10 @@ div#context, div#label_input {
     letter-spacing:.2px !important;
     text-decoration:none !important;
     font-family:brandon-grotesque,Arial,sans-serif;font-weight:700 !important;
+}
+#panel input[type=button]{
+    width: 100%;
+    padding: 5px;
 }
 
 /*______for screen loader at amalysis page _______*/
@@ -208,4 +213,44 @@ div#context, div#label_input {
 @-webkit-keyframes spin {
   0% { -webkit-transform: rotate(0deg); }
   100% { -webkit-transform: rotate(360deg); }
+}
+
+#panel {
+    position: fixed;
+    z-index: 9;
+    background-color: #f1f1f1;
+    border: 1px solid #d3d3d3;
+    top:20px;
+    left: 0;
+    width: 250px;
+}
+
+#panelheader {
+    padding: 10px;
+    cursor: move;
+    z-index: 10;
+    background-color: #2196F3;
+    color: #fff;
+    position: relative;
+}
+#panel .section{
+    padding: 10px;
+}
+#panel .section input.label_input{
+    width: 100%;
+    height: 30px;
+    font-size: 14px;
+}
+#panel .section textarea{
+    width: 100%;
+}
+#panelheader span{
+    background:url('mouse-move.png');
+    height: 35px;
+    width: 35px;
+    display: inline-block;
+    background-size: 35px;
+    position: absolute;
+    right: 4px;
+    top: 4px;
 }
