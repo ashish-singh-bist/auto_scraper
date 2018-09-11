@@ -1,0 +1,211 @@
+@import url("//d2v52k3cl9vedd.cloudfront.net/basscss/4.1.7/basscss.min.css");
+
+input[type="file"] {
+    display: none;
+}
+#context * , #label_input * {
+    box-shadow: none !important;
+}
+#context .form-check,
+#context .form-check-label, 
+#label_input .form-check,
+#label_input .form-check-label{
+    margin: 0;
+}
+.custom-file-upload {
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    outline: 1px beige solid;
+}
+
+#url {
+    outline: 1px beige solid;
+}
+
+#search_site_form > * {
+    min-height: 28px;
+    box-shadow: 2px 2px;
+}
+
+div#context ul, div#label_input ul {
+    list-style: none;
+    list-style-type: none;
+    list-style-position: outside;
+    padding: 10px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    border: 2px solid #e31837 !important;
+    border-radius: 5px !important;
+}
+
+div#context li, div#label_input li {
+    list-style: none;
+    box-shadow: 0 0 0 0 #800;
+    margin-bottom: -7px;
+}
+
+div#context li label, div#label_input li label,
+div#context li label input, div#label_input li label input {
+    display: block;
+}
+
+div#context li label input, div#label_input li label input {
+    text-align: center !important;
+    width: 100% !important;
+    padding: 0 5px !important;
+    height: 32px !important;
+    line-height: 1 !important;
+    margin: 0 0 .6rem 0 !important;
+    font-size: 14px;
+    border-radius: 5px !important;
+}
+
+div#label_input li a:hover {
+    box-shadow: 250px 0 0 0 #FF7A62 inset;
+}
+
+div#context, div#label_input {
+    width: 240px;
+    position: absolute;
+    z-index: 999999;
+    -webkit-transition: all .3s ease;
+    -o-transition: all .3s ease;
+    transition: all .3s ease;
+}
+
+.btn-default:hover,
+.btn-default:focus,
+.btn-default.focus,
+.btn-default:active,
+.btn-default.active,
+.open>.dropdown-toggle.btn-default {}
+
+/*______for aliging placeholder to center______*/
+
+::-webkit-input-placeholder {
+    text-align: center;
+}
+
+:-moz-placeholder {
+    /* Firefox 18- */
+    text-align: center;
+}
+
+::-moz-placeholder {
+    /* Firefox 19+ */
+    text-align: center;
+}
+
+:-ms-input-placeholder {
+    text-align: center;
+}
+
+
+
+/*______for selecting/unselecting elements_______*/
+
+/** {
+    cursor: default;
+    border: 1px solid transparent !important;
+}*/
+
+.option-selected,
+.option-selected:hover {
+    /*border: 3px solid #529c56 !important;*/
+    box-shadow: 0px 0px 0px 3px #529c56 inset !important;
+    cursor: default;
+}
+
+.hover-selected{
+    /*border: 1px solid #e42a78 !important;*/
+    box-shadow: 0px 0px 0px 1px #e42a78 inset !important;
+    /*outline: 1px solid orange;*/
+}
+
+/*______for textarea _______*/
+#label_input textarea {
+    width: 100% !important;
+    min-height: 50px !important;
+    background-color: lightgray !important;
+    color: #323232 !important;
+    font-size: 14px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 5px !important;
+    transition: box-shadow .2s ease !important;
+    padding: 0 5px !important;
+    box-sizing: border-box !important;
+    line-height: 1.25 !important;
+    font-weight: normal;
+    margin-top: 0 !important;
+    margin-bottom: .5rem !important;
+}
+
+#label_input .label_input {
+    background-color: lavender !important;
+    font-weight: normal !important;
+}
+
+#label_input input[type=button], #context input[type=button]{    
+    box-sizing:border-box !important;
+    cursor:pointer !important;
+    background-color:#e31837 !important;
+    border: 1px solid #e31837 !important;
+    color:#fff !important;
+    display:inline-block !important;
+    letter-spacing:.2px !important;
+    text-decoration:none !important;
+    font-family:brandon-grotesque,Arial,sans-serif;font-weight:700 !important;
+}
+
+/*______for screen loader at amalysis page _______*/
+
+.loader_analyze {
+    border: 16px solid #fa6400 !important; 
+    border-top: 16px solid #f42121 !important; 
+    border-radius: 50% !important;
+    width: 160px !important;
+    height: 160px !important;
+    animation: spin 2s linear infinite !important;
+    top: 50% !important;
+    left: 50% !important;
+    position: fixed !important;
+    z-index: 99999;
+}
+
+.loader_index {
+    border: 16px solid #3c763d !important; 
+    border-top: 16px solid #060606 !important; 
+    border-radius: 50% !important;
+    width: 160px !important;
+    height: 160px !important;
+    animation: spin 2s linear infinite !important;
+    top: 45% !important;
+    left: 45% !important;
+    position: fixed !important;
+    z-index: 99999;
+}
+
+#rtech_overlay {
+    position: fixed; /* Sit on top of the page content */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0; 
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+    z-index: 99997; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
