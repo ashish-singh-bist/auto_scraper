@@ -1,14 +1,21 @@
-const express	= require('express');
-const app 		= express();
-const util		= require('util');
-const request 	= require('request');
-const path 		= require('path');
-const fileSystem= require('fs');
-const cheerio	= require('cheerio');
-const bodyParser= require('body-parser');
-const csv 		= require('fast-csv');
+const express		= require('express');
+const app 			= express();
+const util			= require('util');
+const request 		= require('request');
+const path 			= require('path');
+const fileSystem	= require('fs');
+const cheerio		= require('cheerio');
+const bodyParser 	= require('body-parser');
+const csv 			= require('fast-csv');
+const mysql 		= require('mysql')
+const connection 	= mysql.createConnection({
+						  host     : '192.168.1.117',
+						  user     : 'root',
+						  password : 'tick98',
+						  database : 'auto_scraper'
+					  });
 
-
+connection.connect();
 const header 	= require(path.join(__dirname, 'js/headers')); 			//code to clean our headers from invalid characters
 const rtech_config	= require(path.join(__dirname, 'config/config'));	//application config
 
@@ -749,6 +756,16 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 			scrapedContent = JSON.parse(scrapedContent);
 		}
 		scrapedContent.push(req.body.data[0]);
+
+		
+		var data = {'user_id': req.body.user_id, 'data': JSON.stringify(req.body.data[0])};
+		// var data = {'user_id': req.body.user_id, 'data': 'hello'};
+		var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
+		  if (error) throw error;
+		});
+		console.log('query :- ' + query.sql);
+		console.log(req.body.data[0].url + " scrapped data saved in database");
+
 
 	    fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
 			if (err) throw err;
