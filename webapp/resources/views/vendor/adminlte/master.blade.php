@@ -23,10 +23,10 @@
     <!-- Theme style -->
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/AdminLTE.min.css') }}">
 
-    {{-- @if(config('adminlte.plugins.datatables'))
+    @if(config('adminlte.plugins.datatables'))
         <!-- DataTables with bootstrap 3 style -->
         <link rel="stylesheet" href="//cdn.datatables.net/v/bs/dt-1.10.18/datatables.min.css">
-    @endif --}}
+    @endif
 
     @yield('adminlte_css')
 
@@ -69,20 +69,20 @@
 
 
 
-@if(config('adminlte.plugins.select2'))
+{{-- @if(config('adminlte.plugins.select2'))
     <!-- Select2 -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
-@endif
+@endif --}}
 
 @if(config('adminlte.plugins.datatables'))
     <!-- DataTables with bootstrap 3 renderer -->
     <script src="//cdn.datatables.net/v/bs/dt-1.10.18/datatables.min.js"></script>
 @endif
 
-@if(config('adminlte.plugins.chartjs'))
+{{-- @if(config('adminlte.plugins.chartjs'))
     <!-- ChartJS -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js"></script>
-@endif
+@endif --}}
 
 @yield('adminlte_js')
 

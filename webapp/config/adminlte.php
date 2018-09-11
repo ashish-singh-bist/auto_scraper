@@ -114,6 +114,11 @@ return [
             'url'        => '/',
             'icon_color' => 'aqua',
         ],
+        [
+            'text'       => 'Scraped Data',
+            'url'        => '/scraped_data',
+            'icon_color' => 'green',
+        ],
         /*[
             'text' => 'Blog',
             'url'  => 'admin/blog',
