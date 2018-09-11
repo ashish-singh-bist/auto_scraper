@@ -15,6 +15,8 @@
     <!-- Ionicons -->
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/vendor/Ionicons/css/ionicons.min.css') }}">
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     {{-- @if(config('adminlte.plugins.select2'))
         <!-- Select2 -->
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css">
@@ -44,10 +46,7 @@
     <!-- Styles -->
 
     {{-- <script src="config/config.js"></script> --}}
-    
-    <!-- Bootstrap -->
-    
-    
+  
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery-confirm.min.js"></script>
@@ -84,7 +83,27 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js"></script>
 @endif
 
+@if (Auth::check())
+<script type="text/javascript">
+    var config = {
+        "root_ip": "{{ env('NODE_SERVER_IP')}}",
+        "root_port": "{{ env('NODE_SERVER_PORT')}}",
+        "chat_port": "{{ env('NODE_SERVER_CHAT_PORT')}}",
+    };
+
+    var user_id = '{{ Auth::user()->id }}';
+    var user_name = '{{ Auth::user()->name }}';
+    var chat_post_url = '{!! URL::to("sendmessage") !!}';
+</script>
+@endif
+
 @yield('adminlte_js')
+
+<!-- ChatJs  -->
+
+
+<script src="js/chat.js"></script>
+<!-- ChatJs  -->
 
 </body>
 </html>

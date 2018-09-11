@@ -25,4 +25,9 @@ class HomeController extends Controller
     {
         return view('home');
     }
+
+    public function getAdminPage()
+    {
+        return view('admin_chat');
+    }
 }

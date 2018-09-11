@@ -55,7 +55,7 @@ $( document ).ready(function(){
 	function fileUploadAjax(url_list_array_){
 		var data = {};
 		data.url_list = url_list_array_;
-		data.user_id = USER_ID;
+		data.user_id = user_id;
 		fetch('http://'+config.root_ip+':'+config.root_port+'/rtech/api/post_file', {
 			body: JSON.stringify(data),
 			headers: {
@@ -149,7 +149,7 @@ $( document ).ready(function(){
 		let data = {
 			process_host_name: process_host_name,
 			extracted_host_name: extracted_host_name,
-			user_id: USER_ID
+			user_id: user_id
 		}
 		//POST request which will tell the server to start scraping the URLs from the file uploaded earlier via readFile() method
 		fetch('http://'+ config.root_ip + ':' + config.root_port +'/rtech/api/scrape_pages', {
@@ -170,10 +170,10 @@ $( document ).ready(function(){
 	function proceedForAnalysis(){
 		let url_ = windowOpenWith + url_post_part.replace(/\;/g,'');
 		if(url_.indexOf('?') > -1){
-			var str = url_+'&config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+			var str = url_+'&config=false&editmode=false'+'&host='+process_host_name+'&uid='+user_id+'&analyze=true';
 			window.open(str,'_blank');
 		}else{
-			var str = url_+'?config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+			var str = url_+'?config=false&editmode=false'+'&host='+process_host_name+'&uid='+user_id+'&analyze=true';
 			window.open(str,'_blank');
 		}
 	}
@@ -181,10 +181,10 @@ $( document ).ready(function(){
 	function proceedForConfig(editmode = false){
 		let url_ = windowOpenWith + url_post_part;
 		if(url_.indexOf('?') > -1){
-			var str = url_+'&config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID;
+			var str = url_+'&config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+user_id;
 			window.open(str,'_blank');
 		}else{
-			var str = url_+'?config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID;
+			var str = url_+'?config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+user_id;
 			window.open(str,'_blank');
 		}
 	}
@@ -226,7 +226,7 @@ $( document ).ready(function(){
 	//function which'll check the status of scraping every 10 seconds. If scrapping completed successfully, it removes the loader and overlay from screen
 	function check_scraping_status(){
 		var data ={};
-		data.user_id = USER_ID;
+		data.user_id = user_id;
 		data.host_name = process_host_name;
 		var myInterval = setInterval(() => {
 			fetch('http://'+ config.root_ip + ':' + config.root_port +'/rtech/api/check_scrape', {

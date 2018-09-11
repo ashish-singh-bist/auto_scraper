@@ -8,6 +8,17 @@ const cheerio	= require('cheerio');
 const bodyParser= require('body-parser');
 const csv 		= require('fast-csv');
 
+// Chatting Application Code
+// Creating connection with Socket.IO 
+var server = require('http').createServer(app);
+var io = require('socket.io').listen(server);
+var redis = require('redis');
+
+var users  = {};
+var clients = [];
+var userCount = 0;
+var userId=0;
+// Chatting Application Code Ended Here
 
 const header 	= require(path.join(__dirname, 'js/headers')); 			//code to clean our headers from invalid characters
 const rtech_config	= require(path.join(__dirname, 'config/config'));	//application config
@@ -836,3 +847,51 @@ app.listen(rtech_config.root_port, () => console.log('Example app listening on p
 
 // httpsServer.listen(8443);
 //#================================================================
+
+// Chatting Application Code Started Here
+// Creating Connection for Client in Socket.io
+
+server.listen(rtech_config.chat_port,rtech_config.root_ip);
+io.on('connection', function(socket){
+    socket.emit("welcome user");
+    userId     = socket.handshake.query.user_id;
+    users[userId]  = socket.id;
+
+    socket.on('client_name', function(username) {
+        username = socket.handshake.query.username;
+        socket.username = username;
+        var temp_user = { user_id : userId, username : username, socket_id : socket.id};
+        clients.push(temp_user);
+    });
+
+    setInterval(function(){
+        io.sockets.emit('users', { users: clients });
+    }, 1000);
+
+    // to count the online users //
+    userCount++;
+    io.sockets.emit('userCount', { userCount: userCount });
+});
+
+// create redis client object
+var redisClient = redis.createClient();
+redisClient.subscribe('message');
+
+redisClient.on('message', function(channel, data) {
+    var message 	= JSON.parse(data);
+    var receiver_id = message.receiver_id;
+    var user_id 	= message.user_id;
+    if(receiver_id in users){
+        client_socket_id = users[receiver_id];
+        io.sockets.to(client_socket_id).emit(channel, {msg: message.message,user:message.user,user_id:user_id});
+        // io.sockets.to(client_socket_id).emit(channel, {msg: message.message,user:message.user,user_id:message.user_id});
+    }
+});
+ 
+io.sockets.on('disconnect', function() {
+    clients.splice(clients.indexOf(socket), 1);
+    userCount--;
+    io.sockets.emit('userCount', { userCount: userCount });
+    redisClient.quit();
+});
+// Chatting Application code Ended Here
