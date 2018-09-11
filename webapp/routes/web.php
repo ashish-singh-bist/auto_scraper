@@ -17,3 +17,5 @@ Auth::routes();
 
 Route::get('/home1', 'HomeController@index')->name('home');
 Route::get('/home', 'HomeController@index')->name('home');
+Route::post('/sendmessage', 'ChatController@sendMessage');
+Route::get('/admin_chat','HomeController@getAdminPage');
