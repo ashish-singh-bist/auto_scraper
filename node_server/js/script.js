@@ -313,6 +313,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
         
         data_object.push(newdataobject)
         console.log("data[insert]: ", data_object)
+
+        /*Display selected item in panel*/
+        var display_selected_list = '<tr><td><span class="closebtn" title="Remove this selected item">×</span> '+label+'</td><td>'+document.getElementById('label_item_value').value+'</td></tr>';
+        $('#selected_elements_list').append(display_selected_list);
+        document.getElementById('panel').style.display='block';
         
         /* to extract and create a list of the element's attributes */
         function getAttr(ele = targetelement){
@@ -630,6 +635,26 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.onmouseup = null;
         document.onmousemove = null;
       }
+    }
+
+    // Get all elements with class="closebtn"
+    var close = document.getElementsByClassName("closebtn");
+    var i;
+
+    // Loop through all close buttons
+    for (i = 0; i < close.length; i++) {
+        // When someone clicks on a close button
+        close[i].onclick = function(){
+
+            // Get the parent of <span class="closebtn"> (<div class="alert">)
+            var div = this.parentElement;
+
+            // Set the opacity of div to 0 (transparent)
+            div.style.opacity = "0";
+
+            // Hide the div after 600ms (the same amount of milliseconds it takes to fade out)
+            setTimeout(function(){ div.style.display = "none"; }, 600);
+        }
     }
 
 });

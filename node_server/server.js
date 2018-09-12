@@ -509,11 +509,11 @@ const rtech_config	= require(path.join(__dirname, 'config/config'));	//applicati
 					var contextmenu	= '<div id="context"><ul><li><div class="form-check"><label class="form-check-label"><input class=" perform_action" type="button" rel="selection_reset" name="selection_reset" id="selection_completed" value="Reset selection"><input class=" perform_action" type="button" rel="done_config" name="done_config" id="done_config" value="Create config"><input class=" perform_action" type="button" rel="select_id" name="select_id" id="select_id" value="Enter ID selector"><input class="block sm-col-4 field-light h3 label_input" style="display:none;" type="text" name="id_selector_text" placeholder="Input selector and press `Enter`" id="id_selector_text" /></label></div></li></ul></div>';
 					var labelinput	= '<div id="label_input"><ul><li><div class="form-check"><label class="form-check-label"><form class="form-inline"id="label_input_form"><input class="block sm-col-4 field-light h3 label_input" name="label_input_text" type="text" maxsize="30" placeholder="Label" id="label_input_text"/><textarea disabled class="block sm-col-4 field-light h3" id="label_item_value"></textarea><input class="perform_action" type="button" id="label_input_button" value="OK!"></form></label></div></li></ul></div>';
 					
-					var panel = '<div id="panel">  <div id="panelheader">Configuration Panel <span></span></div>';
-						panel += '<div id="label_input1" class="section"><div class="form-check"><label class="form-check-label"><form class="form-inline"id="label_input_form"><input class="block sm-col-4 field-light h3 label_input" name="label_input_text" type="text" maxsize="30" placeholder="Label" id="label_input_text"/><textarea class="block sm-col-4 field-light h3" id="label_item_value"></textarea><input class="perform_action" type="button" id="label_input_button" value="OK!"></form></label></div></div>';
-						panel += '</div>';
+					var panel = '<div id="panel">  <div id="panelheader">Configuration Panel <span></span></div> <table><thead><tr><th>Label</th><th>Description</th></tr></thead><tbody id="selected_elements_list"></tbody></table></div>';
+
+					var top_alert = '<div class="alert"><span class="closebtn">&times;</span> <ul><li>Please left click on the element to select and label it accordingly</li><li>Right click to perfom action</li></ul></div>';
 					
-					$('body').append(contextmenu, labelinput, panel);
+					$('body').append(contextmenu, labelinput, panel, top_alert);
 					//#================================================================
 
 					//#================================================================INJECT JS CODE
