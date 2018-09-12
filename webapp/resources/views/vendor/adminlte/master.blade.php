@@ -86,9 +86,9 @@
 @if (Auth::check())
 <script type="text/javascript">
     var config = {
-        "root_ip": "{{ env('NODE_SERVER_IP')}}",
-        "root_port": "{{ env('NODE_SERVER_PORT')}}",
-        "chat_port": "{{ env('NODE_SERVER_CHAT_PORT')}}",
+        "root_ip": "192.168.1.117",
+        "root_port": "8001",
+        "chat_port": "8001",
     };
 
     var user_id = '{{ Auth::user()->id }}';
@@ -99,11 +99,10 @@
 
 @yield('adminlte_js')
 
+@if (Auth::check())
 <!-- ChatJs  -->
-
-
 <script src="js/chat.js"></script>
-<!-- ChatJs  -->
+@endif
 
 </body>
 </html>

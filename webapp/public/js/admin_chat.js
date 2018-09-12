@@ -16,8 +16,8 @@ $(document).ready(function(){
         $( "#messages" ).append( "<li><strong>"+data.user+" :</strong><p>"+data.msg+"</p></li>" );
     });
 
-    socket.on('userCount', function (data) {
-        var total_user = data.userCount -1;
+    socket.on('user_count', function (data) {
+        var total_user = data.user_count - 1;
         $("#counter").text(total_user);
     });
 
@@ -25,9 +25,10 @@ $(document).ready(function(){
         $("#onlineusers").text('');
         if(data.users.length > 0){
             for(i =0; i< data.users.length; i++){
-                if(data.users[i]['user_id']!=user_id){
-                    $("#onlineusers").append("<li class='user_list' id='"+data.users[i]['user_id']+"'><i class='fa fa-circle' aria-hidden='true' style='font-size:11px;color:#0af90a;margin:5px;'></i><a href='#' id='"+data.users[i]['user_id']+"'>"+data.users[i]['username']+"</a></li>");
-                }
+                console.log(data.users[i].username);
+                // if(data.users[i]['user_id']!=user_id){
+                //     $("#onlineusers").append("<li class='user_list' id='"+data.users[i]['user_id']+"'><i class='fa fa-circle' aria-hidden='true' style='font-size:11px;color:#0af90a;margin:5px;'></i><a href='#' id='"+data.users[i]['user_id']+"'>"+data.users[i]['username']+"</a></li>");
+                // }
             }
         }
     });

@@ -3,27 +3,26 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-	//-- Adding CSRF Token to header --//
-	$.ajaxSetup({
+    //-- Adding CSRF Token to header --//
+    $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-    console.log($('meta[name="csrf-token"]').attr('content'));
 
-    var receiver_id = 0;
+    var receiver_id = 0;  //no receiver_id selected yet
     $(document.body).on('click', '.cw-leave-msg' ,function(){
-		//-- create socket.io connection with node server --//
+        //-- create socket.io connection with node server --//
         var token = $('meta[name="csrf-token"]').attr('content');
-		var connection_string = config.root_ip + ":"+config.chat_port+"/";
+        var connection_string = config.root_ip + ":"+config.chat_port+"/";
         var socket = io.connect(connection_string, {query: {user_id : user_id, username: user_name} });
         if(socket)
         {
-        	if(receiver_id ==0 && $('#userchats li').length == 0){
-        		$( "#userchats" ).append("<li><p>Hello "+user_name+", How Can I Assist You?</p></li>");
-        	}
-        	
-        	//-- emit username to the server --//
+            if(receiver_id ==0 && $('#userchats li').length == 0){
+                $( "#userchats" ).append("<li><p>Hello "+user_name+", How Can I Assist You?</p></li>");
+            }
+            
+            //-- emit username to the server --//
             socket.emit('client_name', user_name);
 
             // Sending Default message to the admin
@@ -47,14 +46,14 @@ $(document).ready(function(){
     $('.chat-messages-input').keypress(function(event){
     var keycode = (event.keyCode ? event.keyCode : event.which);
     if(keycode == '13'){
-    		event.preventDefault();
+            event.preventDefault();
             var token = $('meta[name="csrf-token"]').attr('content');
-	        var msg = $(".chat-messages-input").val();
-	        var data = {'message':msg,'user':user_name,'receiver_id':receiver_id};
-	        sendMessageToReceiver(data,token);
-	        $( "#userchats" ).append( "<li><strong>"+user_name+" :</strong><p>"+msg+"</p></li>" );
-	    }
-	});
+            var msg = $(".chat-messages-input").val();
+            var data = {'message':msg,'user':user_name,'receiver_id':receiver_id};
+            sendMessageToReceiver(data,token);
+            $( "#userchats" ).append( "<li><strong>"+user_name+" :</strong><p>"+msg+"</p></li>" );
+        }
+    });
 
     function sendMessageToReceiver(data,token){
         data._token = token;
