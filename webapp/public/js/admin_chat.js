@@ -7,44 +7,80 @@ $(document).ready(function(){
     });
 
     var receiver_id = 0;
-    var connection_string = config.root_ip + ":"+config.chat_port+"/";
-    var socket = io.connect(connection_string, {query: {user_id : user_id, username: user_name} });
+    var previous_receiver_id = 0;
+    var connection_string = config.root_ip + ":"+config.root_port+"/";
+    var socket = io.connect(connection_string, {query: {user_id : user_id, name: name} });
     
-    socket.emit('client_name', user_name);
+    socket.emit('set_client_name', name);
 
     socket.on('message', function (data) {
         $( "#messages" ).append( "<li><strong>"+data.user+" :</strong><p>"+data.msg+"</p></li>" );
     });
 
-    socket.on('user_count', function (data) {
+    socket.on('get_user_count', function (data) {
         var total_user = data.user_count - 1;
         $("#counter").text(total_user);
     });
 
-    socket.on('users',function(data){
+    socket.on('get_users',function(data){
         $("#onlineusers").text('');
         if(data.users.length > 0){
             for(i =0; i< data.users.length; i++){
-                console.log(data.users[i].username);
-                // if(data.users[i]['user_id']!=user_id){
-                //     $("#onlineusers").append("<li class='user_list' id='"+data.users[i]['user_id']+"'><i class='fa fa-circle' aria-hidden='true' style='font-size:11px;color:#0af90a;margin:5px;'></i><a href='#' id='"+data.users[i]['user_id']+"'>"+data.users[i]['username']+"</a></li>");
-                // }
+                if(data.users[i]['user_id']!=user_id){
+                    var active_class = "";
+                    if(receiver_id == data.users[i]['user_id']){
+                        active_class = "btn-warning";
+                    }
+                    else {
+                        active_class = "btn-primary";
+                    }
+
+                    $("#onlineusers").append("<li class='online_users'><button class='btn " + active_class + " user_list' ref_name='"+data.users[i]['name']+"' id='"+data.users[i]['user_id']+"'><i class='fa fa-circle' aria-hidden='true' style='font-size:11px;color:#0af90a;margin:5px;'></i>"+data.users[i]['name']+"</button></li>");
+
+                }
             }
         }
     });
-    
+
     $(document.body).on('click', '.user_list' ,function(){
+        var token = $('meta[name="csrf-token"]').attr('content');
+        $(".msg").val('');
+        $("#messages").empty();
         receiver_id = $(this).attr('id');
-        $("input[name='receiverid']").val(receiver_id);
+        // if(receiver_id!=previous_receiver_id){
+        //     if(previous_receiver_id!=0){
+        //         // var msg = 'Please wait to reconnect to our support team.';
+        //         // var data = {'message':msg,'user':name,'user_id':user_id,'receiver_id':previous_receiver_id};
+        //         // sendMessageToReceiver(data,token);
+        //     }
+        //     previous_receiver_id = receiver_id;
+        // }
+        var receiver_name = $(this).attr('ref_name');
+        $("#messages").append( "<li><strong>"+receiver_name+" :</strong> connected</li>" );
+       
+        var msg = 'Hello '+receiver_name+', How can i assist you?'
+        var data = {'message':msg,'user':name,'user_id':user_id,'receiver_id':receiver_id};
+        sendMessageToReceiver(data,token);
     });
 
     $(".send-msg").click(function(e){
-        e.preventDefault();
         var token = $('meta[name="csrf-token"]').attr('content');
         var msg = $(".msg").val();
-        var data = {'message':msg,'user':user_name,'user_id':user_id,'receiver_id':receiver_id};
+        if(receiver_id!=0){
+            var data = {'message':msg,'user':name,'user_id':user_id,'receiver_id':receiver_id};
+            sendMessageToReceiver(data,token);
+            $("#messages").append( "<li><strong>me :</strong><p>"+msg+"</p></li>" );
+        }
+    });
+
+    $(".disconnect-user").click(function(e){
+        var token = $('meta[name="csrf-token"]').attr('content');
+        var msg = "Thank you for your time. Incase any troble, feel free to contact us. Our support team will reach out to you via email.<a href='#' class='btn btn-info cw-leave-msg'>click to reconnect</a>";
+        var data = {'message':msg,'user':name,'user_id':0,'receiver_id':receiver_id};
         sendMessageToReceiver(data,token);
-        $( "#messages" ).append( "<li><strong>"+user_name+" :</strong><p>"+msg+"</p></li>" );
+        $(".msg").val('');
+        $("#messages").empty();
+        receiver_id = 0;
     });
 
     function sendMessageToReceiver(data,token){

@@ -14,33 +14,43 @@ $(document).ready(function(){
     $(document.body).on('click', '.cw-leave-msg' ,function(){
         //-- create socket.io connection with node server --//
         var token = $('meta[name="csrf-token"]').attr('content');
-        var connection_string = config.root_ip + ":"+config.chat_port+"/";
-        var socket = io.connect(connection_string, {query: {user_id : user_id, username: user_name} });
+        var connection_string = config.root_ip + ":"+config.root_port+"/";
+        var socket = io.connect(connection_string, {query: {user_id : user_id, name: name} });
         if(socket)
         {
-            if(receiver_id ==0 && $('#userchats li').length == 0){
-                $( "#userchats" ).append("<li><p>Hello "+user_name+", How Can I Assist You?</p></li>");
-            }
-            
             //-- emit username to the server --//
-            socket.emit('client_name', user_name);
-
-            // Sending Default message to the admin
-
-            // var msg="user want to communicate with you.";
-            // var data = {'message':msg,'user':user_name,'user_id':receiver_id};            
-            // sendMessageToReceiver(data);
-            // $( "#userchats" ).append( "<li><strong>"+user_name+" :</strong><p>"+msg+"</p></li>" );
+            socket.emit('set_client_name', name);
+            $( "#userchats" ).empty();
+            $(".chat-messages-input").val('');
+            $(".chat-messages-input").prop('disabled', true);
+            if(receiver_id ==0 && $('#userchats li').length == 0){
+                $( "#userchats" ).append("<li><p>Hello "+name+", connecting to the support team</p></li>");
+            }
 
             //-- Receive data from node server and append it in client window chat box --//
             socket.on('message', function (data) {
+                $(".chat-messages-input").prop('disabled', false);
                 receiver_id = data.user_id;
-                $( "#userchats" ).append( "<li><strong>"+data.user+" :</strong><p>"+data.msg+"</p></li>" );
+                console.log(data);
+                if(data.user_id==0){
+                    socket.disconnect();
+                    $( "#userchats" ).append( "<li><strong>"+data.msg+"</li>" );
+                    $(".chat-messages-input").val('');
+                    $(".chat-messages-input").prop('disabled', false);
+                }else{
+                    $( "#userchats" ).append( "<li><strong>"+data.user+" :</strong><p>"+data.msg+"</p></li>" );
+                    $(".chat-messages-input").val('');
+                    $(".chat-messages-input").prop('disabled', false);
+                }
             });
         }
         else{
             console.log("connection failed");
         }
+    });
+
+    $(document.body).on('click', '.reconnect-user' ,function(){
+
     });
 
     $('.chat-messages-input').keypress(function(event){
@@ -49,9 +59,9 @@ $(document).ready(function(){
             event.preventDefault();
             var token = $('meta[name="csrf-token"]').attr('content');
             var msg = $(".chat-messages-input").val();
-            var data = {'message':msg,'user':user_name,'receiver_id':receiver_id};
+            var data = {'message':msg,'user':name,'receiver_id':receiver_id};
             sendMessageToReceiver(data,token);
-            $( "#userchats" ).append( "<li><strong>"+user_name+" :</strong><p>"+msg+"</p></li>" );
+            $( "#userchats" ).append( "<li><strong>me :</strong><p>"+msg+"</p></li>" );
         }
     });
 

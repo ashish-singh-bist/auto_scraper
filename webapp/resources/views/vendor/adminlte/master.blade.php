@@ -85,14 +85,18 @@
 
 @if (Auth::check())
 <script type="text/javascript">
+    /*var config = {
+        "root_ip": "{{ env('NODE_SERVER_IP')}}",
+        "root_port": "{{ env('NODE_SERVER_PORT')}}",
+    };*/
+
     var config = {
         "root_ip": "192.168.1.117",
-        "root_port": "8001",
-        "chat_port": "8001",
-    };
+        "root_port": "5200",
+    };    
 
     var user_id = '{{ Auth::user()->id }}';
-    var user_name = '{{ Auth::user()->name }}';
+    var name = '{{ Auth::user()->name }}';
     var chat_post_url = '{!! URL::to("sendmessage") !!}';
 </script>
 @endif

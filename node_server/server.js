@@ -845,65 +845,58 @@ var redis = require('redis');
 
 var users  = {};
 var clients = [];
-//var user_count = 0;
-//var user_id=0;
-// Chatting Application Code Ended Here
+var userCount = 0;
+var user_id=0;
 
-// Chatting Application Code Started Here
 // Creating Connection for Client in Socket.io
 
 //server.listen(rtech_config.chat_port,rtech_config.root_ip);
+var socketList = new Array();
 io.on('connection', function(socket){
-    socket.emit("welcome user");
     user_id     = socket.handshake.query.user_id;
     users[user_id]  = socket.id;
+    socket.user_id = user_id;
 
-    socket.on('client_name', function(username) {
-        username = socket.handshake.query.username;
-        socket.username = username;
-        var temp_user = { user_id : user_id, username : username, socket_id : socket.id};
+    socket.on('set_client_name', function(name) {
+        full_name = socket.handshake.query.name;
+        //socket.full_name = full_name;
+        var temp_user = { user_id : user_id, name : full_name, socket_id : socket.id};
+        socket.user_info = temp_user;
         clients.push(temp_user);
     });
 
     setInterval(function(){
-        io.sockets.emit('users', { users: io.engine.clients });
-    }, 1000);
+        io.sockets.emit('get_users', { users: clients });
+    }, 5000);
 
     setInterval(function(){
-        io.sockets.emit('user_count', { user_count: io.engine.clientsCount });
-    }, 1000);    
+        io.sockets.emit('get_user_count', { user_count: io.engine.clientsCount });
+    }, 5000);
 
-    // to count the online users //
-    //user_count++;
+    socket.on('disconnect', function() {
+        var i = clients.indexOf(socket.user_info);
+        clients.splice(i, 1);
+        delete users[socket.user_id];
+        console.log('user disconnected');
+        console.log(users);
+        console.log(clients);
+    });
 });
 
 // create redis client object
 var redisClient = redis.createClient();
 redisClient.subscribe('message');
 
+// Send Message to the receiver
 redisClient.on('message', function(channel, data) {
-    console.log(users);
     var message     = JSON.parse(data);
     var receiver_id = message.receiver_id;
     var user_id     = message.user_id;
     if(receiver_id in users){
         client_socket_id = users[receiver_id];
         io.sockets.to(client_socket_id).emit(channel, {msg: message.message,user:message.user,user_id:user_id});
-        // io.sockets.to(client_socket_id).emit(channel, {msg: message.message,user:message.user,user_id:message.user_id});
     }
 });
- 
-io.sockets.on('disconnect', function(socket) {
-    //clients.splice(clients.indexOf(socket), 1);
-    //user_count--;
-    //io.sockets.emit('user_count', { user_count: io.engine.clientsCount });
-    //redisClient.quit();
-    socket.on('disconnect', function() { 
-        console.log(socket.id + ' disconnected');
-        //remove user from db
-    });
-});
 // Chatting Application code Ended Here
-
 
 server.listen(rtech_config.root_port,() => console.log('Example app listening on port '+rtech_config.root_port))
