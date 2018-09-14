@@ -6,7 +6,7 @@ $( document ).ready(function(){
 	$('.parse-btn').prop('disabled', true);
 
 	//declaring reqired variables
-	var url_list_array = [], parsedJson = [];
+	var url_list_array = [], parsedJson = [], csv_arr = [];
 	var extracted_host_name, flag, process_host_name, argument_analyze_, url_post_part;
 	var windowOpenWith = 'http://' + config.root_ip + ':' + config.root_port;
 
@@ -248,16 +248,23 @@ $( document ).ready(function(){
 						parsedJson = res.data;
 				 		html = "<table class='table table-bordered table-striped capitalised'>"
 						parsedJson.forEach(function (obj, index) {
+							var row = [];
 							if( index == 0 ){
 								html += "<tr>";
+								
 								for (var key in obj) {
-									if (obj.hasOwnProperty(key)) 
+									if (obj.hasOwnProperty(key)){ 
+										row.push('"'+key+'"');
 										html += "<th>" + key + "</th>";
+									}
 								}
+								csv_arr.push(row.join(","));
+								row = [];
 								html += "</tr>";
 							}
 							
 							html += "<tr>";
+							
 							for (var key in obj) {
 								if (obj.hasOwnProperty(key)){
 									if( key == 'url' ){
@@ -265,10 +272,14 @@ $( document ).ready(function(){
 										if (trim_title.length > 29 )
 											trim_title = trim_title.substring(0, 28)+"...";
 										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + trim_title + "</a></td>";
-									}else
+										row.push('"'+obj[key]+'"');
+									}else{
 										html += "<td>" + obj[key] + "</td>";
+										row.push('"'+obj[key]+'"');
+									}
 								}
 							}
+							csv_arr.push(row.join(","));
 							html += "</tr>";
 						});
 						html += "</table>";
@@ -324,4 +335,20 @@ $( document ).ready(function(){
 			}, 100);
 		}
 	}
+
+	function export_table_to_csv() {
+        rawData = csv_arr.join("\n");
+        csvFile = new Blob([rawData], {type: "text/csv"});
+        downloadLink = document.createElement("a");
+        downloadLink.download = 'scraped_data.csv';
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+    }
+
+	$('#download_csv').click(function(){
+		export_table_to_csv();
+	});
+
 });

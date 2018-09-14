@@ -68,6 +68,7 @@
                     </div>
                     <div class="box-footer">
                         <a href="/" class="btn btn btn-primary">Back</a>
+                        <button id="download_csv" disabled="" class="btn btn-primary parse-btn" title="Download As CSV">Download As CSV</button>
                     </div>
                 </div>
             </div>
