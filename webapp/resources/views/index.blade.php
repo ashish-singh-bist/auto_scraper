@@ -82,8 +82,8 @@
         var USER_ID = {{ Auth::user()->id }};
 
         var config = {
-            "root_ip": "{{ env('NODE_SERVER_IP')}}",
-            "root_port": "{{ env('NODE_SERVER_PORT')}}",
+            "root_ip": "{{ config('app.node_server_ip') }}",
+            "root_port": "{{ config('app.node_server_port') }}",
         };
     </script>
     <script src="js/index.js"></script>

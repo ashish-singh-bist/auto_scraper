@@ -211,4 +211,7 @@ return [
 
     ],
 
+    'node_server_ip' => env('NODE_SERVER_IP', ''),
+    'node_server_port' => env('NODE_SERVER_PORT', ''),
+
 ];
