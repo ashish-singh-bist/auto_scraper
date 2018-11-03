@@ -320,21 +320,26 @@ document.addEventListener("DOMContentLoaded", function(event) {
         while( (child = child.previousSibling) != null ) // to get the index of the element in its parent's child list
             i++;
         label = label.trim().replace(/\s+/g, '_');
-        newdataobject["key"]	= label;
-        // newdataobject["value"]	= targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
-        newdataobject["tag"]    = targetelement.tagName.toLowerCase();
-        newdataobject["xpath"]	= x_paths;
-        newdataobject["attributes"]	= getAttr();
-        newdataobject["children"]	= targetelement.childElementCount;
-        newdataobject["child_index"]= i;
-        
-        var temp_parent_xpath	=  x_paths.split('/');
-        	temp_parent_xpath.pop();
-        newdataobject["parent_xpath"]		= temp_parent_xpath.join('/');
-        newdataobject["parent_attributes"]  = getAttr(targetelement.parentElement);
-        newdataobject["parent_tag"]         = targetelement.parentElement.tagName.toLowerCase();
-        if(document.getElementById('advance_code_input_text').value)
+
+        if(document.getElementById('advance_code_input_text').value){
+            newdataobject["key"]    = label;
             newdataobject["code_to_inject"] = document.getElementById('advance_code_input_text').value;
+        }
+        else{
+            newdataobject["key"]    = label;
+            // newdataobject["value"]   = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
+            newdataobject["tag"]    = targetelement.tagName.toLowerCase();
+            newdataobject["xpath"]  = x_paths;
+            newdataobject["attributes"] = getAttr();
+            newdataobject["children"]   = targetelement.childElementCount;
+            newdataobject["child_index"]= i;
+            
+            var temp_parent_xpath   =  x_paths.split('/');
+                temp_parent_xpath.pop();
+            newdataobject["parent_xpath"]       = temp_parent_xpath.join('/');
+            newdataobject["parent_attributes"]  = getAttr(targetelement.parentElement);
+            newdataobject["parent_tag"]         = targetelement.parentElement.tagName.toLowerCase();    
+        }
         
         data_object.push(newdataobject)
         console.log("data[insert]: ", data_object)
@@ -385,10 +390,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var parent_tag  = obj.parent_tag;
 			var element_flag = false;
 			
+            console.log(obj.code_to_inject);
             if ('code_to_inject' in obj){
+            console.log(obj.code_to_inject);
+
                 var data_key = obj.key;                
                 var html = document.documentElement.innerHTML;
-                printable_data[data_key] = eval(obj.code_to_inject);                  
+                printable_data[data_key] = eval(obj.code_to_inject);
             }
 			/* finding element via `id` */
 			else if('id' in element_attributes){
