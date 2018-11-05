@@ -8,8 +8,9 @@ const cheerio   = require('cheerio');
 const bodyParser= require('body-parser');
 const csv       = require('fast-csv');
 
-const header    = require(path.join(__dirname, 'js/headers'));          //code to clean our headers from invalid characters
-const rtech_config  = require(path.join(__dirname, 'config/config'));   //application config
+const header    = require(path.join(__dirname, 'js/headers'));          // code to clean our headers from invalid characters
+const rtech_config  = require(path.join(__dirname, 'config/config'));   // application config
+//const mongo_db  = require(path.join(__dirname, 'Mongodb.js'));          // Import Mongodb file in server.js
 
 //#================================================================CONFIGURING NODE `APP`
     // parse application/x-www-form-urlencoded
@@ -859,7 +860,6 @@ io.on('connection', function(socket){
 
     socket.on('set_client_name', function(name) {
         full_name = socket.handshake.query.name;
-        //socket.full_name = full_name;
         var temp_user = { user_id : user_id, name : full_name, socket_id : socket.id};
         socket.user_info = temp_user;
         clients.push(temp_user);
@@ -878,8 +878,6 @@ io.on('connection', function(socket){
         clients.splice(i, 1);
         delete users[socket.user_id];
         console.log('user disconnected');
-        console.log(users);
-        console.log(clients);
     });
 });
 
@@ -895,6 +893,8 @@ redisClient.on('message', function(channel, data) {
     if(receiver_id in users){
         client_socket_id = users[receiver_id];
         io.sockets.to(client_socket_id).emit(channel, {msg: message.message,user:message.user,user_id:user_id});
+        // Code to save data in mongodb
+        //var mongo_obj = mongo_db.recInsert("chat_details",{'sender_id':user_id,'receiver_id':receiver_id,'message':message.message});
     }
 });
 // Chatting Application code Ended Here

@@ -85,19 +85,20 @@
 
 @if (Auth::check())
 <script type="text/javascript">
-    /*var config = {
-        "root_ip": "{{ env('NODE_SERVER_IP')}}",
-        "root_port": "{{ env('NODE_SERVER_PORT')}}",
-    };*/
+    // var config = {
+    //     "root_ip": "{{ env('NODE_SERVER_IP')}}",
+    //     "root_port": "{{ env('NODE_SERVER_PORT')}}",
+    // };
 
     var config = {
         "root_ip": "192.168.1.117",
-        "root_port": "5200",
+        "root_port": "6001",
     };    
 
     var user_id = '{{ Auth::user()->id }}';
     var name = '{{ Auth::user()->name }}';
     var chat_post_url = '{!! URL::to("sendmessage") !!}';
+    var chat_history_url = '{!! URL::to("chathistory") !!}';
 </script>
 @endif
 
@@ -105,6 +106,7 @@
 
 @if (Auth::check())
 <!-- ChatJs  -->
+<link rel="stylesheet" href="css/chat.css" type="text/css" />
 <script src="js/chat.js"></script>
 @endif
 
