@@ -1,5 +1,6 @@
 .htaccess
 .htpasswd
+/vendor/
 node_server/.htaccess
 node_server/.htpasswd
 node_server/apachelog/
