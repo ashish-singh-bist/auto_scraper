@@ -501,15 +501,20 @@ connection.connect();
 
 					//#================================================================INJECT CSS CODE
 					//for hover/selection border, and css for menu
-					var customcss = '<link href="http://'+use_ip+'/css/from-the-page.css" rel="stylesheet">'
+					var customcss = '<link href="http://'+use_ip+'/css/from-the-page.css" rel="stylesheet">';
 					$('head').append(customcss);
 					//#================================================================
 
 					//#================================================================INJECT HTML CODE
-					var contextmenu	= '<div id="context"><ul><li><div class="form-check"><label class="form-check-label"><input class=" perform_action" type="button" rel="selection_reset" name="selection_reset" id="selection_completed" value="Reset selection"><input class=" perform_action" type="button" rel="done_config" name="done_config" id="done_config" value="Create config"><input class=" perform_action" type="button" rel="select_id" name="select_id" id="select_id" value="Enter ID selector"><input class="block sm-col-4 field-light h3 label_input" style="display:none;" type="text" name="id_selector_text" placeholder="Input selector and press `Enter`" id="id_selector_text" /></label></div></li></ul></div>';
-					var labelinput	= '<div id="label_input"><ul><li><div class="form-check"><label class="form-check-label"><form class="form-inline"id="label_input_form"><input class="block sm-col-4 field-light h3 label_input" name="label_input_text" type="text" maxsize="30" placeholder="Label" id="label_input_text"/><textarea disabled class="block sm-col-4 field-light h3" id="label_item_value"></textarea><input class="perform_action" type="button" id="label_input_button" value="OK!"></form></label></div></li></ul></div>';
+					var contextmenu	= '<div id="context" class="avoid-ele"><span class="close-btn_">&times;</span><ul><li><div class="form-check"><label class="form-check-label"><input class=" perform_action" type="button" rel="selection_reset" name="selection_reset" id="selection_completed" value="Reset selection"><input class=" perform_action" type="button" rel="done_config" name="done_config" id="done_config" value="Create config"><input class=" perform_action" type="button" rel="select_id" name="select_id" id="select_id" value="Enter ID selector"><input class="block sm-col-4 field-light h3 label_input" style="display:none;" type="text" name="id_selector_text" placeholder="Input selector and press `Enter`" id="id_selector_text" /></label></div></li></ul></div>';
+					var labelinput	= '<div id="label_input" class="avoid-ele"><span class="close-btn_">&times;</span><ul><li><div class="form-check"> <label class="form-check-label"><form class="form-inline" id="label_input_form"> <input class="block sm-col-4 field-light h3 label_input" name="label_input_text" type="text" maxsize="30" placeholder="Label" id="label_input_text" /><textarea disabled class="block sm-col-4 field-light h3" id="label_item_value"></textarea><textarea class="" name="label_input_text" placeholder="Advance code" id="advance_code_input_text"></textarea> <input class="perform_action" type="button" id="label_input_button" value="OK!"></form> </label></div></li></ul></div>';
 					
-					$('body').append(contextmenu, labelinput);
+					var panel = '<div id="panel" class="avoid-ele">  <div id="panelheader">Configuration Panel <span id="panelmm" title="Click & Drag"></span></div> <div id="panelbody"><table id="panel-table"><thead id="panel-table-thead"><tr><th></th><th>Label</th><th>Value</th></tr></thead><tbody id="selected_elements_list"></tbody></table><button id="help-btn">Need Help ?</button></div></div>';
+
+					var top_alert = '<div class="msg-panel avoid-ele"></div>';
+					var help_block = '<div id="help_block" class="help-block avoid-ele"><div id="help-modal" class="modal"><div class="modal-content"><div class="modal-header"><span class="close-help-modal">&times;</span><h3>Help </h3></div><div class="modal-body"><ul><li>Please left click on the element to select and label it accordingly</li><li>Right click to perfom action</li></ul></div></div></div></div>';
+					
+					$('body').append(contextmenu, labelinput, panel, top_alert, help_block);
 					//#================================================================
 
 					//#================================================================INJECT JS CODE
