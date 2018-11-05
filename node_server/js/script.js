@@ -352,8 +352,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var parent_tag  = obj.parent_tag;
 			var element_flag = false;
 			
+            if ('code_to_inject' in obj){
+                var data_key = obj.key;                
+                var html = document.documentElement.innerHTML;
+                printable_data[data_key] = eval(obj.code_to_inject);                  
+            }
 			/* finding element via `id` */
-			if('id' in element_attributes){
+			else if('id' in element_attributes){
 				var element = document.getElementById(element_attributes['id']);
 				if(element){
 					element_flag = true;
@@ -432,8 +437,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					if(candidate_parent)
 						return candidate_parent
 				}
-			}
-			
+			}			
 		}
 
 		/* if parent has `class` */
