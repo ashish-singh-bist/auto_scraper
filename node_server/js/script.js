@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         event.stopPropagation();
 
         let label = document.getElementById('label_input_text').value;
+        label = label.trim().replace(/\s+/g, '_');
 
         if(label != '')
         	selectElement(x_paths, label);
@@ -98,31 +99,40 @@ document.addEventListener("DOMContentLoaded", function(event) {
     /* function for handeling clicks on left-click-menu items */
     function clickevent(event){
         //the elemnts on which the left click functionality (of showing label input box) should not work
-        var avoid_element_id = ['label_input_text', 'label_input_button', 'selection_completed', 'done_config', 'select_id', 'id_selector_text']
-        
-        if(avoid_element_id.indexOf(event.target.getAttribute('id')) === -1){
+        // var avoid_element_id = ['label_input_text', 'label_input_button', 'selection_completed', 'done_config', 'select_id', 'id_selector_text', 'panel', 'panelheader', 'panel-table', 'panel-table-thead']
+        // var _classes_str = event.target.getAttribute('class');
+        // console.log(event.target.closest(".avoid-ele"));
+        // var _classes_arr = _classes_str.split(" ");
+                
+        // if(_classes_arr.indexOf('avoid-ele') === -1){
+        if(event.target.closest(".avoid-ele") == null){
             if(document.getElementById("context").style.display === 'block'){
                 document.getElementById("context").style.display = "none";
             }
         
             document.getElementById('label_input_text').value = '';
+            document.getElementById('advance_code_input_text').value = '';
             document.getElementById('label_input_text').setAttribute('placeholder','Label');
+            document.getElementById('label_input_text').style.borderColor = '#ccc';
             
             getXPath(event.target);
             checkForClass(x_paths, event.pageX, event.pageY); 
-        }        
+        } 
     }
 
     /* function for displaying rightclick menu */
     function rightclickevent(event){
-        if(document.getElementById("label_input").style.display === 'block'){
-            document.getElementById("label_input").style.display = "none";
-        }
-
         event.preventDefault();
-        document.getElementById('id_selector_text').setAttribute('style', 'display:none;');
-        document.getElementById('id_selector_text').value = '';
-        document.getElementById('context').setAttribute('style', 'display:block; left:'+event.pageX+'px;top:'+event.pageY+'px;');
+        if(event.target.closest(".avoid-ele") == null){
+            if(document.getElementById("label_input").style.display === 'block'){
+                document.getElementById("label_input").style.display = "none";
+            }
+
+            // event.preventDefault();
+            document.getElementById('id_selector_text').setAttribute('style', 'display:none;');
+            document.getElementById('id_selector_text').value = '';
+            document.getElementById('context').setAttribute('style', 'display:block; left:'+event.pageX+'px;top:'+event.pageY+'px;');
+        }
     }
 
     /* function for adding border on hover */
@@ -153,6 +163,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	            	selected_items[0] = selected_items[0].classList.remove('option-selected');
 
             document.getElementById('context').style.display = 'none';
+            resetConfigurationPanelData();
 	    }else if(action === 'selection_type'){
 
             localStorage.setItem('detailpageflag', '1');
@@ -225,11 +236,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
         var targetelement = document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
         var classexistsflag = checkElement(targetelement);
 
+        console.log('classexistsflag - '+classexistsflag);
+
         if(classexistsflag){
             /* if already selected, unselect it and don't display label input box */
-            document.getElementById('label_input').style.display = 'none';
-            targetelement.classList.remove('option-selected');
-            unselectElement(targetelement.getAttribute('labelkey'));
+            // alert('Already Selected, See Highlight record in table');
+            var _key = targetelement.getAttribute('labelkey');
+            showMessage( _key, 'already selected, see record in table', 'danger' );
+            document.getElementById("context").style.display = "none";
+            document.getElementById("label_input").style.display = "none";
+            // document.getElementById('label_input').style.display = 'none';
+            // targetelement.classList.remove('option-selected');
+            dataHighlighter(_key);
         }else{
             /* if not selected, select it and display the label input box, so that user can enter a label */
             document.getElementById('label_input').setAttribute('style', 'display:block; left:'+x+'px;top:'+y+'px;');
@@ -276,14 +294,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
     	for(var x=0; x< data_object.length; x++){
     		if(data_object[x]["key"] === label){
     			key_flag = true;
-    			document.getElementById('label_input').setAttribute('color','red');
+    			// document.getElementById('label_input').setAttribute('color','red');
     			document.getElementById('label_input_text').value = '';
-    			document.getElementById('label_input_text').setAttribute('placeholder','Key already exists');
+                document.getElementById('advance_code_input_text').value = '';
+                document.getElementById('label_input_text').style.borderColor = 'red';
+                showMessage( label, ' is duplicate name, see record in table', 'danger' );
+                dataHighlighter(label);
     		}
     	}
     	if(!key_flag){
     		var targetelement = document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 	        targetelement.classList.add('option-selected');
+            console.log('label - '+label);
+            targetelement.classList.add('opt_selected_'+label);
 	        targetelement.setAttribute('labelkey', label);
 	        postElement(label, targetelement);
     	}
@@ -296,23 +319,37 @@ document.addEventListener("DOMContentLoaded", function(event) {
         let i = 0;
         while( (child = child.previousSibling) != null ) // to get the index of the element in its parent's child list
             i++;
-        
-        newdataobject["key"]	= label;
-        // newdataobject["value"]	= targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
-        newdataobject["tag"]    = targetelement.tagName.toLowerCase();
-        newdataobject["xpath"]	= x_paths;
-        newdataobject["attributes"]	= getAttr();
-        newdataobject["children"]	= targetelement.childElementCount;
-        newdataobject["child_index"]= i;
-        
-        var temp_parent_xpath	=  x_paths.split('/');
-        	temp_parent_xpath.pop();
-        newdataobject["parent_xpath"]		= temp_parent_xpath.join('/');
-        newdataobject["parent_attributes"]  = getAttr(targetelement.parentElement);
-        newdataobject["parent_tag"]         = targetelement.parentElement.tagName.toLowerCase();
+        label = label.trim().replace(/\s+/g, '_');
+
+        if(document.getElementById('advance_code_input_text').value){
+            newdataobject["key"]    = label;
+            newdataobject["code_to_inject"] = document.getElementById('advance_code_input_text').value;
+        }
+        else{
+            newdataobject["key"]    = label;
+            // newdataobject["value"]   = targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ');
+            newdataobject["tag"]    = targetelement.tagName.toLowerCase();
+            newdataobject["xpath"]  = x_paths;
+            newdataobject["attributes"] = getAttr();
+            newdataobject["children"]   = targetelement.childElementCount;
+            newdataobject["child_index"]= i;
+            
+            var temp_parent_xpath   =  x_paths.split('/');
+                temp_parent_xpath.pop();
+            newdataobject["parent_xpath"]       = temp_parent_xpath.join('/');
+            newdataobject["parent_attributes"]  = getAttr(targetelement.parentElement);
+            newdataobject["parent_tag"]         = targetelement.parentElement.tagName.toLowerCase();    
+        }
         
         data_object.push(newdataobject)
         console.log("data[insert]: ", data_object)
+
+        /*Display selected item in panel*/
+        var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('label_item_value').value+'</td></tr>';
+        $('#selected_elements_list').append(display_selected_list);
+        document.getElementById('panel').style.display='block';
+        showMessage( label, 'label successfuly added, see record in table', 'success' );
+        dataHighlighter(label);
         
         /* to extract and create a list of the element's attributes */
         function getAttr(ele = targetelement){
@@ -327,6 +364,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
         document.getElementById('label_input').style.display = 'none';
         document.getElementById('label_input_text').value = '';
+        document.getElementById('advance_code_input_text').value = '';
     }
 
     /* this function is used to remove an element from `data_object` when we unselect it */
@@ -352,17 +390,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var parent_tag  = obj.parent_tag;
 			var element_flag = false;
 			
+            console.log(obj.code_to_inject);
             if ('code_to_inject' in obj){
+            console.log(obj.code_to_inject);
+
                 var data_key = obj.key;                
                 var html = document.documentElement.innerHTML;
-                printable_data[data_key] = eval(obj.code_to_inject);                  
+                printable_data[data_key] = eval(obj.code_to_inject);
             }
 			/* finding element via `id` */
 			else if('id' in element_attributes){
 				var element = document.getElementById(element_attributes['id']);
 				if(element){
 					element_flag = true;
-					autoSelectElement(element, element_key, element_xpath);
+					autoSelectElement(element, element_key, element_xpath, element_attributes);
 					continue;
 				}
 			}else{
@@ -376,13 +417,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     var candidate_parent 	= returnparent(parent_attributes, parent_xpath, parent_tag);
 					if(candidate_elements.length === 1 && candidate_elements[0] != null){
 						element_flag = true;
-						autoSelectElement(candidate_elements[0], element_key, element_xpath);
+						autoSelectElement(candidate_elements[0], element_key, element_xpath, element_attributes);
 					}else if(candidate_elements.length > 1){
 						var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
 						for(var x=0; x< candidate_elements.length; x++){
 							if(candidate_elements[x].parentElement === candidate_parent){
 								element_flag = true;
-								autoSelectElement(candidate_elements[x], element_key, element_xpath);
+								autoSelectElement(candidate_elements[x], element_key, element_xpath, element_attributes);
 								break;
 							}
 						}
@@ -390,7 +431,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 						candidate_element = document.evaluate(element_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 						if(candidate_element != null){
 							element_flag = true;
-							autoSelectElement(candidate_element, element_key, element_xpath);
+							autoSelectElement(candidate_element, element_key, element_xpath, element_attributes);
 						}
 					}
 				}else{
@@ -399,7 +440,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     //check if parent attributes in config is equal to candidate parents extracted attributes
                     if(candidate_parent && JSON.stringify(postGetAttr(candidate_parent)) === JSON.stringify(parent_attributes)){
                         var candidate_element = candidate_parent.childNodes[element_index];
-                        autoSelectElement(candidate_element, element_key, element_xpath);
+                        autoSelectElement(candidate_element, element_key, element_xpath, element_attributes);
                     }
                     
                 }
@@ -411,7 +452,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
 					if(candidate_parent && candidate_parent == candidate_element.parentElement){
 						element_flag = true;
-						autoSelectElement(candidate_element, element_key, element_xpath);
+						autoSelectElement(candidate_element, element_key, element_xpath, element_attributes);
 					}
 					
 				}
@@ -521,10 +562,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	}
 
 	/* select element */
-	function autoSelectElement(ele, label, path){
+	function autoSelectElement(ele, label, path, ele_attributes){
 		var targetelement = ele;
+        console.log('targetelement'+targetelement);
+        var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
 		targetelement.classList.add('option-selected');
+        targetelement.classList.add('opt_selected_'+label);
 		targetelement.setAttribute('labelkey', label);
+        var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+value+'</td></tr>';
+        $('#selected_elements_list').append(display_selected_list);
+        document.getElementById('panel').style.display='block';
         if(editmode == undefined){
             autoPostElement(label, targetelement, path);
         }
@@ -592,4 +639,140 @@ document.addEventListener("DOMContentLoaded", function(event) {
         });
     }
 
+    //Make the DIV element draggagle:
+    dragElement(document.getElementById("panel"));
+
+    function dragElement(elmnt) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      if (document.getElementById(elmnt.id + "header")) {
+        /* if present, the header is where you move the DIV from:*/
+        document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+      } else {
+        /* otherwise, move the DIV from anywhere inside the DIV:*/
+        elmnt.onmousedown = dragMouseDown;
+      }
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        /* stop moving when mouse button is released:*/
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+    // Get all elements with class="closebtn"
+    var close = document.getElementsByClassName("closebtn");
+    var i;
+
+    // Loop through all close buttons
+    // for (i = 0; i < close.length; i++) {
+    //     // When someone clicks on a close button
+    //     close[i].onclick = function(ele){
+
+    //         var table_length = document.getElementById("panel-table").rows.length; 
+    //         if( table_length == 0){
+    //             document.getElementById('panel').style.display='none';
+    //         }
+
+    //         // Get the parent of <span class="closebtn"> (<div class="alert">)
+    //         this.classList.remove('option-selected');
+    //         var key_ = this.getAttribute('key');
+    //         unselectElement(key_);
+    //         var div = this.parentElement.parentElement;
+    //         // Set the opacity of div to 0 (transparent)
+    //         div.style.opacity = "0";
+            
+    //         // Hide the div after 600ms (the same amount of milliseconds it takes to fade out)
+    //         setTimeout(function(){ 
+    //             div.style.display = "none";
+    //             document.getElementById('context').style.display = 'none';
+    //             document.getElementById('label_input').style.display = 'none';
+    //         }, 300);
+    //     }
+    // }
+    $(document).on('click', '.close-btn_', function(){
+        document.getElementById('context').style.display = 'none';
+        document.getElementById('label_input').style.display = 'none';
+    });
+    $(document).on('click', '.closebtn', function(){
+            var _key = this.getAttribute('key');
+            unselectElement(_key);
+            $('.opt_selected_'+_key).removeClass("option-selected");
+            var i = this.parentNode.parentNode.rowIndex;
+            document.getElementById("panel-table").deleteRow(i);
+            document.getElementById('context').style.display = 'none';
+            document.getElementById('label_input').style.display = 'none';
+            var rowCount = document.getElementById("panel-table").rows.length;
+            if( rowCount == 1){
+                document.getElementById('panel').style.display='none';
+            }
+            showMessage( _key, 'is successfuly removed', 'info' );
+    });
+    $(document).on('click', '.alert-closebtn', function(){
+        var div = this.parentElement;
+        div.style.opacity = "0";
+        div.style.display = "none";
+    });
+
+    function resetConfigurationPanelData(){
+        showMessage('', '<strong>All records are delete.</strong>', 'success');
+        var rowCount = document.getElementById("panel-table").rows.length;
+        for (var i = rowCount - 1; i > 0; i--) {
+            document.getElementById("panel-table").deleteRow(i);
+        }
+        document.getElementById('panel').style.display='none';
+    }
+
+    function dataHighlighter(key, duration=6000){
+        $('.'+key+'_tr').addClass('highlight-rec');
+        setTimeout(function(){
+            $('.'+key+'_tr').removeClass('highlight-rec');
+        },duration);
+    }
+    function showMessage(key, msg, type, duration=10000){
+        var _id = key + '_xxx_' + new Date().getTime();
+        var _html = '<div id="'+_id+'" class="alert alert-'+type+' fade in alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close" title="close">×</a>';
+        if(key)
+            _html += '<strong>' + key + '</strong>&nbsp;'+ msg;
+        else
+            _html += msg;
+        _html += '</div>';
+        $('.msg-panel').append(_html); 
+        setTimeout(function(){
+            $('#'+_id).fadeOut('slow');
+        },duration);
+    }
 });
+var modal = document.getElementById('help-modal');
+var btn = document.getElementById("help-btn");
+var span = document.getElementsByClassName("close-help-modal")[0];
+btn.onclick = function() { modal.style.display = "block"; }
+span.onclick = function() { modal.style.display = "none"; }
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
