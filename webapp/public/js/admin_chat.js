@@ -194,4 +194,16 @@ $(document).ready(function(){
             alert("Please Add Message.");
         }
     }
+
+    $('#admin_search_users').bind('keyup', function() {
+        var searchString = $(this).val();
+        $("#onlineusers li").each(function(index, value) {
+            currentName = $(value).attr('ref_name');
+            if( currentName.toUpperCase().indexOf(searchString.toUpperCase()) > -1) {
+               $(value).show();
+            } else {
+                $(value).hide();
+            } 
+        });
+    });
 });

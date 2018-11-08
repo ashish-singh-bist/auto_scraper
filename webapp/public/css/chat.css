@@ -145,7 +145,7 @@
   border: none;
   color: white;
   font-size: 14px;
-  padding: 14px;
+  padding: 14px 14px 14px 45px;
   width: 100%;
 }
 
@@ -154,7 +154,7 @@
     font-size: 20px;
     padding: 14px;
     position: absolute;
-    right: 20px;
+    left: 35px;
     top: 20px;
 }
 
@@ -332,10 +332,29 @@
   height: 0;
 }
 @media screen and (max-width: 767px) {
+    .admin-chat-panel{
+      padding: 25px;
+    }
+    .admin-chat-panel .admin-chat-box{
+      background-color: transparent;
+    }
+    .admin-chat-panel .chat .chat-history,
+    .admin-chat-panel .chat .chat-message{
+      padding: 5px;
+    }
     .admin-chat-panel .chat-box{
-        padding-left: inherit;
+        padding-left: 15px;
     }
     .admin-chat-panel .people-box{
-        padding-right: inherit;
+        padding-right: 15px;
+        margin-bottom: 20px;
     }
+    .admin-chat-panel .chat{
+      border-radius: 5px;
+    }
+    #people-list{
+      background: #444753;
+      border-radius: 5px;
+    }
+
 }

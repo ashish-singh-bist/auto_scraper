@@ -18,7 +18,7 @@
             <div class="col-sm-4 col-sm-4 people-box">
                 <div class="people-list" id="people-list">
                     <div class="search">
-                        <input type="text" placeholder="Search" />
+                        <input type="text" placeholder="Search" title="Search User" id="admin_search_users" />
                         <i class="fa fa-search"></i>
                     </div>
                     <ul class="list" id="onlineusers"></ul>
