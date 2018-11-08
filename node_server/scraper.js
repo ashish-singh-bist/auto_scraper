@@ -12,17 +12,19 @@ var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'storage/prod
 
 var timeout_1, timeout_2;
 
-createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.user_id + 'started' + '\r\n');
+createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.user_id + ' started' + '\n');
 
 /*_________________________STEP 1____________________________________*/
 	async function run() {
 		//declaring the browser which will be opened
-	 	// const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); //for OVH
+
+	 	//const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); //for OVH
 	 	//const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
 	 	const browser = await puppeteer.launch();
-        //createLog('puppeteer launch, browser open' + '\r\n');
+        //createLog('puppeteer launch, browser open' + '\n');
 
-	 	//declaring the variables which will be used in the loop to run and open the pages
+		//declaring the variables which will be used in the loop to run and open the pages
+
 	 	var batches =0, list_length =url_list_array.length, lower_limit =0, upper_limit =list_length >=10? 10:list_length, count=0;
         	    
         //createLog('loop started' + '\r\n');
@@ -36,12 +38,14 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		                if(url_list_array[i].indexOf('?') > -1){
 		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
 		                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id ;
+		                    console.log("====" + str);
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                    
 		                }else{
 		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
 		                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id ;
+		                    console.log("====" + str);
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                }
@@ -76,12 +80,14 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		                if(url_list_array[i].indexOf('?') > -1){
 		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
 		                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id;
+		                    console.log("====" + str);
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                
 		                }else{
 		                	let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
 		                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id;
+		                    console.log("====" + str);
 		                    page = await browser.newPage();
 							await page.goto(str);
 		                }
