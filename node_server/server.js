@@ -586,12 +586,14 @@ connection.connect();
 	}
 
 
-	function writeSession(userId, writeSess){		
-		var session = readSession(userId);		
+	function writeSession(userId, writeSess){
+		var session = readSession(userId);
+
 		if (session === ''){	
 			session = {};
 		}		
-		for (var key in writeSess) {			
+
+		for (var key in writeSess) {
 		    if (writeSess.hasOwnProperty(key)) {           
 		        session[key] = writeSess[key];
 		        //console.log(key, writeSess[key]);
@@ -607,7 +609,9 @@ connection.connect();
 	function readSession(userId){
 		if(fileSystem.existsSync(path.join(__dirname, 'storage/sess_dir/session_'+userId+'.json'))){
 			var sessContent = fileSystem.readFileSync(path.join(__dirname, 'storage/sess_dir/session_'+userId+'.json'), 'utf8');
-			return JSON.parse(sessContent);			
+			if(sessContent == '')
+				return '';
+			return JSON.parse(sessContent);	
 		}else{
 			return '';
 		}
@@ -631,15 +635,16 @@ connection.connect();
 		//var success = data.process_host_name+'success';
 		//var done = data.process_host_name+'done';
 
-		server.stderr.on('data', function (data) {		    
+		server.stderr.on('exit', function (code) {
+			//console.error(`child stderr:\n${code}`);
 		    //sess.success = false;
 		    //sess.done = true;
 		    temp[data.process_host_name+'_success']  = false;
 			temp[data.process_host_name+'_done']  = true;
 		    writeSession(data.user_id, temp );
 	    	if (debugMode === true) {
-				console.log("Scraping is done\n");
-				writeLogFile(filename,"Scraping is done");
+				console.log("Scraping is done but failed\n");
+				writeLogFile(filename,"Scraping is done failed");
 			}
 		});
 
@@ -650,8 +655,8 @@ connection.connect();
 			temp[data.process_host_name+'_done']  = true;
 		    writeSession(data.user_id, temp );
 		    if (debugMode === true) {
-				console.log("Scraping is done\n");				
-				writeLogFile(filename,"Scraping is done");
+				console.log("Scraping is done successfully\n");				
+				writeLogFile(filename,"Scraping is done successfully");
 			}
 		})
 		
