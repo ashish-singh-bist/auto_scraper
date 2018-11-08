@@ -392,11 +392,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			
             console.log(obj.code_to_inject);
             if ('code_to_inject' in obj){
-            console.log(obj.code_to_inject);
-
                 var data_key = obj.key;                
                 var html = document.documentElement.innerHTML;
-                printable_data[data_key] = eval(obj.code_to_inject);
+                printable_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
             }
 			/* finding element via `id` */
 			else if('id' in element_attributes){
