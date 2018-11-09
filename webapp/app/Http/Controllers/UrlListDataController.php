@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Yajra\Datatables\Datatables;
-use App\ScrapedData;
+use App\UrlListData;
 
-class ScrapedDataController extends Controller
+class UrlListDataController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -26,13 +26,13 @@ class ScrapedDataController extends Controller
      */
     public function index(request $request)
     {
-        return view('scraped_data');
+        return view('url_list_data');
     }
 
     public function getData()
     {
         $id = Auth::user()->id;
-        $scraped_data = ScrapedData::where('user_id', $id)->get();
-        return Datatables::of($scraped_data)->make(true);
+        $url_list_data = UrlListData::where('user_id', $id)->limit(100)->get();
+        return Datatables::of($url_list_data)->make(true);
     }
 }

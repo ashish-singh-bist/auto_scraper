@@ -507,9 +507,9 @@ connection.connect();
 
 					//#================================================================INJECT HTML CODE
 					var contextmenu	= '<div id="context" class="avoid-ele"><span class="close-btn_">&times;</span><ul><li><div class="form-check"><label class="form-check-label"><input class=" perform_action" type="button" rel="selection_reset" name="selection_reset" id="selection_completed" value="Reset selection"><input class=" perform_action" type="button" rel="done_config" name="done_config" id="done_config" value="Create config"><input class=" perform_action" type="button" rel="select_id" name="select_id" id="select_id" value="Enter ID selector"><input class="block sm-col-4 field-light h3 label_input" style="display:none;" type="text" name="id_selector_text" placeholder="Input selector and press `Enter`" id="id_selector_text" /></label></div></li></ul></div>';
-					var labelinput	= '<div id="label_input" class="avoid-ele"><span class="close-btn_">&times;</span><ul><li><div class="form-check"> <label class="form-check-label"><form class="form-inline" id="label_input_form"> <input class="block sm-col-4 field-light h3 label_input" name="label_input_text" type="text" maxsize="30" placeholder="Label" id="label_input_text" /><textarea disabled class="block sm-col-4 field-light h3" id="label_item_value"></textarea><textarea class="" name="label_input_text" placeholder="Advance code" id="advance_code_input_text"></textarea> <input class="perform_action" type="button" id="label_input_button" value="OK!"></form> </label></div></li></ul></div>';
+					var labelinput	= '<div id="label_input" class="avoid-ele"><label class="advance-mode"><input name="add_mode" class="add_mode" value="" type="checkbox"> Advance mode</label><span class="close-btn_">&times;</span><ul><li><div class="form-check"> <label class="form-check-label"><form class="form-inline" id="label_input_form"> <input class="block sm-col-4 field-light h3 label_input" name="label_input_text" type="text" maxsize="30" placeholder="Label" id="label_input_text" /><textarea disabled class="block sm-col-4 field-light h3" id="label_item_value"></textarea><textarea class="" name="label_input_text" placeholder="Code" id="advance_code_input_text"></textarea> <input class="perform_action" type="button" id="label_input_button" value="OK!"></form> </label></div></li></ul></div>';
 					
-					var panel = '<div id="panel" class="avoid-ele">  <div id="panelheader">Configuration Panel <span id="panelmm" title="Click & Drag"></span></div> <div id="panelbody"><table id="panel-table"><thead id="panel-table-thead"><tr><th></th><th>Label</th><th>Value</th></tr></thead><tbody id="selected_elements_list"></tbody></table><button id="help-btn">Need Help ?</button></div></div>';
+					var panel = '<div id="panel" class="avoid-ele">  <div id="panelheader">Configuration Panel <span id="panelmm" title="Click & Drag"></span></div> <div id="panelbody"><table id="panel-table"><thead id="panel-table-thead"><tr><th></th><th>Label</th><th>Value/Code</th></tr></thead><tbody id="selected_elements_list"></tbody></table><button id="help-btn">Need Help ?</button></div></div>';
 
 					var top_alert = '<div class="msg-panel avoid-ele"></div>';
 					var help_block = '<div id="help_block" class="help-block avoid-ele"><div id="help-modal" class="modal"><div class="modal-content"><div class="modal-header"><span class="close-help-modal">&times;</span><h3>Help </h3></div><div class="modal-body"><ul><li>Please left click on the element to select and label it accordingly</li><li>Right click to perfom action</li></ul></div></div></div></div>';
@@ -622,46 +622,45 @@ connection.connect();
 	//this will start the scrapping process
 	app.post('/rtech/api/scrape_pages', (req, res) => {		
 		var data = req.body;
-		server = require('child_process').spawn('node', ['scraper.js', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
-
-		var filename  = data.process_host_name+'_'+data.user_id;		
-
-		if (debugMode === true) {
-			console.log("\nScraping start for : "+data.extracted_host_name);			
-			writeLogFile(filename, "Scraping start for : "+data.extracted_host_name);			
+		if( 'source' in data ){
+			server = require('child_process').spawn('node', ['scraper.js', 'databasemode', data.source, data.user_id], { shell: true });
+			res.send({status: 200, message: "Scraping start from database" });
 		}
-		
-		var temp = {};
-		//var success = data.process_host_name+'success';
-		//var done = data.process_host_name+'done';
-
-		server.stderr.on('exit', function (code) {
-			//console.error(`child stderr:\n${code}`);
-		    //sess.success = false;
-		    //sess.done = true;
-		    temp[data.process_host_name+'_success']  = false;
-			temp[data.process_host_name+'_done']  = true;
-		    writeSession(data.user_id, temp );
-	    	if (debugMode === true) {
-				console.log("Scraping is done but failed\n");
-				writeLogFile(filename,"Scraping is done failed");
+		else{
+			server = require('child_process').spawn('node', ['scraper.js', 'normalmode', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
+			var filename  = data.process_host_name+'_'+data.user_id;		
+			if (debugMode === true) {
+				console.log("\nScraping start for : "+data.extracted_host_name);			
+				writeLogFile(filename, "Scraping start for : "+data.extracted_host_name);			
 			}
-		});
-
-		server.on('close', function (code){
-			//sess.done = true;
-		    //sess.success = true;
-			temp[data.process_host_name+'_success']  = true;
-			temp[data.process_host_name+'_done']  = true;
-		    writeSession(data.user_id, temp );
-		    if (debugMode === true) {
-				console.log("Scraping is done successfully\n");				
-				writeLogFile(filename,"Scraping is done successfully");
-			}
-		})
-		
-		res.send({status: 200, message: "Scraping start for : "+data.extracted_host_name })
-		
+			var temp = {};
+			//var success = data.process_host_name+'success';
+			//var done = data.process_host_name+'done';
+			server.stderr.on('exit', function (code) {
+				//console.error(`child stderr:\n${code}`);
+			    //sess.success = false;
+			    //sess.done = true;
+			    temp[data.process_host_name+'_success']  = false;
+				temp[data.process_host_name+'_done']  = true;
+			    writeSession(data.user_id, temp );
+		    	if (debugMode === true) {
+					console.log("Scraping is done but failed\n");
+					writeLogFile(filename,"Scraping is done failed");
+				}
+			});
+			server.on('close', function (code){
+				//sess.done = true;
+			    //sess.success = true;
+				temp[data.process_host_name+'_success']  = true;
+				temp[data.process_host_name+'_done']  = true;
+			    writeSession(data.user_id, temp );
+			    if (debugMode === true) {
+					console.log("Scraping is done successfully\n");				
+					writeLogFile(filename,"Scraping is done successfully");
+				}
+			})
+			res.send({status: 200, message: "Scraping start for : "+data.extracted_host_name })	
+		}
 	})
 
 	//this will receive the uploaded file of URLs

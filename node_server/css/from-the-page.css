@@ -148,10 +148,14 @@ div#context, div#label_input {
     margin-top: 0 !important;
     margin-bottom: .5rem !important;
 }
-
+#advance_code_input_text{
+    display: none;
+}
 #label_input .label_input {
     background-color: lavender !important;
     font-weight: normal !important;
+    border: 1px solid rgb(204, 204, 204);
+    box-sizing: border-box;
 }
 
 #label_input input[type=button], #context input[type=button],
@@ -455,3 +459,11 @@ div#context, div#label_input {
 }
 .help-block .modal-body { padding: 20px; }
 .help-block ul li{ list-style: circle; }
+
+.advance-mode {
+    position: absolute;
+    left: 8px;
+    top: 2px;
+    cursor: pointer;
+    display: inline-block;
+}
