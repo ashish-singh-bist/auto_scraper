@@ -1,14 +1,70 @@
 const puppeteer = require('puppeteer');
 const path 		= require('path');
 const fileSystem= require('fs');
+const mysql 	= require('mysql')
 const config 	= require(path.join(__dirname, 'config/config.js'));
 
-var windowOpenWith 	= 'http://' + config.root_ip + ':' + config.root_port ;
-var process_host_name 	= process.argv[2];
-var extracted_host_name = process.argv[3];
-config.user_id = process.argv[4];
+const connection 	= mysql.createConnection({
+						  host     : config.mysql_host,
+						  user     : config.mysql_user,
+						  password : config.mysql_password,
+						  database : config.mysql_database
+					  });
+connection.connect();
 
-var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'storage/product_url/'+process_host_name+'_'+config.user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
+var windowOpenWith 	= 'http://' + config.root_ip + ':' + config.root_port ;
+
+var parsing_mode  = process.argv[2];
+	
+	if ( parsing_mode == 'databasemode') {
+		var source =  process.argv[3];
+		config.user_id = process.argv[4];
+
+		var data = [config.user_id,source,1];
+		// var data = [ 1,source,1];
+		var result = [];
+		var url_list_array = [];
+
+		var extracted_host_name = '';		//'https://www.youtube.com';
+		var process_host_name = '';			//'www_youtube_com'
+
+		var result = [];
+		var  getInformationFromDB = function(callback) {
+			connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? limit 10", data, function (error, results, fields){
+				if (error)  return callback(error);
+				if(results.length){
+					for(var i = 0; i < results.length; i++){
+						result.push(results[i].actual_url);
+					}
+				}
+				callback(null, result);
+			});
+		};
+
+		getInformationFromDB(function (error, result) {
+			if (error) console.log("Database error!");
+			else {
+				url_list_array = result;
+				if ( url_list_array.length > 0 )  {
+					var url_ = url_list_array[0];
+					process_host_name = (url_.split('/'))[2].replace(/\./g,'_');
+
+					var split_ar = url_.split('/');
+            		extracted_host_name = split_ar[0] + '//' + split_ar[2];
+				}
+				run();
+			}
+		});
+		
+	}
+	else{
+		var process_host_name 	= process.argv[3];
+		var extracted_host_name = process.argv[4];
+		config.user_id = process.argv[5];
+		var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'storage/product_url/'+process_host_name+'_'+config.user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
+		run();
+	}
+
 
 var timeout_1, timeout_2;
 
@@ -132,4 +188,4 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
         fileSystem.writeFile(path.join(__dirname, 'storage/log/scraper_log_' + config.user_id + '.txt'), message);
     }
 
-	run();
+	// run();
