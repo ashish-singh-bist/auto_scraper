@@ -17,7 +17,7 @@ set('git_tty', true);
 
 // Shared files/dirs between deploys 
 add('shared_files', ['webapp/.env', 'node_server/config/config.js']);
-add('shared_dirs', ['webapp/storage', 'node_server/storage/site_output', 'node_server/storage/site_config', 'node_server/storage/sess_dir', 'node_server/storage/product_url', 'node_server/storage/log', 'node_server/storage/history_data', 'node_server/storage/global_config']);
+add('shared_dirs', ['webapp/storage', 'node_server/storage/site_output', 'node_server/storage/site_config', 'node_server/storage/sess_dir', 'node_server/storage/product_url', 'node_server/storage/log', 'node_server/storage/history_data', 'node_server/storage/global_config','webapp/public/.htaccess']);
 
 // Writable dirs by web server 
 add('writable_dirs', []);
