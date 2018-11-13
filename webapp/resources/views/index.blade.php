@@ -7,15 +7,6 @@
 <div class="">
     <div class="row">
         <div class="col-md-12">
-            <div class="alert alert-dismissible" id="msgBox" style="display: none;">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                <span id="msgBoxMessage"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
             {{-- <div id="fileUploadContainer" style="display: none;"> --}}
             <div id="fileUploadContainer" >
                 <form id="search_site_form" class="text-center">
@@ -86,5 +77,6 @@
             "root_port": "{{ config('app.node_server_port') }}",
         };
     </script>
+    <script src="js/custom.js"></script>
     <script src="js/index.js"></script>
 @endsection

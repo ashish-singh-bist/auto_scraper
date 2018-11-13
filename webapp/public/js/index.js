@@ -287,19 +287,6 @@ $( document ).ready(function(){
 			});
 		}, 1000)
 	}
- 	
- 	// type - success | errror
- 	// msg - a message in string form want to show 
- 	// duration - adjust the duration of message shown
- 	function showMsg( type, msg, duration = 5000 ){
- 		$('#msgBox').show();
- 		$('#msgBox').addClass(type);
- 		$('#msgBoxMessage').html(msg);
- 		setTimeout(function(){ 
- 			$('#msgBox').fadeOut();
- 			$('#msgBox').removeClass(type);
- 		}, duration);
- 	}
     
     function setFetchingStatus(){
     	$("#debugger_console").append("<p> Fetching ... </p>");
