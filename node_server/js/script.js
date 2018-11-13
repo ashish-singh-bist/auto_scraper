@@ -110,6 +110,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 document.getElementById("context").style.display = "none";
             }
         
+            $( ".add_mode" ).prop( "checked", false );
+            $('#label_item_value').show();
+            $('#advance_code_input_text').hide();
             document.getElementById('label_input_text').value = '';
             document.getElementById('advance_code_input_text').value = '';
             document.getElementById('label_input_text').setAttribute('placeholder','Label');
@@ -345,7 +348,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
         console.log("data[insert]: ", data_object)
 
         /*Display selected item in panel*/
-        var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('label_item_value').value+'</td></tr>';
+        if(document.getElementById('advance_code_input_text').value){
+            var html = document.documentElement.innerHTML;
+            var res = eval('try {' + document.getElementById('advance_code_input_text').value + '}catch(err) {err.message}');
+            var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ res +'</td></tr>';    
+        }
+        else{
+            var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('label_item_value').value+'</td></tr>';
+        }
+
+        
         $('#selected_elements_list').append(display_selected_list);
         document.getElementById('panel').style.display='block';
         showMessage( label, 'label successfuly added, see record in table', 'success' );
@@ -733,6 +745,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
         var div = this.parentElement;
         div.style.opacity = "0";
         div.style.display = "none";
+    });
+    $(document).on('click', '.add_mode', function(){
+
+            var _key = this.getAttribute('key');
+            if($(this).is(":checked")){
+                $('#label_item_value').hide();
+                $('#advance_code_input_text').show();
+                showMessage( _key, 'Advance mode for this key successfuly enabled', 'success' );
+            }
+            else{
+                $('#label_item_value').show();
+                $('#advance_code_input_text').hide();
+                showMessage( _key, 'Advance mode for this key successfuly disabled', 'danger' );
+            }
     });
 
     function resetConfigurationPanelData(){

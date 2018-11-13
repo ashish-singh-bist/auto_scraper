@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Yajra\Datatables\Datatables;
 use App\ScrapedData;
@@ -30,7 +31,8 @@ class ScrapedDataController extends Controller
 
     public function getData()
     {
-        $scraped_data = ScrapedData::get();
+        $id = Auth::user()->id;
+        $scraped_data = ScrapedData::where('user_id', $id)->get();
         return Datatables::of($scraped_data)->make(true);
     }
 }

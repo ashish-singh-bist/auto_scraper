@@ -20,3 +20,8 @@ Route::get('/home1', 'HomeController@index')->name('home');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::post('/sendmessage', 'ChatController@sendMessage');
 Route::get('/admin_chat','HomeController@getAdminPage');
+
+Route::get('/url_list_data', 'UrlListDataController@index')->name('url_list.index');
+Route::get('/url_list_get', 'UrlListDataController@getData')->name('url_list.getdata');
+Route::post('/url_list_get', 'UrlListDataController@getData')->name('url_list.getdata');
+Route::post('/url_list_update', 'UrlListDataController@update')->name('url_list.update');
