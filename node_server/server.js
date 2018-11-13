@@ -636,7 +636,7 @@ connection.connect();
 			var temp = {};
 			//var success = data.process_host_name+'success';
 			//var done = data.process_host_name+'done';
-			server.stderr.on('exit', function (code) {
+			server.stderr.on('error', function (code) {
 				//console.error(`child stderr:\n${code}`);
 			    //sess.success = false;
 			    //sess.done = true;

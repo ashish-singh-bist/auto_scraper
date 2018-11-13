@@ -74,11 +74,10 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 	async function run() {
 		//declaring the browser which will be opened
 
+		const browser = await puppeteer.launch();
         if(config.env == "dev"){
             // //for OVH
-            const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
-        }else{
-            const browser = await puppeteer.launch();
+            browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
         }
 
 	 	//const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
@@ -91,33 +90,43 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		if(list_length %10 ==0) {
 		    myLoop();
 		    async function myLoop() {
+		    	//createLog('inside 1 loop ' + count + "===============" + list_length + '\n');
 		        if(count < list_length){
 		            for(var i=lower_limit; i< upper_limit; i++){
-		            	let page;
 
-		                if(url_list_array[i].indexOf('?') > -1){
-		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id ;
-		                    console.log("====" + str);
-		                    page = await browser.newPage();
-							await page.goto(str);
-		                    
-		                }else{
-		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id ;
-		                    console.log("====" + str);
-		                    page = await browser.newPage();
-							await page.goto(str);
-		                }
-		                
-		                count++;
-		                page.close();
+		            	try{
+
+			            	let page;
+
+			                if(url_list_array[i].indexOf('?') > -1){
+			                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id ;
+			                    console.log(str);
+			                    page = await browser.newPage();
+								await page.goto(str);
+			                    
+			                }else{
+			                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id ;
+			                    console.log(str);
+			                    page = await browser.newPage();
+								await page.goto(str);
+			                }
+			                
+			                count++;
+			                page.close();
+			            }
+			           	catch(err) {
+			            	createLog(err.message + '\n');
+						}
+
 		            }
 		            lower_limit = upper_limit;
 		            upper_limit += 10;
-
+		            console.log("count = " + count);
 		            if(count === list_length){
 		            	timeout_2 = setTimeout(function(){
+		            		console.log("end loop");
 			        		end_loop();
 			        	}, 10000)
 		            }
@@ -135,26 +144,34 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		    async function myLoop() {
 		        if(count < list_length){
 		            for(var i=lower_limit; i< upper_limit; i++){
-		                let page;
+		            	//createLog('inside 2 loop if i= ' + i + "===============" + list_length + '\n');
+		            	console.log(i);
+		            	try{
+			                let page;
 
-		                if(url_list_array[i].indexOf('?') > -1){
-		                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id;
-		                    console.log("====" + str);
-		                    page = await browser.newPage();
-							await page.goto(str);
-		                
-		                }else{
-		                	let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
-		                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id;
-		                    console.log("====" + str);
-		                    page = await browser.newPage();
-							await page.goto(str);
-		                }
-		                count++;
-		                page.close();
-		            }
-
+			                if(url_list_array[i].indexOf('?') > -1){
+			                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id;
+			                    //console.log(str);
+			                    page = await browser.newPage();
+								await page.goto(str);
+			                
+			                }else{
+			                	let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id;
+			                    //console.log(str);
+			                    page = await browser.newPage();
+								await page.goto(str);
+			                }
+			                count++;
+			                page.close();
+			            }
+			            catch(err) {
+			            	createLog(err.message + '\n');
+			            	console.log(err.message);
+						}
+								            }
+		            //createLog('loop' + upper_limit + '\n');
 		            if(upper_limit === list_length-last_upper_limit){
 		                lower_limit = upper_limit;
 		                upper_limit += last_upper_limit;
@@ -162,9 +179,10 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		                lower_limit = upper_limit;
 		                upper_limit += 10;
 		            }
-
+		            console.log("count = " + count + " list_length " + list_length);
 		            if(count === list_length){
 		            	timeout_2 = setTimeout(function(){
+		            		console.log("end loop");
 			        		end_loop();
 			        	}, 10000)
 		            }
@@ -179,16 +197,16 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		}
 
 		async function end_loop(){
+			createLog('browser close' + '\n');
 			clearTimeout(timeout_1);
 			clearTimeout(timeout_2);
 			await browser.close();
-            //createLog('browser close' + '\r\n');
             //createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.user_id + 'end' + '\r\n');
 		}
-			 		 	
+
 	}
 
-    function createLog(message){
+    async function createLog(message){
         fileSystem.writeFile(path.join(__dirname, 'storage/log/scraper_log_' + config.user_id + '.txt'), message);
     }
 
