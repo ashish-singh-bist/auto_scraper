@@ -17,7 +17,7 @@ class UrlListData extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'ref_id', 'url',
+        'ref_id', 'url','is_active',
     ];
 
     /**

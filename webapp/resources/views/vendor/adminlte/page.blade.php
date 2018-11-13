@@ -114,7 +114,14 @@
 
             <!-- Main content -->
             <section class="content">
-
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="alert alert-dismissible" id="msgBox" style="display: none;">
+                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                            <span id="msgBoxMessage"></span>
+                        </div>
+                    </div>
+                </div>
                 @yield('content')
 
             </section>
