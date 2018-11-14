@@ -632,6 +632,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             // url: window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'')
             url: getUrlParameter('host') // www_youtube_com
         }
+
+        if( getUrlParameter('url_list_id')){
+            data.url_list_id = getUrlParameter('url_list_id');
+        }
+        if( getUrlParameter('ref_id')){
+            data.ref_id = getUrlParameter('ref_id');
+        }
         
         fetch('/rtech/api/save_scraped_data', {            
             body: JSON.stringify(data),

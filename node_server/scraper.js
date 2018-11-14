@@ -20,7 +20,7 @@ var parsing_mode  = process.argv[2];
 		var source =  process.argv[3];
 		config.user_id = process.argv[4];
 
-		var data = [config.user_id,source,1];
+		var data = [config.user_id, source, 1];
 		// var data = [ 1,source,1];
 		var result = [];
 		var url_list_array = [];
@@ -28,13 +28,12 @@ var parsing_mode  = process.argv[2];
 		var extracted_host_name = '';		//'https://www.youtube.com';
 		var process_host_name = '';			//'www_youtube_com'
 
-		var result = [];
 		var  getInformationFromDB = function(callback) {
-			connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? limit 10", data, function (error, results, fields){
+			connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL limit 10", data, function (error, results, fields){
 				if (error)  return callback(error);
 				if(results.length){
 					for(var i = 0; i < results.length; i++){
-						result.push(results[i].actual_url);
+						result.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id});
 					}
 				}
 				callback(null, result);
@@ -46,12 +45,13 @@ var parsing_mode  = process.argv[2];
 			else {
 				url_list_array = result;
 				if ( url_list_array.length > 0 )  {
-					var url_ = url_list_array[0];
+					var url_ = url_list_array[0].act_url;
 					process_host_name = (url_.split('/'))[2].replace(/\./g,'_');
 
 					var split_ar = url_.split('/');
             		extracted_host_name = split_ar[0] + '//' + split_ar[2];
 				}
+				// console.log(url_list_array);
 				run();
 			}
 		});
@@ -61,7 +61,11 @@ var parsing_mode  = process.argv[2];
 		var process_host_name 	= process.argv[3];
 		var extracted_host_name = process.argv[4];
 		config.user_id = process.argv[5];
-		var url_list_array	= (fileSystem.readFileSync(path.join(__dirname, 'storage/product_url/'+process_host_name+'_'+config.user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
+		var url_list_array = [];
+		var url_arr_ = (fileSystem.readFileSync(path.join(__dirname, 'storage/product_url/'+process_host_name+'_'+config.user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
+		for(var i = 0; i < url_arr_.length; i++){
+			url_list_array.push({ 'act_url':url_arr_[i] });
+		}
 		run();
 	}
 
@@ -98,17 +102,21 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 
 			            	let page;
 
-			                if(url_list_array[i].indexOf('?') > -1){
-			                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                if(url_list_array[i].act_url.indexOf('?') > -1){
+			                    let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id ;
-			                    console.log(str);
+			                    if ( parsing_mode == 'databasemode')
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    console.log('1str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
 			                    
 			                }else{
-			                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                    let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id ;
-			                    console.log(str);
+			                    if ( parsing_mode == 'databasemode')
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    console.log('2str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
 			                }
@@ -149,17 +157,21 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 		            	try{
 			                let page;
 
-			                if(url_list_array[i].indexOf('?') > -1){
-			                    let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                if(url_list_array[i].act_url.indexOf('?') > -1){
+			                    let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id;
-			                    //console.log(str);
+			                    if ( parsing_mode == 'databasemode')
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    console.log('3str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
 			                
 			                }else{
-			                	let url_ = windowOpenWith+url_list_array[i].replace(extracted_host_name, '').replace(/\;/g,'');
+			                	let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id;
-			                    //console.log(str);
+			                    if ( parsing_mode == 'databasemode')
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    console.log('4str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
 			                }
