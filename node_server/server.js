@@ -768,10 +768,28 @@ connection.connect();
 
 		
 		var data = {'user_id': req.body.user_id, 'data': JSON.stringify(req.body.data[0])};
+		
+		if( req.body.hasOwnProperty('url_list_id')){
+			data.url_list_id = req.body.url_list_id;
+		}
+
+		if( req.body.hasOwnProperty('ref_id')){
+			data.ref_id = req.body.ref_id;
+		}
 		// var data = {'user_id': req.body.user_id, 'data': 'hello'};
 		var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
 		  if (error) throw error;
 		});
+
+		if( req.body.hasOwnProperty('url_list_id')){
+			var id = req.body.url_list_id;
+			var d = new Date();
+			var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+			var query = connection.query("update tbl_url_lists SET ? where id="+id, _data, function (error, results, fields) {
+			  if (error) throw error;
+			});
+		}
+
 		console.log('query :- ' + query.sql);
 		console.log(req.body.data[0].url + " scrapped data saved in database");
 
