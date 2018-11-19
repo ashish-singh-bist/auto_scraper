@@ -1,4 +1,3 @@
-$.noConflict();
 $( document ).ready(function(){
 	$('#file_upload').val('');
 	$('#text_input_urls').val('');

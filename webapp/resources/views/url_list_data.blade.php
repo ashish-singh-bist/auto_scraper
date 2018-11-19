@@ -61,7 +61,9 @@
     <!-- end of content wrapper. contains page content -->
 @endsection
 @section('adminlte_js')
+    <script src="js/url_list_data.js"></script>
     <script type="text/javascript">
+
         $(function() {
             $.ajaxSetup({
                 headers: {
@@ -133,41 +135,5 @@
         };
     </script>
     <script src="js/custom.js"></script>
-    <script type="text/javascript">
-        $( document ).ready(function(){
-            $("#url_source").val("");
-            $('#scraping_for_url_list').prop('disabled', true);
-
-            $('#scraping_for_url_list').click(function(evt){
-                var option_selected = $( "#url_source option:selected" ).val();
-                if ( option_selected ) {
-                    //eg {process_host_name: 'www_gnc_com', extracted_host_name: 'http://www.gnc.com'}
-                    let data = {
-                        process_host_name: '',
-                        extracted_host_name: '',
-                        source: option_selected,
-                        user_id: USER_ID
-                    }
-                    //POST request which will tell the server to start scraping the URLs from the file uploaded earlier via readFile() method
-                    fetch('http://'+ config.root_ip + ':' + config.root_port +'/rtech/api/scrape_pages', {
-                        body: JSON.stringify(data),
-                        headers: { 'content-type': 'application/json' },
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(res => {
-                        if(res.status == 200){
-                            showMsg('success', "Scraping Start successfully");
-                        }
-                        else{
-                            showMsg('error', 'Something going wrong refresh the window');
-                        }
-                    }).catch(() => {
-                        showMsg('error', 'Somthing going wrong refresh the window');
-                    })
-                }
-            });
-
-        });
-    </script>
+    
 @endsection

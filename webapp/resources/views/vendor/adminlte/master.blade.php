@@ -45,18 +45,8 @@
     {{-- <link href="css/from-the-page.css" rel="stylesheet"> --}}
     <link href="css/jquery-confirm.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <!-- Styles -->
+    <!-- Styles -->  
 
-    {{-- <script src="config/config.js"></script> --}}
-    
-    <!-- Bootstrap -->
-    
-    
-    <script src="js/jquery-3.3.1.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery-confirm.min.js"></script>
-
-    {{-- <script src="js/index.js"></script> --}}
 </head>
 <body class="hold-transition @yield('body_class')">
     <div class="progress-bar" id="progress_bar">
@@ -71,7 +61,7 @@
 <script src="{{ asset('vendor/adminlte/vendor/bootstrap/dist/js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('vendor/adminlte/dist/js/adminlte.min.js') }}"></script>
 
-
+<script src="js/jquery-confirm.min.js"></script>
 
 {{-- @if(config('adminlte.plugins.select2'))
     <!-- Select2 -->

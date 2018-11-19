@@ -623,8 +623,60 @@ connection.connect();
 	app.post('/rtech/api/scrape_pages', (req, res) => {		
 		var data = req.body;
 		if( 'source' in data ){
-			server = require('child_process').spawn('node', ['scraper.js', 'databasemode', data.source, data.user_id], { shell: true });
-			res.send({status: 200, message: "Scraping start from database" });
+			var result = [], url_list_array = [];
+			var query_data = [ data.user_id, data.source, 1];
+			var  getInformationFromDB = function(callback) {
+				connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL limit 10", query_data, function (error, results, fields){
+					if (error)  return callback(error);
+					if(results.length){
+						for(var i = 0; i < results.length; i++){
+							result.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id});
+						}
+					}
+					callback(null, result);
+				});
+			};
+
+			getInformationFromDB(function (error, result) {
+				if (error) {
+					console.log("Database error!")
+					res.send({status: 500, 'config_exist':false, message: "Something going wrong" });
+				}
+				else if(result.length == 0){
+					res.send({status: 200, no_data:true, message: "No Data found to parse" });
+				}
+				else {
+					url_list_array = result;
+					if ( url_list_array.length > 0 )  {
+						var url_ = url_list_array[0].act_url;
+						var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
+						var config_exist;
+						console.log('storage/site_config/'+filename_+'_'+data.user_id+'.json');
+						if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+data.user_id+'.json'))) {
+							config_exist = true;
+							server = require('child_process').spawn('node', ['scraper.js', 'databasemode', data.source, data.user_id], { shell: true });
+							res.send({status: 200, message: "Scraping start from database" });
+							//res.send({'exists': true, 'extracted_host_name': filename_})
+						}else if (fileSystem.existsSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'))) {
+							var scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'), 'utf8');
+							scrapedContent = JSON.parse(scrapedContent);
+							scrapedContent.user_id = user_id;
+							fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename_+'_'+data.user_id+'.json'), JSON.stringify(scrapedContent), 'utf-8', function(err) {
+								if(err) {
+									// config_exist = false;
+									res.send({status: 200, 'config_exist':false, message: "Config not exist, Make config first", 'url':url_ });
+								}else{
+									// config_exist = true;
+									server = require('child_process').spawn('node', ['scraper.js', 'databasemode', data.source, data.user_id], { shell: true });
+									res.send({status: 200, message: "Scraping start from database" });
+								}
+							});
+						}else{
+							res.send({status: 200, 'config_exist':false, message: "Config not exist, Make config first", 'url':url_ });
+						}
+					}
+				}
+			});
 		}
 		else{
 			server = require('child_process').spawn('node', ['scraper.js', 'normalmode', data.process_host_name, data.extracted_host_name, data.user_id], { shell: true });
@@ -680,7 +732,7 @@ connection.connect();
 		//console.log(sess);		
         if(data.url_list.length>0){        	    		
             var split_ar = url_.split('/');
-            var host_url = split_ar[0] + '//' + split_ar[2];    		
+            var host_url = split_ar[0] + '//' + split_ar[2];
     		var config_exist;
 
     		if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+user_id+'.json'))) {
