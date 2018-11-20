@@ -29,7 +29,7 @@ var parsing_mode  = process.argv[2];
 		var process_host_name = '';			//'www_youtube_com'
 
 		var  getInformationFromDB = function(callback) {
-			connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL limit 10", data, function (error, results, fields){
+			connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and actual_url IS NOT NULL limit 10", data, function (error, results, fields){
 				if (error)  return callback(error);
 				if(results.length){
 					for(var i = 0; i < results.length; i++){
