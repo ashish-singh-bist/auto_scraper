@@ -33,7 +33,7 @@ var parsing_mode  = process.argv[2];
 				if (error)  return callback(error);
 				if(results.length){
 					for(var i = 0; i < results.length; i++){
-						result.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id});
+						result.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});
 					}
 				}
 				callback(null, result);
@@ -106,7 +106,7 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 			                    let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id ;
 			                    if ( parsing_mode == 'databasemode')
-			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id+'&source='+url_list_array[i].source;
 			                    console.log('1str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
@@ -115,7 +115,7 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 			                    let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id ;
 			                    if ( parsing_mode == 'databasemode')
-			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id+'&source='+url_list_array[i].source;
 			                    console.log('2str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
@@ -161,7 +161,7 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 			                    let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'&config=true&host='+process_host_name+'&uid='+config.user_id;
 			                    if ( parsing_mode == 'databasemode')
-			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id+'&source='+url_list_array[i].source;
 			                    console.log('3str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);
@@ -170,7 +170,7 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 			                	let url_ = windowOpenWith+url_list_array[i].act_url.replace(extracted_host_name, '').replace(/\;/g,'');
 			                    var str = url_+'?config=true&host='+process_host_name+'&uid='+config.user_id;
 			                    if ( parsing_mode == 'databasemode')
-			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id;
+			                    	str += '&url_list_id='+url_list_array[i].url_list_id+'&ref_id='+url_list_array[i].ref_id+'&source='+url_list_array[i].source;
 			                    console.log('4str - '+str);
 			                    page = await browser.newPage();
 								await page.goto(str);

@@ -819,7 +819,7 @@ connection.connect();
 		scrapedContent.push(req.body.data[0]);
 
 		
-		var data = {'user_id': req.body.user_id, 'data': JSON.stringify(req.body.data[0])};
+		var data = {'user_id': req.body.user_id, 'source': req.body.source, 'data': JSON.stringify(req.body.data[0])};
 		
 		if( req.body.hasOwnProperty('url_list_id')){
 			data.url_list_id = req.body.url_list_id;
