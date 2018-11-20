@@ -632,7 +632,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
             // url: window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'')
             url: getUrlParameter('host') // www_youtube_com
         }
+        data.source = getUrlParameter('host');
 
+        if( getUrlParameter('source')){
+            data.source = getUrlParameter('source');
+        }
         if( getUrlParameter('url_list_id')){
             data.url_list_id = getUrlParameter('url_list_id');
         }
