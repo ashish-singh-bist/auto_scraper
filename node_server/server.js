@@ -665,7 +665,7 @@ connection.connect();
                         console.log('storage/site_config/'+filename_+'_'+body_data.user_id+'.json');
                         if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+body_data.user_id+'.json'))) {
                             config_exist = true;
-                            server = require('child_process').spawn('node', ['scraper.js', 'databasemode', body_data.source, body_data.user_id], { shell: true });
+                            server = require('child_process').spawn('node', [path.join(__dirname, 'scraper.js'), 'databasemode', body_data.source, body_data.user_id], { shell: true });
                             res.send({status: 200, message: "Scraping start from database" });
                             //res.send({'exists': true, 'extracted_host_name': filename_})
                         }else if (fileSystem.existsSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'))) {
@@ -678,7 +678,7 @@ connection.connect();
                                     res.send({status: 200, 'config_exist':false, message: "Config not exist, Make config first", 'url':url_ });
                                 }else{
                                     // config_exist = true;
-                                    server = require('child_process').spawn('node', ['scraper.js', 'databasemode', body_data.source, body_data.user_id], { shell: true });
+                                    server = require('child_process').spawn('node', [path.join(__dirname, 'scraper.js'), 'databasemode', body_data.source, body_data.user_id], { shell: true });
                                     res.send({status: 200, message: "Scraping start from database" });
                                 }
                             });
@@ -692,7 +692,7 @@ connection.connect();
         else{
             console.log("normalmode");
             try{
-                server = require('child_process').spawn('node', ['scraper.js', 'normalmode', body_data.process_host_name, body_data.extracted_host_name, body_data.user_id ], { shell: true });
+                server = require('child_process').spawn('node', [path.join(__dirname, 'scraper.js'), 'normalmode', body_data.process_host_name, body_data.extracted_host_name, body_data.user_id ], { shell: true });
             }
             catch(err) {
                 console.log(err.message);
@@ -725,7 +725,7 @@ connection.connect();
                 temp[body_data.process_host_name+'_done']  = true;
                 writeSession(body_data.user_id, temp );
                 if (debugMode === true) {
-                    console.log("\nScraping is done but failed, code: " + code);
+                    console.log("\nScraping is done but failed, error code: " + code);
                     writeLogFile(filename,"\nScraping is done failed");
                 }
             });
@@ -736,7 +736,7 @@ connection.connect();
                 temp[body_data.process_host_name+'_done']  = true;
                 writeSession(body_data.user_id, temp );
                 if (debugMode === true) {
-                    console.log("\nScraping is done successfully, code: " + code);             
+                    console.log("\nScraping is done successfully, close code: " + code);             
                     writeLogFile(filename,"\nScraping is done successfully");
                 }
             });
@@ -747,7 +747,7 @@ connection.connect();
                 temp[body_data.process_host_name+'_done']  = true;
                 writeSession(body_data.user_id, temp );
                 if (debugMode === true) {
-                    console.log("\nScraping is done successfully, code: " + code);             
+                    console.log("\nScraping is done successfully, exit code: " + code);             
                     writeLogFile(filename,"\nScraping is done successfully");
                 }
             });            
@@ -832,8 +832,10 @@ connection.connect();
 		//sess.filename = filename;
 
 		var options = {includeEndRowDelimiter:true};
+        console.log("trying to save data..");
 		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.csv'))){
 			options['headers'] = false;
+            console.log("data saved");
 		}else{
 			options['headers'] = true;
 		}

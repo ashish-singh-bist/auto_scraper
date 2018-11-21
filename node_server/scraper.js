@@ -77,12 +77,12 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
 /*_________________________STEP 1____________________________________*/
     async function run() {
         //declaring the browser which will be opened
-
-        const browser = await puppeteer.launch();
-        if(config.env == "dev"){
-            // //for OVH
-            browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
-        }
+        console.log("Trying to connect browser");
+        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+        // if(config.env == "dev"){
+        //     // //for OVH
+        //     //browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+        // }
         console.log("Scraper: Browser opened");
 
         //const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
@@ -186,6 +186,7 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
                         }
                                             }
                     //createLog('loop' + upper_limit + '\n');
+                    console.log("count:" + count);
                     if(upper_limit === list_length-last_upper_limit){
                         lower_limit = upper_limit;
                         //upper_limit += last_upper_limit;
@@ -194,7 +195,7 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
                         //upper_limit += 10;
                     }
                     console.log("count = " + count + " list_length " + list_length);
-                    if(count === list_length){
+                    if(count >= list_length){
                         timeout_2 = setTimeout(function(){
                             console.log("end loop");
                             end_loop();
