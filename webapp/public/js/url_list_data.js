@@ -43,6 +43,9 @@ $( document ).ready(function(){
                 else if( res.hasOwnProperty('no_data') && res.no_data && res.status == 200){
                     showMsg('success', res.message);
                 }
+                else if( res.status == 200){
+                    showMsg('success', res.message);
+                }
                 else{
                     showMsg('error', 'Something going wrong refresh the window');
                 }

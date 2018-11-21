@@ -807,153 +807,153 @@ connection.connect();
         else{
             res.send({status: 500, file_location: err});
         }
-    })
+	})
 
-    //this will create the config file
-    app.post('/rtech/api/done_config', (req, res) => {
-        var filename = req.body.url;
-        var user_id = req.body.user_id;
+	//this will create the config file
+	app.post('/rtech/api/done_config', (req, res) => {
+		var filename = req.body.url;
+		var user_id = req.body.user_id;
 
-        if(typeof req.body.data === 'string'){
-            req.body.data = JSON.parse(req.body.data);
-        }
+		if(typeof req.body.data === 'string'){
+			req.body.data = JSON.parse(req.body.data);
+		}
 
-        fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
-            if (err) throw err;
-            console.log('Saved!');
-        });
-        res.send({})
-    })
+		fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
+			if (err) throw err;
+			console.log('Saved!');
+		});
+		res.send({})
+	})
 
-    //this will write the scrapped data on a csv file
-    app.post('/rtech/api/save_scraped_data', (req, res) => {        
-        //#================================================================FOR WRITING ON CSV FILE
-        var filename = req.body.url+'_'+req.body.user_id;       
-        //sess.filename = filename;
+	//this will write the scrapped data on a csv file
+	app.post('/rtech/api/save_scraped_data', (req, res) => {		
+		//#================================================================FOR WRITING ON CSV FILE
+		var filename = req.body.url+'_'+req.body.user_id;		
+		//sess.filename = filename;
 
-        var options = {includeEndRowDelimiter:true};
-        if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.csv'))){
-            options['headers'] = false;
-        }else{
-            options['headers'] = true;
-        }
-        // var csvStream = csv.createWriteStream(options),
-     //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'storage/site_output/'+filename+'.csv'), {flags: 'a'});
-     //    writableStream.on('finish', function(){
-     //    });
+		var options = {includeEndRowDelimiter:true};
+		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.csv'))){
+			options['headers'] = false;
+		}else{
+			options['headers'] = true;
+		}
+		// var csvStream = csv.createWriteStream(options),
+	 //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'storage/site_output/'+filename+'.csv'), {flags: 'a'});
+	 //    writableStream.on('finish', function(){
+	 //    });
 
-        if(typeof req.body.data === 'string'){
-            req.body.data = JSON.parse(req.body.data)
-        }
-        
-        // csvStream.pipe(writableStream);
-        // csvStream.write(req.body.data[0]);
-        //parsedDataArray.push(req.body.data[0]);
-        //console.log(parsedDataArray);
-        
-        var scrapedContent = [];
-        if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
-            scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
-            scrapedContent = JSON.parse(scrapedContent);
-        }
-        scrapedContent.push(req.body.data[0]);
+	    if(typeof req.body.data === 'string'){
+	    	req.body.data = JSON.parse(req.body.data)
+	    }
+	    
+	    // csvStream.pipe(writableStream);
+	    // csvStream.write(req.body.data[0]);
+		//parsedDataArray.push(req.body.data[0]);
+	    //console.log(parsedDataArray);
+	    
+	    var scrapedContent = [];
+		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
+			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
+			scrapedContent = JSON.parse(scrapedContent);
+		}
+		scrapedContent.push(req.body.data[0]);
 
-        
-        var data = {'user_id': req.body.user_id, 'data': JSON.stringify(req.body.data[0])};
-        
-        if( req.body.hasOwnProperty('url_list_id')){
-            data.url_list_id = req.body.url_list_id;
-        }
+		
+		var data = {'user_id': req.body.user_id, 'source': req.body.source, 'data': JSON.stringify(req.body.data[0])};
+		
+		if( req.body.hasOwnProperty('url_list_id')){
+			data.url_list_id = req.body.url_list_id;
+		}
 
-        if( req.body.hasOwnProperty('ref_id')){
-            data.ref_id = req.body.ref_id;
-        }
-        // var data = {'user_id': req.body.user_id, 'data': 'hello'};
-        var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
-          if (error) throw error;
-        });
+		if( req.body.hasOwnProperty('ref_id')){
+			data.ref_id = req.body.ref_id;
+		}
+		// var data = {'user_id': req.body.user_id, 'data': 'hello'};
+		var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
+		  if (error) throw error;
+		});
 
-        if( req.body.hasOwnProperty('url_list_id')){
-            var id = req.body.url_list_id;
-            var d = new Date();
-            var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
-            var query = connection.query("update tbl_url_lists SET ? where id="+id, _data, function (error, results, fields) {
-              if (error) throw error;
-            });
-        }
+		if( req.body.hasOwnProperty('url_list_id')){
+			var id = req.body.url_list_id;
+			var d = new Date();
+			var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+			var query = connection.query("update tbl_url_lists SET ? where id="+id, _data, function (error, results, fields) {
+			  if (error) throw error;
+			});
+		}
 
-        console.log('query :- ' + query.sql);
-        console.log(req.body.data[0].url + " scrapped data saved in database");
+		console.log('query :- ' + query.sql);
+		console.log(req.body.data[0].url + " scrapped data saved in database");
 
 
-        fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
-            if (err) throw err;
-        });
+	    fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
+			if (err) throw err;
+		});
 
-        if (debugMode === true) {
-            var logData = "Scraped data for : "+req.body.data[0].url+"\n";
-            writeLogFile(filename,logData);
-        }
-        //console.log(req.body.data[0]);
-        // csvStream.end();
-        res.send({})
-    })
+		if (debugMode === true) {
+			var logData = "Scraped data for : "+req.body.data[0].url+"\n";
+			writeLogFile(filename,logData);
+		}
+	    //console.log(req.body.data[0]);
+	    // csvStream.end();
+		res.send({})
+	})
 
-    //this will handle all the POST requests we have redirected from the website's page to our server
-    app.post('/*', (req, res) => {
+	//this will handle all the POST requests we have redirected from the website's page to our server
+	app.post('/*', (req, res) => {
 
-        var options = {
-            form: req.body,
-            url: default_host + req.originalUrl,
-            hostname: default_host.replace('https://', ''),
-            headers: {
-                'content-type': req.headers['content-type'],
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            }
-        }
+		var options = {
+			form: req.body,
+			url: default_host + req.originalUrl,
+			hostname: default_host.replace('https://', ''),
+			headers: {
+				'content-type': req.headers['content-type'],
+				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0'
+			}
+		}
 
-        if((req.originalUrl).match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/)){
-            options['url'] = req.originalUrl.replace(/^\//, '');
-        }
+		if((req.originalUrl).match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/)){
+			options['url'] = req.originalUrl.replace(/^\//, '');
+		}
 
-        request.post(options, function(err,httpResponse,body){
-            if(!err && httpResponse){
+		request.post(options, function(err,httpResponse,body){
+			if(!err && httpResponse){
 
-                var jsonArrayFromGET_Item = {
-                    uri: {},
-                };
-                jsonArrayFromGET_Item['uri']['protocol']= httpResponse.request.uri.protocol;
-                jsonArrayFromGET_Item['uri']['auth']    = httpResponse.request.uri.auth;
-                jsonArrayFromGET_Item['uri']['hostname']= httpResponse.request.uri.hostname;
-                jsonArrayFromGET_Item['uri']['port']    = httpResponse.request.uri.port;
-                jsonArrayFromGET_Item['uri']['query']   = httpResponse.request.uri.query;
-                jsonArrayFromGET_Item['uri']['pathname']= httpResponse.request.uri.pathname;
-                jsonArrayFromGET_Item['uri']['path']    = httpResponse.request.uri.path;
-                jsonArrayFromGET_Item['uri']['href']    = httpResponse.request.uri.href;
+				var jsonArrayFromGET_Item = {
+					uri: {},
+				};
+				jsonArrayFromGET_Item['uri']['protocol']= httpResponse.request.uri.protocol;
+				jsonArrayFromGET_Item['uri']['auth']	= httpResponse.request.uri.auth;
+				jsonArrayFromGET_Item['uri']['hostname']= httpResponse.request.uri.hostname;
+				jsonArrayFromGET_Item['uri']['port']	= httpResponse.request.uri.port;
+				jsonArrayFromGET_Item['uri']['query']	= httpResponse.request.uri.query;
+				jsonArrayFromGET_Item['uri']['pathname']= httpResponse.request.uri.pathname;
+				jsonArrayFromGET_Item['uri']['path']	= httpResponse.request.uri.path;
+				jsonArrayFromGET_Item['uri']['href']	= httpResponse.request.uri.href;
 
-                jsonArrayFromGET_Item['REQ_headers']    = httpResponse.request.headers;
-                jsonArrayFromGET_Item['RES_headers']    = httpResponse.headers;
+				jsonArrayFromGET_Item['REQ_headers']	= httpResponse.request.headers;
+				jsonArrayFromGET_Item['RES_headers']	= httpResponse.headers;
 
-                if(String(httpResponse.headers['content-type']).indexOf('application/json') !== -1 || String(httpResponse.headers['content-type']).indexOf('text/javascript') !== -1){
-                    jsonArrayFromGET_Item['RES_body']   = JSON.parse(body.toString());
-                    jsonArrayFromGET_Item['method']         = httpResponse.request.method;
+				if(String(httpResponse.headers['content-type']).indexOf('application/json') !== -1 || String(httpResponse.headers['content-type']).indexOf('text/javascript') !== -1){
+					jsonArrayFromGET_Item['RES_body']	= JSON.parse(body.toString());
+					jsonArrayFromGET_Item['method']			= httpResponse.request.method;
 
-                    jsonArrayFromGET.push(jsonArrayFromGET_Item);
-                    
-                }else{
-                    jsonArrayFromGET_Item['method']         = httpResponse.request.method;
+					jsonArrayFromGET.push(jsonArrayFromGET_Item);
+					
+				}else{
+					jsonArrayFromGET_Item['method']			= httpResponse.request.method;
 
-                    jsonArrayFromGET.push(jsonArrayFromGET_Item);
-                }
+					jsonArrayFromGET.push(jsonArrayFromGET_Item);
+				}
 
-                res.writeHead(200, httpResponse.headers);
-                res.end(body);
-            }else{
-                res.writeHead(500);
-                res.end(err);
-            }
-        })
-    })
+				res.writeHead(200, httpResponse.headers);
+				res.end(body);
+			}else{
+				res.writeHead(500);
+				res.end(err);
+			}
+		})
+	})
 //#================================================================
 
 app.listen(rtech_config.root_port, () => console.log('Example app listening on port '+rtech_config.root_port));
