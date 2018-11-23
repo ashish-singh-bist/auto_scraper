@@ -706,32 +706,18 @@ connection.connect();
             //var success = body_data.process_host_name+'success';
             //var done = body_data.process_host_name+'done';
             server.stdout.on('data', function (data) {
-              console.log('stdout: ==' + data + "==");
-              if(data.toString() === "end\n"){
-                temp[body_data.process_host_name+'_success']  = true;
-                temp[body_data.process_host_name+'_done']  = true;
-                writeSession(body_data.user_id, temp );
-                if (debugMode === true) {
-                    console.log("\nScraping is done successfully");             
-                    writeLogFile(filename,"\nScraping is done successfully");
-                }                
-              }
+                console.log('stdout:' + data.toString());
             });
             server.stderr.on('error', function (code) {
-                //console.error(`child stderr:\n${code}`);
-                //sess.success = false;
-                //sess.done = true;
                 temp[body_data.process_host_name+'_success']  = false;
                 temp[body_data.process_host_name+'_done']  = true;
                 writeSession(body_data.user_id, temp );
                 if (debugMode === true) {
-                    console.log("\nScraping is done but failed, error code: " + code);
-                    writeLogFile(filename,"\nScraping is done failed");
+                    console.log("\nScraper end but failed to parse data, error code: " + code);
+                    writeLogFile(filename,"\nScraping failed");
                 }
             });
             server.on('close', function (code){
-                //sess.done = true;
-                //sess.success = true;
                 temp[body_data.process_host_name+'_success']  = true;
                 temp[body_data.process_host_name+'_done']  = true;
                 writeSession(body_data.user_id, temp );
@@ -740,15 +726,10 @@ connection.connect();
                     writeLogFile(filename,"\nScraping is done successfully");
                 }
             });
-            server.on('exit', function (code){
-                //sess.done = true;
-                //sess.success = true;
-                temp[body_data.process_host_name+'_success']  = true;
-                temp[body_data.process_host_name+'_done']  = true;
-                writeSession(body_data.user_id, temp );
+            server.on('exit', function (code, signal){
                 if (debugMode === true) {
-                    console.log("\nScraping is done successfully, exit code: " + code);             
-                    writeLogFile(filename,"\nScraping is done successfully");
+                    console.log("\nScraping exit, code: " + code);             
+                    writeLogFile(filename,"\nScraper exit");
                 }
             });            
             res.send({status: 200, message: "\nScraping start for : "+body_data.extracted_host_name }) 
