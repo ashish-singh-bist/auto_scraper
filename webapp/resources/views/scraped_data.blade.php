@@ -11,6 +11,35 @@
             <div class="row">
                 <div class="col-xs-12">
                     <div class="box box-primary">
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-6 col-sm-6 col-xs-12">
+                                    <div class="form-group">
+                                        <label>Soucre</label>
+                                        <select class="form-control" id="url_source">
+                                            <option value="" selected="">Choose Source</option>
+                                            @foreach ($sources as $source)
+                                                <option value="{{$source}}">{{$source}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col=md-3 col-sm-3 col-xs-12">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="button" class="btn btn-block btn-primary btn-sm form-control" id="scraping_for_url_list" style="background-color: #3c8dbc" disabled="">Parse Using Soucre</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="box box-primary">
                         <div class="box-body table-responsive">
                             <table class="table table-bordered" id="users-table">
                                 <thead>
@@ -125,6 +154,53 @@
                     $("#myModal").modal()
                 });
             });
+        });
+    </script>
+    <script>
+        $( document ).ready(function(){
+            $("#url_source").val("");
+            $('#scraping_for_url_list').prop('disabled', true);
+
+            $('#url_source').change(function(evt){
+                var option_selected = $( "#url_source option:selected" ).val();
+                if ( option_selected )
+                    $('#scraping_for_url_list').prop('disabled', false);
+                else
+                    $('#scraping_for_url_list').prop('disabled', true);
+            });
+
+            $('#scraping_for_url_list').click(function(evt){
+                var option_selected = $( "#url_source option:selected" ).val();
+                if ( option_selected ) {
+                    let data = {
+                        source: option_selected,
+                    }
+                    $.ajax({
+                        type: 'GET',
+                        url: "{{ route('scraped_data.getcsvfile') }}",
+                        data: data,
+                        success: function(res, status, xhr) {
+                            var csvData = new Blob([res], {type: 'text/csv;charset=utf-8;'});
+                            if (navigator.appVersion.toString().indexOf('.NET') > 0){
+                                window.navigator.msSaveBlob(csvData, 'data.csv');
+                            }
+                            else{
+                                var csvURL = window.URL.createObjectURL(csvData);
+                                var tempLink = document.createElement('a');
+                                tempLink.href = csvURL;
+                                tempLink.setAttribute('download', 'data.csv');
+                                document.body.appendChild(tempLink);
+                                tempLink.click();
+                                document.body.removeChild(tempLink);
+                            }
+                        },
+                        error:function( e){
+                            console.log(e);
+                        }
+                    });
+                }
+            });
+
         });
     </script>
 @endsection
