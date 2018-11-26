@@ -28,18 +28,60 @@ class ScrapedDataController extends Controller
     public function index(request $request)
     {
         $sources = [];
-        $scraped_sources = ScrapedData::whereNotNull('source')->distinct()->get(['source']);
+        $id = Auth::user()->id;
+        $scraped_sources = ScrapedData::where('user_id', $id)->whereNotNull('source')->distinct()->get(['source']);
         foreach($scraped_sources as $row) {
             array_push( $sources, $row->source);
         }
         return view('scraped_data', ['sources' => $sources]);
     }
 
-    public function getData()
+    public function getData(Request $request)
     {
+        // $id = Auth::user()->id;
+        // $scraped_data = ScrapedData::where('user_id', $id)->get();
+        // return Datatables::of($scraped_data)->make(true);
+        $columns = ['id','source', 'data'];
         $id = Auth::user()->id;
-        $scraped_data = ScrapedData::where('user_id', $id)->get();
-        return Datatables::of($scraped_data)->make(true);
+
+        // add limit and sort order to retrieve data
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $order = $columns[$request->input('order.0.column')];
+        $dir = $request->input('order.0.dir');
+
+        if ( isset($request->source) and $request->source ) {
+            $url_list_data =  ScrapedData::where('user_id', $id)->where('source', $request->source);
+        }
+        else{
+            $url_list_data =  ScrapedData::where('user_id', $id);
+        }
+        
+        $totalData = $url_list_data->count();
+
+        // query to retrieve log booking data as per limit and sort order
+        $ul_data = $url_list_data->offset(intval($start))
+                     ->limit(intval($limit))
+                     ->orderBy($order,$dir)
+                     ->get();
+
+        $totalFiltered = $totalData;
+        // for($i=0; $i < count($ul_data); $i++)
+        // {   
+        //     if( $ul_data[$i]['is_active'] )
+        //         $ul_data[$i]['is_active'] = '<button type="button" uid="'.$ul_data[$i]['user_id'].'" rel="'.$ul_data[$i]['id'].'" title="Click to Inactive" class="btn btn-xs btn-success active-incative-btn" status="1" >Active</button>';
+        //     else
+        //         $ul_data[$i]['is_active'] = '<button type="button" uid="'.$ul_data[$i]['user_id'].'" rel="'.$ul_data[$i]['id'].'" title="Click to Active" class="btn btn-xs btn-danger active-incative-btn" status="0" >Inactive</button>';
+        // }
+
+        $json_data = array(
+                    "draw"            => intval($request->input('draw')),
+                    "recordsTotal"    => intval($totalData),
+                    "recordsFiltered" => intval($totalFiltered),
+                    "data"            => $ul_data,
+                    );
+            
+        echo json_encode($json_data);
     }
 
     public function getProductDetails($id, request $request)

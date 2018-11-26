@@ -90,7 +90,8 @@
 @section('adminlte_js')
     <script type="text/javascript">
         $(function() {
-            $('#users-table').DataTable({
+            $("#url_source").val("");
+            var oTable = $('#users-table').DataTable({
                 "aLengthMenu": [10,25, 50, 100, 500, 1000],
                 "iDisplayLength": 25,
                 "sPaginationType" : "full_numbers",
@@ -99,7 +100,12 @@
                 select: {
                     style: 'multi'
                 },
-                ajax: "{!! route('scraped_data.getdata') !!}",
+                ajax: {
+                    url:  "{!! route('scraped_data.getdata') !!}",
+                    data: function (d) {
+                        d.source = $( "#url_source option:selected" ).val();
+                    }
+                },
                 columns: [
                     { data: 'id', name: 'id' },
                     { data: 'source', name: 'source' },
@@ -115,6 +121,10 @@
                 columnDefs: [
                    { orderable: false, targets: [1,2] }
                 ]                
+            });
+
+            $('#url_source').change(function(evt){
+                oTable.draw();
             });
 
             $('#users-table').on('click', '.view_details', function() {
