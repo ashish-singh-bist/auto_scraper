@@ -27,7 +27,12 @@ class ScrapedDataController extends Controller
      */
     public function index(request $request)
     {
-        return view('scraped_data');
+        $sources = [];
+        $scraped_sources = ScrapedData::whereNotNull('source')->distinct()->get(['source']);
+        foreach($scraped_sources as $row) {
+            array_push( $sources, $row->source);
+        }
+        return view('scraped_data', ['sources' => $sources]);
     }
 
     public function getData()
@@ -43,4 +48,51 @@ class ScrapedDataController extends Controller
         $product_details = ScrapedData::where('user_id', $user_id)->where('id', $id)->first();
         return Response::json($product_details);
     }    
+    public function getCsvFile( Request $request)
+    {   
+        $user_id = Auth::user()->id;
+        $columns = [];
+        $headers = array(
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=file.csv",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        );
+        if ( isset($request->source) && $request->source) {
+            $scraped_records = ScrapedData::where('user_id', $user_id)->where('source', $request->source)->get();
+            if ($scraped_records) {
+                $column_json = json_decode($scraped_records->first()->data);
+                foreach($column_json as $key => $val) {
+                    array_push( $columns, $key);
+                }
+            }
+            $callback = function() use ($scraped_records, $columns)
+            {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, $columns);
+
+                foreach($scraped_records as $row) {
+                    $data_row = [];
+                    foreach ($columns as $key) {
+                        $json_data = json_decode( $row->data );
+                        array_push($data_row, $json_data->$key);
+                    }
+                    fputcsv($file, $data_row);
+                }
+                fclose($file);
+            };
+            // echo json_encode(array("abc" => "string data"));
+            return Response::stream($callback, 200, $headers);
+        }
+    }
+    public function getSourceNames( Request $request){
+        $sources = [];
+        $scraped_sources = ScrapedData::distinct('source')->get();
+        foreach($scraped_sources as $row) {
+            array_push( $sources, $row->source);
+        }
+        
+        dd($sources);
+    }
 }
