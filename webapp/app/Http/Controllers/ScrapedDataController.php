@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Yajra\Datatables\Datatables;
 use App\ScrapedData;
+use Response;
 
 class ScrapedDataController extends Controller
 {
@@ -35,4 +36,11 @@ class ScrapedDataController extends Controller
         $scraped_data = ScrapedData::where('user_id', $id)->get();
         return Datatables::of($scraped_data)->make(true);
     }
+
+    public function getProductDetails($id, request $request)
+    {
+        $user_id = Auth::user()->id;
+        $product_details = ScrapedData::where('user_id', $user_id)->where('id', $id)->first();
+        return Response::json($product_details);
+    }    
 }

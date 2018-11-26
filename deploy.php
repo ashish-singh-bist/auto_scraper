@@ -66,6 +66,11 @@ task('artisan:config:cache', function () {
     write('config:cache run successfully!');
 });
 
+task('run:node:server', function () {
+    run('cd {{release_path}} && bash start_node_servers_after_deploy.sh 7001');
+    write('node server run successfully in background!');
+});
+
 task('artisan:optimize', function () {
     //No need to run this command
     //run('cd {{release_path}}/webapp && php artisan optimize');
@@ -78,6 +83,8 @@ task('node:module:install', function () {
 });
 
 after('deploy:vendors', 'node:module:install');
+
+after('node:module:install', 'run:node:server');
 
 // [Optional] if deploy fails automatically unlock.
 after('deploy:failed', 'deploy:unlock');
