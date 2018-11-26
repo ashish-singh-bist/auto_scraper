@@ -4,15 +4,6 @@ const fileSystem= require('fs');
 const mysql     = require('mysql')
 const config    = require(path.join(__dirname, 'config/config.js'));
 
-const connection    = mysql.createConnection({
-                          host     : config.mysql_host,
-                          user     : config.mysql_user,
-                          password : config.mysql_password,
-                          database : config.mysql_database
-                      });
-connection.connect();
-console.log("Scraper: Database connected");
-
 var windowOpenWith  = 'http://' + config.root_ip + ':' + config.root_port ;
 
 var parsing_mode  = process.argv[2];
@@ -28,6 +19,15 @@ if ( parsing_mode == 'databasemode') {
 
     var extracted_host_name = '';       //'https://www.youtube.com';
     var process_host_name = '';         //'www_youtube_com'
+
+    const connection    = mysql.createConnection({
+                              host     : config.mysql_host,
+                              user     : config.mysql_user,
+                              password : config.mysql_password,
+                              database : config.mysql_database
+                          });
+    connection.connect();
+    console.log("Scraper: Database connected");    
 
     var  getInformationFromDB = function(callback) {
         connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and actual_url IS NOT NULL limit 10", data, function (error, results, fields){
