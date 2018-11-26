@@ -76,7 +76,16 @@ class ScrapedDataController extends Controller
                     $data_row = [];
                     foreach ($columns as $key) {
                         $json_data = json_decode( $row->data );
-                        array_push($data_row, $json_data->$key);
+
+                        if(array_key_exists($key,$json_data)){
+                            if(gettype($json_data->$key) == 'array'){
+                                array_push($data_row, join(", ", $json_data->$key));
+                            }else{
+                                array_push($data_row, $json_data->$key);
+                            }
+                        }else{
+                            array_push($data_row, '');
+                        }
                     }
                     fputcsv($file, $data_row);
                 }

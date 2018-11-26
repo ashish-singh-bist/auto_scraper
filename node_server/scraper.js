@@ -189,10 +189,10 @@ createLog('parsing for domain ' + process_host_name + ' for user_id ' + config.u
                     console.log("count:" + count);
                     if(upper_limit === list_length-last_upper_limit){
                         lower_limit = upper_limit;
-                        //upper_limit += last_upper_limit;
+                        upper_limit += last_upper_limit;
                     } else{
                         lower_limit = upper_limit;
-                        //upper_limit += 10;
+                        upper_limit += 10;
                     }
                     console.log("count = " + count + " list_length " + list_length);
                     if(count >= list_length){
