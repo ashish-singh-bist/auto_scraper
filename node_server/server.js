@@ -807,7 +807,9 @@ connection.connect();
 	})
 
 	//this will write the scrapped data on a csv file
-	app.post('/rtech/api/save_scraped_data', (req, res) => {		
+	app.post('/rtech/api/save_scraped_data', (req, res) => {	
+        res.send({});
+        return;
 		//#================================================================FOR WRITING ON CSV FILE
 		var filename = req.body.url+'_'+req.body.user_id;		
 		//sess.filename = filename;
