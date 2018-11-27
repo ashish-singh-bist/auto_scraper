@@ -102,11 +102,30 @@ async function run()
                         url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
                     }
 
-                    const browser = await puppeteer.launch({headless: false});
+                    //proxy setting
+                    var args = []; 
+                    if ( config.proxy_enable ){
+                        if ( config.proxy_type === 'tor'){
+                            args = ['--proxy-server='+config.proxy_url];
+                        }
+                        else if ( config.proxy_type === 'authenticated' ) {
+                            args = ['--proxy-server='+config.proxy_url];
+                        }
+                    }
+
+                    const browser = await puppeteer.launch({ args: args });
                     //const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
                     //const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); // for ovh
 
                     const page = await browser.newPage();
+
+                    //proxy authentication
+                    if ( config.proxy_enable && config.proxy_type === 'authenticated' ){
+                            page.authenticate({
+                            username: config.proxy_username,
+                            password: config.proxy_password
+                        });
+                    }
 
                     console.log(`loading page: ${url}`);
                     await page.goto(url, {
@@ -119,6 +138,7 @@ async function run()
                     let scraped_data = await page.evaluate(parsingScript,site_config);
                     //console.log(scraped_data);
                     if(JSON.stringify(scraped_data) != '{}') {
+                        scraped_data.url = url_obj.act_url;
                         await saveParseData(scraped_data, url_list_id);
                     }
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////

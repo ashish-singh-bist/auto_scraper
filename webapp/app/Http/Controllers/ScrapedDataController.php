@@ -51,19 +51,23 @@ class ScrapedDataController extends Controller
         $dir = $request->input('order.0.dir');
 
         if ( isset($request->source) and $request->source ) {
-            $url_list_data =  ScrapedData::where('user_id', $id)->where('source', $request->source);
+            $url_list_data =  ScrapedData::where('scraped_data.user_id', $id)->where('scraped_data.source', $request->source);
         }
         else{
-            $url_list_data =  ScrapedData::where('user_id', $id);
+            $url_list_data =  ScrapedData::where('scraped_data.user_id', $id);
         }
         
         $totalData = $url_list_data->count();
 
         // query to retrieve log booking data as per limit and sort order
-        $ul_data = $url_list_data->offset(intval($start))
-                     ->limit(intval($limit))
-                     ->orderBy($order,$dir)
-                     ->get();
+        $ul_data = $url_list_data->select('scraped_data.*', 'tbl_url_lists.actual_url')
+                    ->leftJoin('tbl_url_lists', function($join) {
+                        $join->on('scraped_data.url_list_id', '=', 'tbl_url_lists.id');
+                    })
+                    ->offset(intval($start))
+                    ->limit(intval($limit))
+                    ->orderBy($order,$dir)
+                    ->get();
 
         $totalFiltered = $totalData;
         // for($i=0; $i < count($ul_data); $i++)

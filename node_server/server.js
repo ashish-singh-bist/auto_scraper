@@ -705,6 +705,7 @@ connection.connect();
             var temp = {};
             server.stdout.on('data', function (data) {
                 console.log('stdout:' + data.toString());
+                writeLogFile(filename, "\n"+data.toString());
             });
             server.stderr.on('error', function (code) {
                 temp[body_data.process_host_name+'_success']  = false;
