@@ -837,7 +837,9 @@ connection.connect();
 	    var scrapedContent = [];
 		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
 			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
-			scrapedContent = JSON.parse(scrapedContent);
+            if(scrapedContent != ''){
+			 scrapedContent = JSON.parse(scrapedContent);
+            }
 		}
 		scrapedContent.push(req.body.data[0]);
 
@@ -874,7 +876,7 @@ connection.connect();
 		});
 
 		if (debugMode === true) {
-			var logData = "Scraped data for : "+req.body.data[0].url+"\n";
+			var logData = "Scraped and save data for : "+req.body.data[0].url+"\n";
 			writeLogFile(filename,logData);
 		}
 	    //console.log(req.body.data[0]);

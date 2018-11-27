@@ -8,6 +8,7 @@ var windowOpenWith  = 'http://' + config.root_ip + ':' + config.root_port ;
 var parsing_mode  = process.argv[2];
 
 var url_list_array = [];
+const thread_count = config.thread_count;
 
 if ( parsing_mode == 'databasemode') {
     var source =  process.argv[3];
@@ -75,53 +76,68 @@ else{
 /*_________________________Scraping with headless browser____________________________________*/
 async function run() 
 {
-    (async () => {
-        try {
-        
-            const pages = url_list_array.map(async (url_obj, i) => {
+    // this is a loop to process all urls in chunk
+    var process_index = 0;
+    var all_url_count = url_list_array.length;
+    processChunk();
+    async function processChunk() {
+        var url_list_chunk = [];
+        if (all_url_count > process_index){
+            console.log("inside if");
+            url_list_chunk = url_list_array.slice(process_index, process_index + thread_count);
+        }
+        console.log("==================process_index: " + process_index + "========= url_list_chunk: " + url_list_chunk);
+        (async () => {
+            try {
+                const pages = url_list_chunk.map(async (url_obj, i) => {
 
-                //create url to process
-                let temp_url = windowOpenWith+url_obj.act_url.replace(host_base_url, '').replace(/\;/g,'');
-                var url = temp_url+'&config=true&host='+host_slug+'&uid='+user_id ;
+                    //create url to process
+                    let temp_url = windowOpenWith+url_obj.act_url.replace(host_base_url, '').replace(/\;/g,'');
+                    var url = temp_url+'&config=true&host='+host_slug+'&uid='+user_id ;
 
-                //add some more parameter in url
-                if ( parsing_mode == 'databasemode')
-                    url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
+                    //add some more parameter in url
+                    if ( parsing_mode == 'databasemode')
+                        url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
 
-                const browser = await puppeteer.launch();
-                //const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
-                //const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); // for ovh
+                    const browser = await puppeteer.launch({headless: false});
+                    //const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
+                    //const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); // for ovh
 
-                const page = await browser.newPage();
+                    const page = await browser.newPage();
 
-                console.log(`loading page: ${url}`);
-                await page.goto(url, {
-                    waitUntil: 'networkidle0',
-                    timeout: 120000,
+                    console.log(`loading page: ${url}`);
+                    await page.goto(url, {
+                        waitUntil: 'networkidle0',
+                        timeout: 120000,
+                    });
+
+                    //save html as pdf format for testing purpose
+                    // console.log(`saving as pdf: ${url}`);
+                    // await page.pdf({
+                    //   path: `${i}.pdf`,
+                    //   format: 'Letter',
+                    //   printBackground: true,
+                    // });
+
+                    console.log(`closing page: ${url}`);
+                    //await page.waitFor(5000); //wait if necessary
+                    console.log(`page closed`);
+                    await page.close();
+                    await browser.close();
                 });
 
-                //save html as pdf format for testing purpose
-                // console.log(`saving as pdf: ${url}`);
-                // await page.pdf({
-                //   path: `${i}.pdf`,
-                //   format: 'Letter',
-                //   printBackground: true,
-                // });
-
-                console.log(`closing page: ${url}`);
-                //await page.waitFor(5000); //wait if necessary
-                console.log(`page closed`);
-                await page.close();
-                await browser.close();
-            });
-
-            await Promise.all(pages).then(() => {
-              //do anything which you want to execute at the end
-              //parsing done
-            });
-        } catch (error) {
-            //console error if any
-            console.log(error);
-        }
-    })();
+                await Promise.all(pages).then(() => {
+                    //do anything which you want to execute at the end
+                    //parsing done
+                });
+                process_index += url_list_chunk.length;
+                if(process_index < all_url_count){
+                    processChunk();
+                }
+            } catch (error) {
+                //console error if any
+                console.log(error);
+            }
+        })();
+    }
  }
