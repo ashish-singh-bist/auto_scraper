@@ -703,8 +703,6 @@ connection.connect();
                 writeLogFile(filename, "Scraping start for : "+body_data.extracted_host_name);           
             }
             var temp = {};
-            //var success = body_data.process_host_name+'success';
-            //var done = body_data.process_host_name+'done';
             server.stdout.on('data', function (data) {
                 console.log('stdout:' + data.toString());
             });
