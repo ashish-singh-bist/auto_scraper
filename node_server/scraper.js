@@ -283,9 +283,9 @@ async function parsingScript(html,site_config)
            return targetelement.getAttribute('src');
         }
 
-        else if( element_tag === 'a' ){
-           return targetelement.getAttribute('href');
-        }
+        // else if( element_tag === 'a' ){
+        //    return targetelement.getAttribute('href');
+        // }
 
         else {
            return ele.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
