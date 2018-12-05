@@ -64,18 +64,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
         console.log('keyboard')
         if(event.keyCode === 27){
             
-            document.getElementById('context').style.display = 'none';
+            // document.getElementById('context').style.display = 'none';
             document.getElementById('label_input').style.display = 'none';
         }else if(event.keyCode === 13 && event.target.name === 'id_selector_text'){
             
             let selector_ = document.querySelector('#id_selector_text').value;
+            console.log('selector_ - '+selector_);
             if(document.querySelector(selector_)){
-                document.getElementById('id_selector_text').setAttribute('style', 'display: none;');
-
+                document.getElementById('id_selector_text').style.display = 'none';
                 let target_ = document.querySelector(selector_);
-
                 getXPath(target_);
-                selectElement(x_paths, '_ID'); 
+                selectElement(x_paths, '_ID');
+                document.getElementById('id_selector_text').value='';
             }else{
                 document.getElementById('id_selector_text').value='';
                 document.getElementById('id_selector_text').setAttribute('placeholder','Invalid selector');
@@ -99,23 +99,23 @@ document.addEventListener("DOMContentLoaded", function(event) {
     /* function for handeling clicks on left-click-menu items */
     function clickevent(event){
         //the elemnts on which the left click functionality (of showing label input box) should not work
-        // var avoid_element_id = ['label_input_text', 'label_input_button', 'selection_completed', 'done_config', 'select_id', 'id_selector_text', 'panel', 'panelheader', 'panel-table', 'panel-table-thead']
+        // var avoid_element_id = ['label_input_text', 'label_input_button', 'selection_completed', 'done_config', 'select_id', 'id_selector_text', 'panelfooter', 'panelheader', 'panel-table', 'panel-table-thead']
         // var _classes_str = event.target.getAttribute('class');
         // console.log(event.target.closest(".avoid-ele"));
         // var _classes_arr = _classes_str.split(" ");
                 
         // if(_classes_arr.indexOf('avoid-ele') === -1){
         if(event.target.closest(".avoid-ele") == null){
-            if(document.getElementById("context").style.display === 'block'){
-                document.getElementById("context").style.display = "none";
-            }
+            // if(document.getElementById("context").style.display === 'block'){
+                // document.getElementById("context").style.display = "none";
+            // }
         
             $( ".add_mode" ).prop( "checked", false );
             $('#label_item_value').show();
             $('#advance_code_input_text').hide();
             document.getElementById('label_input_text').value = '';
             document.getElementById('advance_code_input_text').value = '';
-            document.getElementById('label_input_text').setAttribute('placeholder','Label');
+            // document.getElementById('label_input_text').setAttribute('placeholder','Label');
             document.getElementById('label_input_text').style.borderColor = '#ccc';
             
             getXPath(event.target);
@@ -125,17 +125,35 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     /* function for displaying rightclick menu */
     function rightclickevent(event){
-        event.preventDefault();
-        if(event.target.closest(".avoid-ele") == null){
-            if(document.getElementById("label_input").style.display === 'block'){
-                document.getElementById("label_input").style.display = "none";
-            }
+        
+        // if(event.target.closest(".avoid-ele") == null){
+        //     if(document.getElementById("label_input").style.display === 'block'){
+        //         document.getElementById("label_input").style.display = "none";
+        //     }
 
-            // event.preventDefault();
-            document.getElementById('id_selector_text').setAttribute('style', 'display:none;');
-            document.getElementById('id_selector_text').value = '';
-            document.getElementById('context').setAttribute('style', 'display:block; left:'+event.pageX+'px;top:'+event.pageY+'px;');
+        //     // event.preventDefault();
+        //     document.getElementById('id_selector_text').setAttribute('style', 'display:none;');
+        //     document.getElementById('id_selector_text').value = '';
+        //     // document.getElementById('context').setAttribute('style', 'display:block; left:'+event.pageX+'px;top:'+event.pageY+'px;');
+        // }
+        // event.preventDefault();
+        if(event.target.closest(".avoid-ele") == null){
+            // if(document.getElementById("context").style.display === 'block'){
+                // document.getElementById("context").style.display = "none";
+            // }
+        
+            $( ".add_mode" ).prop( "checked", false );
+            $('#label_item_value').show();
+            $('#advance_code_input_text').hide();
+            document.getElementById('label_input_text').value = '';
+            document.getElementById('advance_code_input_text').value = '';
+            // document.getElementById('label_input_text').setAttribute('placeholder','Label');
+            document.getElementById('label_input_text').style.borderColor = '#ccc';
+            
+            getXPath(event.target);
+            checkForClass(x_paths, event.pageX, event.pageY); 
         }
+        event.preventDefault();
     }
 
     /* function for adding border on hover */
@@ -152,25 +170,26 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     /* function for handeling clicks on right-click-menu items */
     function contextmenuclick(event){
-        console.log('context menu clicked')
+        console.log('context menu clicked');
         let action = event.target.getAttribute('rel');
-        
-        if(action === 'selection_reset'){
-            localStorage.removeItem('data');
-            localStorage.removeItem('detailpageflag');
-            data_object = [];
+        console.log( 'action '+ action);
+        // if(action === 'selection_reset'){
+        //     localStorage.removeItem('data');
+        //     localStorage.removeItem('detailpageflag');
+        //     data_object = [];
 
-            var selected_items = document.getElementsByClassName('option-selected');
-            if(selected_items.length > 0)
-	            while(selected_items.length)
-	            	selected_items[0] = selected_items[0].classList.remove('option-selected');
+        //     var selected_items = document.getElementsByClassName('option-selected');
+        //     if(selected_items.length > 0)
+	       //      while(selected_items.length)
+	       //      	selected_items[0] = selected_items[0].classList.remove('option-selected');
 
-            document.getElementById('context').style.display = 'none';
-            resetConfigurationPanelData();
-	    }else if(action === 'selection_type'){
+        //     // document.getElementById('context').style.display = 'none';
+        //     resetConfigurationPanelData();
+	    // }else
+         if(action === 'selection_type'){
 
             localStorage.setItem('detailpageflag', '1');
-            document.getElementById('context').style.display = 'none';
+            // document.getElementById('context').style.display = 'none';
         }else if(action === 'done_config'){
             
             // var url = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'');
@@ -194,9 +213,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 // window.location = config.homepage_rtech;
                 var ww = window.open('', '_self'); ww.close();
             })
-            document.getElementById('context').style.display = 'none';
+            // document.getElementById('context').style.display = 'none';
         }else if(action === 'select_id'){
-            document.getElementById('id_selector_text').setAttribute('style', 'display: block;')
+            document.getElementById('id_selector_text').style.display = 'block';
         }        
 
         // document.getElementById('context').style.display = 'none';
@@ -246,7 +265,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             // alert('Already Selected, See Highlight record in table');
             var _key = targetelement.getAttribute('labelkey');
             showMessage( _key, 'already selected, see record in table', 'danger' );
-            document.getElementById("context").style.display = "none";
+            // document.getElementById("context").style.display = "none";
             document.getElementById("label_input").style.display = "none";
             // document.getElementById('label_input').style.display = 'none';
             // targetelement.classList.remove('option-selected');
@@ -320,6 +339,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
         let newdataobject        = {};
         let child = targetelement;
         let i = 0;
+        console.log('targetelement - '+targetelement);
+        
+        console.log('label_item_value - '+document.getElementById('label_item_value').value);
+
+        
         while( (child = child.previousSibling) != null ) // to get the index of the element in its parent's child list
             i++;
         label = label.trim().replace(/\s+/g, '_');
@@ -353,13 +377,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var res = eval('try {' + document.getElementById('advance_code_input_text').value + '}catch(err) {err.message}');
             var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ res +'</td></tr>';    
         }
+        else if(document.getElementById('id_selector_text').value){
+            console.log(document.querySelector(document.getElementById('id_selector_text').value).innerHTML);
+            var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.querySelector(document.getElementById('id_selector_text').value).innerHTML+'</td></tr>';
+        }
         else{
             var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('label_item_value').value+'</td></tr>';
         }
 
         
         $('#selected_elements_list').append(display_selected_list);
-        document.getElementById('panel').style.display='block';
+         document.getElementById("done_config").title = 'Create config';
+         document.getElementById("done_config").disabled = false;
+        document.getElementById('panelfooter').style.display='block';
         showMessage( label, 'label successfuly added, see record in table', 'success' );
         dataHighlighter(label);
         
@@ -581,7 +611,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		targetelement.setAttribute('labelkey', label);
         var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+value+'</td></tr>';
         $('#selected_elements_list').append(display_selected_list);
-        document.getElementById('panel').style.display='block';
+        document.getElementById("done_config").title = 'Create config';
+        document.getElementById("done_config").disabled = false;
+        document.getElementById('panelfooter').style.display='block';
         if(editmode == undefined){
             autoPostElement(label, targetelement, path);
         }
@@ -708,34 +740,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     var close = document.getElementsByClassName("closebtn");
     var i;
 
-    // Loop through all close buttons
-    // for (i = 0; i < close.length; i++) {
-    //     // When someone clicks on a close button
-    //     close[i].onclick = function(ele){
-
-    //         var table_length = document.getElementById("panel-table").rows.length; 
-    //         if( table_length == 0){
-    //             document.getElementById('panel').style.display='none';
-    //         }
-
-    //         // Get the parent of <span class="closebtn"> (<div class="alert">)
-    //         this.classList.remove('option-selected');
-    //         var key_ = this.getAttribute('key');
-    //         unselectElement(key_);
-    //         var div = this.parentElement.parentElement;
-    //         // Set the opacity of div to 0 (transparent)
-    //         div.style.opacity = "0";
-            
-    //         // Hide the div after 600ms (the same amount of milliseconds it takes to fade out)
-    //         setTimeout(function(){ 
-    //             div.style.display = "none";
-    //             document.getElementById('context').style.display = 'none';
-    //             document.getElementById('label_input').style.display = 'none';
-    //         }, 300);
-    //     }
-    // }
     $(document).on('click', '.close-btn_', function(){
-        document.getElementById('context').style.display = 'none';
+        // document.getElementById('context').style.display = 'none';
         document.getElementById('label_input').style.display = 'none';
     });
     $(document).on('click', '.closebtn', function(){
@@ -744,11 +750,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             $('.opt_selected_'+_key).removeClass("option-selected");
             var i = this.parentNode.parentNode.rowIndex;
             document.getElementById("panel-table").deleteRow(i);
-            document.getElementById('context').style.display = 'none';
+            // document.getElementById('context').style.display = 'none';
             document.getElementById('label_input').style.display = 'none';
             var rowCount = document.getElementById("panel-table").rows.length;
             if( rowCount == 1){
-                document.getElementById('panel').style.display='none';
+                document.getElementById("done_config").title = 'First creates property';
+                document.getElementById("done_config").disabled = true;
+                document.getElementById('panelfooter').style.display='none';
             }
             showMessage( _key, 'is successfuly removed', 'info' );
     });
@@ -758,7 +766,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         div.style.display = "none";
     });
     $(document).on('click', '.add_mode', function(){
-
             var _key = this.getAttribute('key');
             if($(this).is(":checked")){
                 $('#label_item_value').hide();
@@ -772,13 +779,26 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
     });
 
+    $(document).on('click', '#selection_completed', function(){
+        localStorage.removeItem('data');
+        localStorage.removeItem('detailpageflag');
+        data_object = [];
+        var selected_items = document.getElementsByClassName('option-selected');
+        if(selected_items.length > 0)
+            while(selected_items.length)
+                selected_items[0] = selected_items[0].classList.remove('option-selected');
+        resetConfigurationPanelData();
+    });
+
     function resetConfigurationPanelData(){
         showMessage('', '<strong>All records are delete.</strong>', 'success');
         var rowCount = document.getElementById("panel-table").rows.length;
         for (var i = rowCount - 1; i > 0; i--) {
             document.getElementById("panel-table").deleteRow(i);
         }
-        document.getElementById('panel').style.display='none';
+        document.getElementById("done_config").title = 'First creates property';
+        document.getElementById("done_config").disabled = true;
+        document.getElementById('panelfooter').style.display='none';
     }
 
     function dataHighlighter(key, duration=6000){
