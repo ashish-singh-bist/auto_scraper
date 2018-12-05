@@ -2,6 +2,11 @@ const puppeteer = require('puppeteer');
 const path      = require('path');
 const fileSystem= require('fs');
 const mysql     = require('mysql')
+const DOMParser = require('xmldom').DOMParser;
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
+//const https = require('https');
+const request = require("request-promise");
 const config    = require(path.join(__dirname, 'config/config.js'));
 
 var windowOpenWith  = 'http://' + config.root_ip + ':' + config.root_port ;
@@ -102,61 +107,39 @@ async function run()
                         url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
                     }
 
-                    //proxy setting
-                    var args = []; 
-                    if ( config.proxy_enable ){
-                        if ( config.proxy_type === 'tor'){
-                            args = ['--proxy-server='+config.proxy_url];
-                        }
-                        else if ( config.proxy_type === 'authenticated' ) {
-                            args = ['--proxy-server='+config.proxy_url];
-                        }
-                    }
-
-                    const browser = await puppeteer.launch({ args: args });
-                    //const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
-                    //const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); // for ovh
-
-                    const page = await browser.newPage();
-
-                    //proxy authentication
-                    if ( config.proxy_enable && config.proxy_type === 'authenticated' ){
-                            page.authenticate({
-                            username: config.proxy_username,
-                            password: config.proxy_password
-                        });
-                    }
-
+  
                     console.log(`loading page: ${url}`);
-                    await page.goto(url, {
-                        waitUntil: 'networkidle0',
-                        timeout: 120000,
+  
+                    var options = [];
+                    console.log("===================" + url_obj.act_url);
+                    options['url'] = url_obj.act_url;
+                    options['followAllRedirects'] = true ;
+                    var html ="";
+                    await request(options, function(error, response, body){                        
+                        html = body;
                     });
 
-                    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    // get hotel details
-                    let scraped_data = await page.evaluate(parsingScript,site_config);
-                    //console.log(scraped_data);
-                    if(JSON.stringify(scraped_data) != '{}') {
-                        scraped_data.url = url_obj.act_url;
-                        await saveParseData(scraped_data, url_list_id);
+                    if(html){
+                        console.log("=======data get=======");
+                        let scraped_data = await parsingScript(html, site_config)
+                        console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
+                        //console.log(body);
+                        // var parser = new DOMParser()
+                        // var document = parser.parseFromString(body, "text/html");
+                        // let scraped_data = await parsingScript(document, site_config);
+
+                        if(JSON.stringify(scraped_data) != '{}') {
+                            scraped_data.url = url_obj.act_url;
+                            console.log("saving data....");
+                            await saveParseData(scraped_data, url_list_id);
+                        }
                     }
-                    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-                    //save html as pdf format for testing purpose
-                    // console.log(`saving as pdf: ${url}`);
-                    // await page.pdf({
-                    //   path: `${i}.pdf`,
-                    //   format: 'Letter',
-                    //   printBackground: true,
-                    // });
 
                     console.log(`closing page: ${url}`);
                     //await page.waitFor(5000); //wait if necessary
                     console.log(`page closed`);
-                    await page.close();
-                    await browser.close();
+                    //await page.close();
+                    //await browser.close();
                 });
 
                 await Promise.all(pages).then(() => {
@@ -169,135 +152,134 @@ async function run()
                 }
             } catch (error) {
                 //console error if any
-                console.log(error);
+                console.log("error" + error);
             }
         })();
     }
 }
 
 
-async function parsingScript(site_config) 
+async function parsingScript(html,site_config) 
 {
     var scraped_data = {};
 
-    for(var obj of site_config){
-        var element_attributes  = obj.attributes;
-        var element_key = obj.key;
-        var element_xpath   = obj.xpath;
-        var element_tag = obj.tag;
-        var element_index = obj.child_index;
+    try{
 
-        var parent_attributes   = obj.parent_attributes;
-        var parent_xpath= obj.parent_xpath;
-        var parent_tag  = obj.parent_tag;
-        var element_flag = false;
+        //var parser = new DOMParser();
 
-        if ('code_to_inject' in obj){
-            var data_key = obj.key;
-            var html = document.documentElement.innerHTML;
-            scraped_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
-        }
-        /* finding element via `id` */
-        else if('id' in element_attributes){
-            var element = document.getElementById(element_attributes['id']);
-            if(element){
-                element_flag = true;
-                autoSelectElement(element, element_key, element_xpath, element_attributes);
-                continue;
+        //var document = parser.parseFromString(html, "text/html");
+
+        var dom = new JSDOM(html);
+        var document = dom.window.document;
+        var doc = dom.window.document;
+    }
+    catch(err){
+        console.log(err.message);
+        return scraped_data;
+    }
+
+
+    for(var obj of site_config) {
+        try{
+            var element_attributes  = obj.attributes;
+            var element_key = obj.key;
+            var element_xpath   = obj.xpath;
+            var element_tag = obj.tag;
+            var element_index = obj.child_index;
+
+            var parent_attributes   = obj.parent_attributes;
+            var parent_xpath= obj.parent_xpath;
+            var parent_tag  = obj.parent_tag;
+            var element_flag = false;
+
+            if ('code_to_inject' in obj){
+                var data_key = obj.key;
+                var html = document.documentElement.innerHTML;
+                scraped_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
             }
-        } else{
-            var condition_string = '';
-            for(var attribute in  element_attributes){
-                if(element_attributes[attribute] !== '')
-                    condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
-            }
-            if(condition_string != ''){
-                var candidate_elements  = document.querySelectorAll(element_tag+condition_string+'');
-                var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);
-                if(candidate_elements.length === 1 && candidate_elements[0] != null){
+            /* finding element via `id` */
+            else if('id' in element_attributes){
+                var element = document.getElementById(element_attributes['id']);
+
+                if(element){
                     element_flag = true;
-                    
-                    autoSelectElement(candidate_elements[0], element_key, element_xpath, element_attributes);
-                }else if(candidate_elements.length > 1){
-                    var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
-                    for(var x=0; x< candidate_elements.length; x++){
-                        if(candidate_elements[x].parentElement === candidate_parent){
+                    scraped_data[element_key] = autoSelectElement(element, element_key, element_tag);
+                    continue;
+                }
+            } 
+            else{
+                var condition_string = '';            
+                for(var attribute in  element_attributes){
+                    if(element_attributes[attribute] !== '')
+                        condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
+                }            
+                if(condition_string != ''){
+                    var candidate_elements  = doc.querySelectorAll(element_tag+condition_string+'');
+                    var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);
+                    if(candidate_elements.length > 1){console.log('if_candidate_elements');
+                        var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
+                        for(var x=0; x< candidate_elements.length; x++){                            
+                            if(candidate_elements[x].parentElement === candidate_parent  && candidate_elements[x] != null){
+                                element_flag = true;
+                                //autoSelectElement(candidate_elements[x], element_key);
+                                scraped_data[element_key] = autoSelectElement(candidate_elements[x], element_key, element_tag);
+                                break;
+                            }
+                        }
+                    }else{
+                        candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
+                        if(candidate_element != null){
                             element_flag = true;
-                            autoSelectElement(candidate_elements[x], element_key, element_xpath, element_attributes);
-                            break;
+                            //autoSelectElement(candidate_element, element_key);
+                            scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
                         }
                     }
                 }else{
-                    candidate_element = document.evaluate(element_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    if(candidate_element != null){
-                        element_flag = true;
-                        autoSelectElement(candidate_element, element_key, element_xpath, element_attributes);
+                    var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
+
+                    //check if parent attributes in config is equal to candidate parents extracted attributes
+                    if(candidate_parent && JSON.stringify(postGetAttr(candidate_parent)) === JSON.stringify(parent_attributes)){
+                        var candidate_element = candidate_parent.childNodes[element_index];
+                        
+                        //autoSelectElement(candidate_element, element_key);
+                        scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
                     }
-                }
-            }else{
-                var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
-
-                //check if parent attributes in config is equal to candidate parents extracted attributes
-                if(candidate_parent && JSON.stringify(postGetAttr(candidate_parent)) === JSON.stringify(parent_attributes)){
-                    var candidate_element = candidate_parent.childNodes[element_index];
                     
-                    autoSelectElement(candidate_element, element_key, element_xpath, element_attributes);
                 }
-                
+            }
+            if(element_flag === false){
+                var candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
+                if(candidate_element != null){
+                    var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
+                    if(candidate_parent && candidate_parent == candidate_element.parentElement){
+                        element_flag = true;
+                        
+                        //autoSelectElement(candidate_element, element_key);
+                        scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
+                    }
+                    
+                }
             }
         }
-
-        if(element_flag === false){
-            var candidate_element = document.evaluate(element_xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if(candidate_element != null){
-                var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
-                if(candidate_parent && candidate_parent == candidate_element.parentElement){
-                    element_flag = true;
-                    
-                    autoSelectElement(candidate_element, element_key, element_xpath, element_attributes);
-                }
-                
-            }
+        catch(err){
+            console.log(err.message);
         }
-
     }
     return scraped_data;
 
 
      /* select element */
-    async function autoSelectElement(ele, label, path, ele_attributes){
+    function autoSelectElement(ele, label, element_tag){
         var targetelement = ele;
-        console.log('targetelement'+targetelement);
-        var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
-        targetelement.classList.add('option-selected');
-        targetelement.classList.add('opt_selected_'+label);
-        targetelement.setAttribute('labelkey', label);
-        var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+value+'</td></tr>';
-        $('#selected_elements_list').append(display_selected_list);
-        document.getElementById('panel').style.display='block';
-        //var editmode = 'undefined';
-        //if(editmode === 'undefined'){
-            autoPostElement(label, targetelement, path);
-        //}
-    }
-
-    /* extract selected element's properties */
-    async function autoPostElement(label, targetelement, path){
-        
-        //for cases like one in `https://www.airbnb.co.in/rooms/20814508` where the <div> contains the image url in its `style` property
-        let image   = (window.getComputedStyle(targetelement).backgroundImage);
-        image       = image.substr(5, image.length-7);
-
-        let replace = '(.)+'+config.root_port+'\/';     
-        let re      = new RegExp(replace, "g");
-
-        if(image.length)
-            scraped_data[label] = image;
-        else
-            scraped_data[label] = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
-
-        console.log(label, scraped_data[label])
-    }                    
+        //console.log(ele.textContent);        
+        //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
+        if ( element_tag === 'img' ){
+           return targetelement.getAttribute('src');
+        }        
+        else {
+           return ele.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
+        }
+    }                
 
     async function returnparent(attributes, xpath, tag){
         var selected_parent;
@@ -313,7 +295,7 @@ async function parsingScript(site_config)
                 var temporary_id_container = attributes['id'];
                 var split_id = temporary_id_container.split(/([0-9]+)/g);
                 for(var x=0; x< split_id.length; x++){
-                    var candidate_parent = document.querySelector('*[id*="'+split_id[x]+'"]');
+                    var candidate_parent = doc.querySelector('*[id*="'+split_id[x]+'"]');
                     if(candidate_parent)
                         return candidate_parent
                 }
@@ -341,7 +323,7 @@ async function parsingScript(site_config)
             condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
         }
         if(condition_string != ''){
-            var candidate_parent = document.querySelector(tag+condition_string);
+            var candidate_parent = doc.querySelector(tag+condition_string);
             if(candidate_parent != null){
                 var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
                 if(candidate_parent_xpath == xpath){
@@ -356,11 +338,11 @@ async function parsingScript(site_config)
                     }
                 }
             }
-            candidate_parent = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
             if(candidate_parent != null)
                 selected_parent = candidate_parent;
         }else{
-            var candidate_parent = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            var candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
             if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
                 return candidate_parent;
             }
@@ -409,4 +391,4 @@ async function saveParseData(scraped_data, url_list_id)
         }
     });
     connection.end();
-}                
+}

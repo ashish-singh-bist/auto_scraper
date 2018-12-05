@@ -1,13 +1,13 @@
 const express       = require('express');
 const app           = express();
 const util          = require('util');
-const request       = require('request');
 const path          = require('path');
 const fileSystem    = require('fs');
 const cheerio       = require('cheerio');
 const bodyParser    = require('body-parser');
 const csv           = require('fast-csv');
-const mysql         = require('mysql')
+const mysql         = require('mysql');
+const request       = require("request-promise");
 
 const header    = require(path.join(__dirname, 'js/headers'));          //code to clean our headers from invalid characters
 const rtech_config  = require(path.join(__dirname, 'config/config'));   //application config
@@ -206,6 +206,8 @@ connection.connect();
         if(options['url'].startsWith(REL_PREFIX)){
             options['url'] = 'https:' + options['url']
         }
+
+        //options['proxy'] = 'http://207.180.240.16:3128';
 
         request(options, function(error, response, body){
 
