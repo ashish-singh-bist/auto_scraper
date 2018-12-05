@@ -383,7 +383,8 @@ async function saveParseData(scraped_data, url_list_id)
                           host     : config.mysql_host,
                           user     : config.mysql_user,
                           password : config.mysql_password,
-                          database : config.mysql_database
+                          database : config.mysql_database,
+                          charset : "utf8mb4_unicode_ci"
                       });
     //connect to database
     connection.connect();
