@@ -246,18 +246,28 @@ $( document ).ready(function(){
 					if(res.hasOwnProperty('data') && res.data.length > 0){
 						parsedJson = res.data;
 				 		html = "<table class='table table-bordered table-striped capitalised'>"
+
+				 		var key_array = [];
+				 		//insert key in array for table header
 						parsedJson.forEach(function (obj, index) {
-							if( index == 0 ){
-								html += "<tr>";
-								for (var key in obj) {
-									if (obj.hasOwnProperty(key)) 
-										html += "<th>" + key + "</th>";
-								}
-								html += "</tr>";
-							}
-							
-							html += "<tr>";
 							for (var key in obj) {
+								if (obj.hasOwnProperty(key) && $.inArray(key, key_array) == -1)
+									key_array.push(key);
+							}
+						});
+
+						//create table header
+						html += "<tr>";
+						for(var i=0; i< key_array.length; i++) {
+							html += "<th>" + key_array[i] + "</th>";
+						}
+						html += "</tr>";
+
+						//create table data
+						parsedJson.forEach(function (obj, index) {					
+							html += "<tr>";
+							for(var i=0; i< key_array.length; i++) {
+								key = key_array[i];
 								if (obj.hasOwnProperty(key)){
 									if( key == 'url' ){
 										var trim_title = obj[key];
@@ -266,6 +276,8 @@ $( document ).ready(function(){
 										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + trim_title + "</a></td>";
 									}else
 										html += "<td>" + obj[key] + "</td>";
+								}else{
+									html += "<td></td>";
 								}
 							}
 							html += "</tr>";

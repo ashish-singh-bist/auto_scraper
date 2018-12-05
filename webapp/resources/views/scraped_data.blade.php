@@ -46,6 +46,7 @@
                                     <tr>
                                         <th>Id</th>
                                         <th>Source</th>
+                                        <th>Url</th>
                                         <th>Data</th>
                                         <th>View Data</th>
                                     </tr>
@@ -109,6 +110,7 @@
                 columns: [
                     { data: 'id', name: 'id' },
                     { data: 'source', name: 'source' },
+                    { data: 'actual_url', name: 'actual_url' },
                     { data: 'data', name: 'data' },
                     { 
                         "data": "id",
@@ -119,7 +121,7 @@
                     },                    
                 ],
                 columnDefs: [
-                   { orderable: false, targets: [1,2] }
+                   { orderable: false, targets: [2,3,4] }
                 ]                
             });
 

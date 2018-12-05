@@ -1,13 +1,13 @@
 const express       = require('express');
 const app           = express();
 const util          = require('util');
-const request       = require('request');
 const path          = require('path');
 const fileSystem    = require('fs');
 const cheerio       = require('cheerio');
 const bodyParser    = require('body-parser');
 const csv           = require('fast-csv');
-const mysql         = require('mysql')
+const mysql         = require('mysql');
+const request       = require("request-promise");
 
 const header    = require(path.join(__dirname, 'js/headers'));          //code to clean our headers from invalid characters
 const rtech_config  = require(path.join(__dirname, 'config/config'));   //application config
@@ -206,6 +206,8 @@ connection.connect();
         if(options['url'].startsWith(REL_PREFIX)){
             options['url'] = 'https:' + options['url']
         }
+
+        //options['proxy'] = 'http://207.180.240.16:3128';
 
         request(options, function(error, response, body){
 
@@ -696,15 +698,16 @@ connection.connect();
             }
             var temp = {};
             server.stdout.on('data', function (data) {
-              console.log('stdout: ==' + data + "==");
+                console.log('stdout:' + data.toString());
+                writeLogFile(filename, "\n"+data.toString());
             });
             server.stderr.on('error', function (code) {
                 temp[body_data.process_host_name+'_success']  = false;
                 temp[body_data.process_host_name+'_done']  = true;
                 writeSession(body_data.user_id, temp );
                 if (debugMode === true) {
-                    console.log("\nScraping is done but failed, error code: " + code);
-                    writeLogFile(filename,"\nScraping is done failed");
+                    console.log("\nScraper end but failed to parse data, error code: " + code);
+                    writeLogFile(filename,"\nScraping failed");
                 }
             });
             server.on('close', function (code){
@@ -716,17 +719,12 @@ connection.connect();
                     writeLogFile(filename,"\nScraping is done successfully");
                 }
             });
-            // server.on('exit', function (code){
-            //     //sess.done = true;
-            //     //sess.success = true;
-            //     temp[body_data.process_host_name+'_success']  = true;
-            //     temp[body_data.process_host_name+'_done']  = true;
-            //     writeSession(body_data.user_id, temp );
-            //     if (debugMode === true) {
-            //         console.log("\nScraping is done successfully, exit code: " + code);
-            //         writeLogFile(filename,"\nScraping is done successfully");
-            //     }
-            // });            
+            server.on('exit', function (code, signal){
+                if (debugMode === true) {
+                    console.log("\nScraping exit, code: " + code);             
+                    writeLogFile(filename,"\nScraper exit");
+                }
+            });            
             res.send({status: 200, message: "\nScraping start for : "+body_data.extracted_host_name }) 
         }
     })
@@ -802,7 +800,9 @@ connection.connect();
 	})
 
 	//this will write the scrapped data on a csv file
-	app.post('/rtech/api/save_scraped_data', (req, res) => {		
+	app.post('/rtech/api/save_scraped_data', (req, res) => {	
+        res.send({});
+        return;
 		//#================================================================FOR WRITING ON CSV FILE
 		var filename = req.body.url+'_'+req.body.user_id;		
 		//sess.filename = filename;
@@ -832,7 +832,9 @@ connection.connect();
 	    var scrapedContent = [];
 		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
 			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
-			scrapedContent = JSON.parse(scrapedContent);
+            if(scrapedContent != ''){
+			 scrapedContent = JSON.parse(scrapedContent);
+            }
 		}
 		scrapedContent.push(req.body.data[0]);
 
@@ -869,7 +871,7 @@ connection.connect();
 		});
 
 		if (debugMode === true) {
-			var logData = "Scraped data for : "+req.body.data[0].url+"\n";
+			var logData = "Scraped and save data for : "+req.body.data[0].url+"\n";
 			writeLogFile(filename,logData);
 		}
 	    //console.log(req.body.data[0]);
