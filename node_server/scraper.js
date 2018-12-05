@@ -113,11 +113,19 @@ async function run()
                     var options = [];
                     console.log("===================" + url_obj.act_url);
                     options['url'] = url_obj.act_url;
-                    options['followAllRedirects'] = true ;
+                    //options['followAllRedirects'] = true ;
                     var html ="";
-                    await request(options, function(error, response, body){                        
-                        html = body;
-                    });
+                    try {
+                        await request(options, function(error, response, body){ 
+                            console.log('statusCode=========='+response.statusCode);
+                            if ( response.statusCode == 200 ) {
+                                html = body;
+                            }
+                        });                        
+                    }
+                    catch(e) {                        
+                        //console.log('error'+e.message);
+                    }                    
 
                     if(html){
                         console.log("=======data get=======");
@@ -152,7 +160,7 @@ async function run()
                 }
             } catch (error) {
                 //console error if any
-                console.log("error" + error);
+                //console.log("error" + error);
             }
         })();
     }
@@ -209,16 +217,16 @@ async function parsingScript(html,site_config)
             } 
             else{
                 var condition_string = '';            
-                for(var attribute in  element_attributes){
+                for(var attribute in  element_attributes){                    
                     if(element_attributes[attribute] !== '')
                         condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
-                }            
+                }
                 if(condition_string != ''){
                     var candidate_elements  = doc.querySelectorAll(element_tag+condition_string+'');
-                    var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);
+                    var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);                    
                     if(candidate_elements.length > 1){console.log('if_candidate_elements');
                         var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
-                        for(var x=0; x< candidate_elements.length; x++){                            
+                        for(var x=0; x < candidate_elements.length; x++){                            
                             if(candidate_elements[x].parentElement === candidate_parent  && candidate_elements[x] != null){
                                 element_flag = true;
                                 //autoSelectElement(candidate_elements[x], element_key);
@@ -227,7 +235,7 @@ async function parsingScript(html,site_config)
                             }
                         }
                     }else{
-                        candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
+                        candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;                        
                         if(candidate_element != null){
                             element_flag = true;
                             //autoSelectElement(candidate_element, element_key);
@@ -243,8 +251,7 @@ async function parsingScript(html,site_config)
                         
                         //autoSelectElement(candidate_element, element_key);
                         scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
-                    }
-                    
+                    }                    
                 }
             }
             if(element_flag === false){
@@ -256,8 +263,7 @@ async function parsingScript(html,site_config)
                         
                         //autoSelectElement(candidate_element, element_key);
                         scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
-                    }
-                    
+                    }                    
                 }
             }
         }
@@ -272,10 +278,15 @@ async function parsingScript(html,site_config)
     function autoSelectElement(ele, label, element_tag){
         var targetelement = ele;
         //console.log(ele.textContent);        
-        //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
-        if ( element_tag === 'img' ){
+        //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');        
+        if ( element_tag === 'img' ){                                 
            return targetelement.getAttribute('src');
-        }        
+        }
+
+        else if( element_tag === 'a' ){
+           return targetelement.getAttribute('href');
+        }
+
         else {
            return ele.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
         }
