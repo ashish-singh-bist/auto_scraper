@@ -107,18 +107,30 @@ async function run()
                         url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
                     }
 
-  
                     console.log(`loading page: ${url}`);
   
-                    var options = [];
+                    var options = {
+                        headers: {
+                                'connection': 'keep-alive',
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
+                                //'Accept-Language': 'en-US,en;q=0.5', 
+                            },                        
+                        encoding: null,
+                        jar: true 
+                    }
+
                     console.log("===================" + url_obj.act_url);
                     options['url'] = url_obj.act_url;
-                    //options['followAllRedirects'] = true ;
+                    options['resolveWithFullResponse'] = true;                    
                     var html ="";
                     try {
                         await request(options, function(error, response, body){ 
                             console.log('statusCode=========='+response.statusCode);
-                            if ( response.statusCode == 200 ) {
+                            // fileSystem.writeFile('test_scrap.html', body , function (err) {
+                            //     if (err) throw err;
+                            //     console.log('HTML File Saved!!!!!');
+                            // });                            
+                            if ( response.statusCode === 200 ) {
                                 html = body;
                             }
                         });                        
@@ -129,7 +141,7 @@ async function run()
 
                     if(html){
                         console.log("=======data get=======");
-                        let scraped_data = await parsingScript(html, site_config)
+                        let scraped_data = await parsingScript(html, site_config);
                         console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
                         //console.log(body);
                         // var parser = new DOMParser()
@@ -172,7 +184,6 @@ async function parsingScript(html,site_config)
     var scraped_data = {};
 
     try{
-
         //var parser = new DOMParser();
 
         //var document = parser.parseFromString(html, "text/html");
@@ -198,7 +209,7 @@ async function parsingScript(html,site_config)
             var parent_attributes   = obj.parent_attributes;
             var parent_xpath= obj.parent_xpath;
             var parent_tag  = obj.parent_tag;
-            var element_flag = false;
+            var element_flag = false;            
 
             if ('code_to_inject' in obj){
                 var data_key = obj.key;
@@ -219,10 +230,11 @@ async function parsingScript(html,site_config)
                 var condition_string = '';            
                 for(var attribute in  element_attributes){                    
                     if(element_attributes[attribute] !== '')
-                        condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
+                        condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';                        
                 }
                 if(condition_string != ''){
                     var candidate_elements  = doc.querySelectorAll(element_tag+condition_string+'');
+                    console.log("candidate_elements***************"+condition_string);
                     var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);                    
                     if(candidate_elements.length > 1){console.log('if_candidate_elements');
                         var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
@@ -237,9 +249,9 @@ async function parsingScript(html,site_config)
                     }else{
                         candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;                        
                         if(candidate_element != null){
-                            element_flag = true;
+                            element_flag = true;                            
                             //autoSelectElement(candidate_element, element_key);
-                            scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
+                            scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);                            
                         }
                     }
                 }else{
@@ -256,7 +268,9 @@ async function parsingScript(html,site_config)
             }
             if(element_flag === false){
                 var candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
-                if(candidate_element != null){
+                console.log("element_xpath===================="+element_xpath);
+                console.log("==========candidate_element==========="+candidate_element);
+                if(candidate_element != null){                    
                     var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
                     if(candidate_parent && candidate_parent == candidate_element.parentElement){
                         element_flag = true;
@@ -277,15 +291,16 @@ async function parsingScript(html,site_config)
      /* select element */
     function autoSelectElement(ele, label, element_tag){
         var targetelement = ele;
-        //console.log(ele.textContent);        
+        console.log('textContent================='+ele.textContent);        
         //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');        
+        console.log('elementTag================'+element_tag);
         if ( element_tag === 'img' ){                                 
            return targetelement.getAttribute('src');
         }
 
-        else if( element_tag === 'a' ){
-           return targetelement.getAttribute('href');
-        }
+        // else if( element_tag === 'a' ){
+        //    return targetelement.getAttribute('href');
+        // }
 
         else {
            return ele.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
