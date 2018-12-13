@@ -7,7 +7,8 @@ const cheerio       = require('cheerio');
 const bodyParser    = require('body-parser');
 const csv           = require('fast-csv');
 const mysql         = require('mysql');
-const request       = require("request-promise");
+const request       = require('request-promise');
+var tor_request     = require('tor-request');
 
 const header    = require(path.join(__dirname, 'js/headers'));          //code to clean our headers from invalid characters
 const rtech_config  = require(path.join(__dirname, 'config/config'));   //application config
@@ -195,6 +196,49 @@ connection.connect();
     async function sendRequest(req, res, host, uid, options, config, new_url, analyze){
         var headers, obj;
 
+        //======================for the redirect urls=========================
+        function redirectOn302(body, response, resolveWithFullResponse) {
+            console.log('Calling function redirectOn302');
+            console.log('1 : statusCode======='+response.statusCode);
+            // if (response.statusCode == 302 ) {
+            //     // Set the new url (this is the options object)
+            //     //this.url = response.['the redirect url somehow'];
+            //     //console.log('1 : statusCode======='+response.statusCode);
+            //     this.url = response.headers.location;
+            //     var options = {
+            //         url: response.headers.location,            
+            //         resolveWithFullResponse : true,
+            //         transform: redirectOn302            
+            //     };        
+            //     return request(options).then(function(body){
+            //         //console.log('body+++++++'+body);
+            //         }).catch(function(err){
+            //         console.log(err);
+            //     });
+            // } else {
+            //     return resolveWithFullResponse ? response : body;
+            // }
+            if ( response.statusCode != 200 ) {
+                // Set the new url (this is the options object)
+                //this.url = response.['the redirect url somehow'];
+                //console.log('1 : statusCode======='+response.statusCode);
+                this.url = response.headers.location;
+                var options = {
+                    url: response.headers.location,            
+                    resolveWithFullResponse : true,
+                    transform: redirectOn302            
+                };        
+                return request(options).then(function(body){
+                    //console.log('body+++++++'+body);
+                    }).catch(function(err){
+                    console.log(err);
+                });
+            } else {
+                return resolveWithFullResponse ? response : body;
+            }
+        }
+        //======================================================================
+
         if(options['url'].indexOf('https') === -1){
             options['url'] = options['url'].replace('http', 'https')
         }
@@ -207,17 +251,25 @@ connection.connect();
             options['url'] = 'https:' + options['url']
         }
 
-        //options['proxy'] = 'http://207.180.240.16:3128';
+        //options['proxy'] = 'http://207.180.240.16:3128';        
+             
+        options['resolveWithFullResponse'] = true;
+        
+        //options['proxy'] = 'http://doug:vgK4PbpY@172.84.85.127:60099';
+        options['transform'] = redirectOn302;
+        
+        request(options, function(error, response, body){            
+            
+            //console.log('2 : statusCode======='+response.statusCode);
 
-        request(options, function(error, response, body){
-
-            if (!error && response.statusCode == 200) {
+            if (!error && response.statusCode == 200) {            
                 // console.log('++++++++++++++++++++++++++++++++++++>');
                 // console.log(options['url']);
                 // console.log(String(response.headers['content-type']));
                 // console.log(body.toString().length);
                 // console.log(inject_code_flag)
                 // console.log('++++++++++++++++++++++++++++++++++++>\n');
+
         
                 //#================================================================RESPONSE HEADERS
                 headers = response.headers;
@@ -376,7 +428,7 @@ connection.connect();
                             if(starts_with(value, REL_PREFIX)){
                                 new_value = new_url + 'https:'+value;
                                 $(this).attr('src', new_value);
-                                return ;
+                                return;
                             }
 
                             if(starts_with(value, VALID_PREFIXES)){
@@ -885,10 +937,11 @@ connection.connect();
 		var options = {
 			form: req.body,
 			url: default_host + req.originalUrl,
-			hostname: default_host.replace('https://', ''),
+			hostname: default_host.replace('https://', ''),            
 			headers: {
 				'content-type': req.headers['content-type'],
-				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0'
+                'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36'
+				//'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0'
 			}
 		}
 
