@@ -121,7 +121,8 @@ async function run()
 
                     console.log("===================" + url_obj.act_url);
                     options['url'] = url_obj.act_url;
-                    options['resolveWithFullResponse'] = true;                    
+                    options['resolveWithFullResponse'] = true;
+                    options['encoding'] = 'utf8';               
                     var html ="";
                     try {
                         await request(options, function(error, response, body){ 
