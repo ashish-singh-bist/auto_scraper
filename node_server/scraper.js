@@ -382,16 +382,20 @@ async function saveParseData(scraped_data, url_list_id)
     //save data to file
     var filename = host_slug + '_' + user_id;
     var scrapedContent = [];
-    if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
-        scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
-        if(scrapedContent != ''){
-         scrapedContent = JSON.parse(scrapedContent);
+    try{
+        if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
+            scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
+            if(scrapedContent != ''){
+             scrapedContent = JSON.parse(scrapedContent);
+            }
         }
-    }
-    scrapedContent.push(scraped_data);
-    fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
-        if (err) throw err;
-    });  
+        scrapedContent.push(scraped_data);
+        fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
+            if (err) throw err;
+        });
+    } catch(e) {                        
+        //console.log('error'+e.message);
+    }     
 
     //database connection setting
     const connection  = mysql.createConnection({

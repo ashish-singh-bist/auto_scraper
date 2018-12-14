@@ -8,7 +8,6 @@ const bodyParser    = require('body-parser');
 const csv           = require('fast-csv');
 const mysql         = require('mysql');
 const request       = require('request-promise');
-var tor_request     = require('tor-request');
 
 const header    = require(path.join(__dirname, 'js/headers'));          //code to clean our headers from invalid characters
 const rtech_config  = require(path.join(__dirname, 'config/config'));   //application config
