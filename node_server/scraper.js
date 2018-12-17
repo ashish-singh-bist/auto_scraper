@@ -19,7 +19,7 @@ var host_base_url = '';       //'https://www.youtube.com';
 var host_slug = '';         //'www_youtube_com'
 var site_config;
 
-if ( parsing_mode == 'databasemode') {
+if (parsing_mode == 'databasemode') {
     host_slug =  process.argv[3];
     user_id = process.argv[4];
 
@@ -463,5 +463,7 @@ async function saveParseData(scraped_data, url_list_id)
             });
         }
     });
-    connection.end();
+    if(parsing_mode == 'normalmode'){
+        connection.end();
+    }
 }
