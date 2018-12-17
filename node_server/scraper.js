@@ -13,20 +13,20 @@ var windowOpenWith  = 'http://' + config.root_ip + ':' + config.root_port ;
 var parsing_mode  = process.argv[2];
 
 var url_list_array = [];
-var source = '';
+//var source = '';
 const thread_count = config.thread_count;
 var host_base_url = '';       //'https://www.youtube.com';
 var host_slug = '';         //'www_youtube_com'
 var site_config;
 
 if ( parsing_mode == 'databasemode') {
-    source =  process.argv[3];
+    host_slug =  process.argv[3];
     user_id = process.argv[4];
 
-    var data = [user_id, source, 1];
+    var data = [user_id, host_slug, 1];
     var result = [];
 
-    var  getInformationFromDB = function() {
+    var  getInformationFromDB = function(callback) {
         const connection    = mysql.createConnection({
                                   host     : config.mysql_host,
                                   user     : config.mysql_user,
@@ -47,8 +47,8 @@ if ( parsing_mode == 'databasemode') {
             }
             callback(null, result);
         });
-        connection.end();
-        run();
+        //connection.end();
+        //run();
     };
 
     getInformationFromDB(function (error, result) {
@@ -91,7 +91,9 @@ async function run()
         if (all_url_count > process_index){
             url_list_chunk = url_list_array.slice(process_index, process_index + thread_count);
         }
-        site_config = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8')).data;
+        if(url_list_chunk.length > 0){        
+            site_config = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8')).data;
+        }
         (async () => {
             try {
                 const pages = url_list_chunk.map(async (url_obj, i) => {
@@ -101,7 +103,7 @@ async function run()
                     var url = temp_url+'&config=true&host='+host_slug+'&uid='+user_id ;
 
                     //add some more parameter in url
-                    url_list_id = 0;
+                    var url_list_id = 0;
                     if ( parsing_mode == 'databasemode'){
                         url_list_id = url_obj.url_list_id;
                         url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
@@ -151,7 +153,7 @@ async function run()
 
                         if(JSON.stringify(scraped_data) != '{}') {
                             scraped_data.url = url_obj.act_url;
-                            console.log("saving data....");
+                            console.log("saving data...." + url_list_id);
                             await saveParseData(scraped_data, url_list_id);
                         }
                     }
@@ -311,70 +313,100 @@ async function parsingScript(html,site_config)
     async function returnparent(attributes, xpath, tag){
         var selected_parent;
 
-        /* if parent has `id` */
-        if(attributes['id']){
-            
-            selected_parent = document.getElementById(attributes['id']);
-            if(selected_parent != null){
-                return selected_parent;
-            }else{
-                //if an id is contains a dynamically generated entity
-                var temporary_id_container = attributes['id'];
-                var split_id = temporary_id_container.split(/([0-9]+)/g);
-                for(var x=0; x< split_id.length; x++){
-                    var candidate_parent = doc.querySelector('*[id*="'+split_id[x]+'"]');
-                    if(candidate_parent)
-                        return candidate_parent
-                }
-            }           
-        }
+        try{
+            /* if parent has `id` */
+            if(attributes['id']){
+                
+                selected_parent = document.getElementById(attributes['id']);
+                if(selected_parent != null){
+                    return selected_parent;
+                }else{
+                    //if an id is contains a dynamically generated entity
+                    var temporary_id_container = attributes['id'];
+                    var split_id = temporary_id_container.split(/([0-9]+)/g);
+                    for(var x=0; x< split_id.length; x++){
+                        var candidate_parent = doc.querySelector('*[id*="'+split_id[x]+'"]');
+                        if(candidate_parent)
+                            return candidate_parent
+                    }
+                }           
+            }
 
-        /* if parent has `class` */
-        if(attributes['class']){
-            
-            var candidate_parents = document.getElementsByClassName(attributes['class']);
-            if(candidate_parents.length > 0)
-                for(var i=0; i< candidate_parents.length; i++){
-                    var candidate_parent = candidate_parents[i];
+            /* if parent has `class` */
+            if(attributes['class']){
+                
+                var candidate_parents = document.getElementsByClassName(attributes['class']);
+                if(candidate_parents.length > 0)
+                    for(var i=0; i< candidate_parents.length; i++){
+                        var candidate_parent = candidate_parents[i];
+                        var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
+                        if(candidate_parent_xpath == xpath){
+                            selected_parent = candidate_parent;
+                            return selected_parent;
+                        }
+                    }
+            }
+
+            /* if parent has attributes other than `id` and `class` */
+            var condition_string = '';
+            for(var attribute in  attributes){
+                condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
+            }
+            if(condition_string != ''){
+                var candidate_parent = doc.querySelector(tag+condition_string);
+                if(candidate_parent != null){
                     var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
                     if(candidate_parent_xpath == xpath){
                         selected_parent = candidate_parent;
                         return selected_parent;
+                    }else{
+                        var candidate_parent_xpath2 = candidate_parent_xpath.replace(/\[|\]|[1-9]+/g,'');
+                        var xpath2  = xpath.replace(/\[|\]|[1-9]+/g,'');
+                        if(candidate_parent_xpath2 === xpath2){
+                            selected_parent = candidate_parent;
+                            return selected_parent;
+                        }
                     }
                 }
-        }
-
-        /* if parent has attributes other than `id` and `class` */
-        var condition_string = '';
-        for(var attribute in  attributes){
-            condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
-        }
-        if(condition_string != ''){
-            var candidate_parent = doc.querySelector(tag+condition_string);
-            if(candidate_parent != null){
-                var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
-                if(candidate_parent_xpath == xpath){
+                candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                if(candidate_parent != null)
                     selected_parent = candidate_parent;
-                    return selected_parent;
-                }else{
-                    var candidate_parent_xpath2 = candidate_parent_xpath.replace(/\[|\]|[1-9]+/g,'');
-                    var xpath2  = xpath.replace(/\[|\]|[1-9]+/g,'');
-                    if(candidate_parent_xpath2 === xpath2){
-                        selected_parent = candidate_parent;
-                        return selected_parent;
-                    }
+            }else{
+                var candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
+                    return candidate_parent;
                 }
             }
-            candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
-            if(candidate_parent != null)
-                selected_parent = candidate_parent;
-        }else{
-            var candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
-            if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
-                return candidate_parent;
+            return selected_parent;
+        }catch(error){
+            console.log(error.message);
+            return selected_parent;
+        }            
+    }
+
+    /* to calculate xpath of a given element */
+    async function getXPathAutoScraper(element) {
+        var paths = [];
+        
+        try{
+            for (; element && element.nodeType == 1; element = element.parentNode) {
+                var index = 0;
+                for (var sibling = element.previousSibling; sibling; sibling = sibling.previousSibling) {
+                    // Ignore document type declaration.
+                    if (sibling.nodeType == Node.DOCUMENT_TYPE_NODE)
+                        continue;
+                    if (sibling.nodeName == element.nodeName)
+                        ++index;
+                }
+                var tagName = element.nodeName.toLowerCase();
+                var pathIndex = (index ? "["+(index + 1) + "]" : "");
+                paths.splice(0, 0, tagName + pathIndex);
             }
+            return paths.length ? "/" + paths.join("/"): null;
+        }catch(error){
+            console.log(error.message);
+            return null;
         }
-        return selected_parent;
     }
 }
 
@@ -410,17 +442,25 @@ async function saveParseData(scraped_data, url_list_id)
     connection.connect();
 
     //save data to database
-    var data = {'user_id': user_id, 'source': source, 'data': JSON.stringify(scraped_data)};
+    var data = {'user_id': user_id, 'source': host_slug, 'data': JSON.stringify(scraped_data)};
+
+    if(url_list_id > 0){
+        data.url_list_id = url_list_id;
+    }
+
     var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
-        if (error) throw error
+        //if (error) throw error
+        if (error) console.log(error);
         if( url_list_id > 0 ){
             var d = new Date();
-            var data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+            var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
             //update status of url in database
-            var query = connection.query("update tbl_url_lists SET ? where id="+id, _data, function (error, results, fields) {
-                if (error) throw error;
+            var query = connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (error, results, fields) {
+                //if (error) throw error;
+                connection.end();
+                console.log("===============================parsed url_list_id" + url_list_id);
+                if (error) console.log(error);
             });
         }
     });
-    connection.end();
 }
