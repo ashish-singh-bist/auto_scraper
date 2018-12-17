@@ -463,4 +463,5 @@ async function saveParseData(scraped_data, url_list_id)
             });
         }
     });
+    connection.end();
 }
