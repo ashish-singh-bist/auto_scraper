@@ -62,7 +62,7 @@ if (parsing_mode == 'databasemode') {
                 var split_ar = url_.split('/');
                 host_base_url = split_ar[0] + '//' + split_ar[2];
             }
-            run();
+            run();            
         }
     });
 }
@@ -109,7 +109,7 @@ async function run()
                         url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
                     }
 
-                    console.log(`loading page: ${url}`);
+                    //console.log(`loading page: ${url}`);
   
                     var options = {
                         headers: {
@@ -143,9 +143,10 @@ async function run()
                     }                    
 
                     if(html){
-                        console.log("=======data get=======");
+                        //console.log("=======data get=======");
                         let scraped_data = await parsingScript(html, site_config);
-                        console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
+                        //console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
+                        //console.log("=============================parse done============================:");
                         //console.log(body);
                         // var parser = new DOMParser()
                         // var document = parser.parseFromString(body, "text/html");
@@ -158,9 +159,9 @@ async function run()
                         }
                     }
 
-                    console.log(`closing page: ${url}`);
+                    //console.log(`closing page: ${url}`);
                     //await page.waitFor(5000); //wait if necessary
-                    console.log(`page closed`);
+                    //console.log(`page closed`);
                     //await page.close();
                     //await browser.close();
                 });
@@ -173,6 +174,9 @@ async function run()
                 if(process_index < all_url_count){
                     processChunk();
                 }
+                else if(parsing_mode == 'databasemode'){
+                    process.exit();
+                }                
             } catch (error) {
                 //console error if any
                 //console.log("error" + error);
@@ -294,9 +298,9 @@ async function parsingScript(html,site_config)
      /* select element */
     function autoSelectElement(ele, label, element_tag){
         var targetelement = ele;
-        console.log('textContent================='+ele.textContent);        
+        //console.log('textContent================='+ele.textContent);        
         //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');        
-        console.log('elementTag================'+element_tag);
+        //console.log('elementTag================'+element_tag);
         if ( element_tag === 'img' ){                                 
            return targetelement.getAttribute('src');
         }
@@ -393,7 +397,8 @@ async function parsingScript(html,site_config)
                 var index = 0;
                 for (var sibling = element.previousSibling; sibling; sibling = sibling.previousSibling) {
                     // Ignore document type declaration.
-                    if (sibling.nodeType == Node.DOCUMENT_TYPE_NODE)
+                    //if (sibling.nodeType == Node.DOCUMENT_TYPE_NODE)
+                    if (sibling.nodeType == 10)
                         continue;
                     if (sibling.nodeName == element.nodeName)
                         ++index;
