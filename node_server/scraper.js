@@ -121,7 +121,7 @@ async function run()
                         jar: true 
                     }
 
-                    console.log("===================" + url_obj.act_url);
+                    console.log("loading page: " + url_obj.act_url);
                     options['url'] = url_obj.act_url;
                     options['resolveWithFullResponse'] = true;
                     options['encoding'] = 'utf8';               
@@ -138,8 +138,8 @@ async function run()
                             }
                         });                        
                     }
-                    catch(e) {                        
-                        //console.log('error'+e.message);
+                    catch(err) {                        
+                        //console.log('Error: '+err.message);
                     }                    
 
                     if(html){
@@ -153,8 +153,8 @@ async function run()
                         // let scraped_data = await parsingScript(document, site_config);
 
                         if(JSON.stringify(scraped_data) != '{}') {
-                            scraped_data.url = url_obj.act_url;
-                            console.log("saving data...." + url_list_id);
+                            scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
+                            console.log("saving data....");
                             await saveParseData(scraped_data, url_list_id);
                         }
                     }
@@ -200,7 +200,7 @@ async function parsingScript(html,site_config)
         var doc = dom.window.document;
     }
     catch(err){
-        console.log(err.message);
+        console.log('Error: '+err.message);
         return scraped_data;
     }
 
@@ -241,9 +241,8 @@ async function parsingScript(html,site_config)
                 }
                 if(condition_string != ''){
                     var candidate_elements  = doc.querySelectorAll(element_tag+condition_string+'');
-                    console.log("candidate_elements***************"+condition_string);
                     var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);                    
-                    if(candidate_elements.length > 1){console.log('if_candidate_elements');
+                    if(candidate_elements.length > 1){
                         var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
                         for(var x=0; x < candidate_elements.length; x++){                            
                             if(candidate_elements[x].parentElement === candidate_parent  && candidate_elements[x] != null){
@@ -275,8 +274,6 @@ async function parsingScript(html,site_config)
             }
             if(element_flag === false){
                 var candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
-                console.log("element_xpath===================="+element_xpath);
-                console.log("==========candidate_element==========="+candidate_element);
                 if(candidate_element != null){                    
                     var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
                     if(candidate_parent && candidate_parent == candidate_element.parentElement){
@@ -289,7 +286,7 @@ async function parsingScript(html,site_config)
             }
         }
         catch(err){
-            console.log(err.message);
+            console.log('Error: '+err.message);
         }
     }
     return scraped_data;
@@ -314,7 +311,7 @@ async function parsingScript(html,site_config)
         }
     }                
 
-    async function returnparent(attributes, xpath, tag){
+    function returnparent(attributes, xpath, tag){
         var selected_parent;
 
         try{
@@ -382,14 +379,14 @@ async function parsingScript(html,site_config)
                 }
             }
             return selected_parent;
-        }catch(error){
-            console.log(error.message);
+        }catch(err){
+            console.log('Error: '+err.message);
             return selected_parent;
         }            
     }
 
     /* to calculate xpath of a given element */
-    async function getXPathAutoScraper(element) {
+    function getXPathAutoScraper(element) {
         var paths = [];
         
         try{
@@ -408,8 +405,8 @@ async function parsingScript(html,site_config)
                 paths.splice(0, 0, tagName + pathIndex);
             }
             return paths.length ? "/" + paths.join("/"): null;
-        }catch(error){
-            console.log(error.message);
+        }catch(err){
+            console.log('Error: '+err.message);
             return null;
         }
     }
@@ -431,8 +428,8 @@ async function saveParseData(scraped_data, url_list_id)
         fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
             if (err) throw err;
         });
-    } catch(e) {                        
-        //console.log('error'+e.message);
+    } catch(err) {                        
+        //console.log('Error: '+err.message);
     }     
 
     //database connection setting
@@ -455,7 +452,7 @@ async function saveParseData(scraped_data, url_list_id)
 
     var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
         //if (error) throw error
-        if (error) console.log(error);
+        if (error) console.log('Error: '+error);
         if( url_list_id > 0 ){
             var d = new Date();
             var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
@@ -463,8 +460,8 @@ async function saveParseData(scraped_data, url_list_id)
             var query = connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (error, results, fields) {
                 //if (error) throw error;
                 connection.end();
-                console.log("===============================parsed url_list_id" + url_list_id);
-                if (error) console.log(error);
+                console.log("Parsed url_list_id: " + url_list_id);
+                if (error) console.log('Error: '+error);
             });
         }
     });
