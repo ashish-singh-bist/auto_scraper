@@ -28,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
     var getScriptWithJson = document.querySelector('#scriptNodeWithJson');//we inject this information through client.js
     if(getScriptWithJson){
         data_object = JSON.parse(document.querySelector('#scriptNodeWithJson').innerHTML).data;
+        puppeteerEnabledObj = JSON.parse(document.querySelector('#scriptNodeWithJson').innerHTML).puppeteer_enabled;
+        if (puppeteerEnabledObj)
+            $("#puppeteer_enabled").prop("checked", true);
         //call function for auto scraping
         autoDetect();
         
