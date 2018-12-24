@@ -52,6 +52,7 @@ pl += '<div id="panel" class="avoid-ele">';
   pl += '<div id="panelheader">Configuration Panel <span id="panelmm" title="Click & Drag"></span></div>';
   pl += '<div id="panelbody">';
     pl += '<button id="help-btn">Need Help ?</button>';
+    pl += '<div><input name="puppeteer_enabled" id="puppeteer_enabled" value="puppeteer_enabled" type="checkbox"> Puppeteer Enable</div>';
     pl += '<input class=" perform_action" type="button" rel="done_config" name="done_config" id="done_config" title="First creates property" disabled value="Create config">';
     pl += '<input class=" perform_action" type="button" rel="select_id" name="select_id" id="select_id" title="Enter ID selector" value="Enter ID selector">';
     pl += '<input class="block sm-col-4 field-light h3 label_input" style="display:none;" type="text" name="id_selector_text" placeholder="Input selector and press `Enter`" id="id_selector_text" />';

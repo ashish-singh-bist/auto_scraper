@@ -191,14 +191,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
             localStorage.setItem('detailpageflag', '1');
             // document.getElementById('context').style.display = 'none';
         }else if(action === 'done_config'){
-            
+            var puppeteerEnabled = false;
+            if($('#puppeteer_enabled').is(':checked'))
+                var puppeteerEnabled = true;
             // var url = window.location.search.split("&")[window.location.search.split("&").length - 1].replace("host=",'');
             var url = getUrlParameter('host');
             var user_id = getUrlParameter('uid');
             var data = {
                 data: data_object,
                 url: url,
-                user_id: user_id
+                user_id: user_id,
+                puppeteer_enabled: puppeteerEnabled
             }
                         
     		fetch('/rtech/api/done_config', {
