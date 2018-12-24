@@ -19,6 +19,9 @@ var host_base_url = '';       //'https://www.youtube.com';
 var host_slug = '';         //'www_youtube_com'
 var site_config;
 
+var puppeteer_enabled = 0;
+
+
 if (parsing_mode == 'databasemode') {
     host_slug =  process.argv[3];
     user_id = process.argv[4];
@@ -92,71 +95,139 @@ async function run()
             url_list_chunk = url_list_array.slice(process_index, process_index + thread_count);
         }
         if(url_list_chunk.length > 0){        
-            site_config = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8')).data;
+            site_config_json = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8'));
+            site_config = site_config_json.data;
+            if(site_config_json.puppeteer_enabled != undefined && site_config_json.puppeteer_enabled == '1'){
+                puppeteer_enabled = 1;
+            }
         }
         (async () => {
             try {
                 const pages = url_list_chunk.map(async (url_obj, i) => {
 
                     //create url to process
-                    let temp_url = windowOpenWith+url_obj.act_url.replace(host_base_url, '').replace(/\;/g,'');
-                    var url = temp_url+'&config=true&host='+host_slug+'&uid='+user_id ;
+                    // let temp_url = windowOpenWith+url_obj.act_url.replace(host_base_url, '').replace(/\;/g,'');
+                    // var url = temp_url+'&config=true&host='+host_slug+'&uid='+user_id ;
 
                     //add some more parameter in url
                     var url_list_id = 0;
                     if ( parsing_mode == 'databasemode'){
                         url_list_id = url_obj.url_list_id;
-                        url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
+                        //url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
                     }
 
                     //console.log(`loading page: ${url}`);
-  
-                    var options = {
-                        headers: {
-                                'connection': 'keep-alive',
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
-                                //'Accept-Language': 'en-US,en;q=0.5', 
-                            },                        
-                        encoding: null,
-                        jar: true 
-                    }
 
-                    console.log("loading page: " + url_obj.act_url);
-                    options['url'] = url_obj.act_url;
-                    options['resolveWithFullResponse'] = true;
-                    options['encoding'] = 'utf8';               
-                    var html ="";
-                    try {
-                        await request(options, function(error, response, body){ 
-                            console.log('statusCode=========='+response.statusCode);
-                            // fileSystem.writeFile('test_scrap.html', body , function (err) {
-                            //     if (err) throw err;
-                            //     console.log('HTML File Saved!!!!!');
-                            // });                            
-                            if ( response.statusCode === 200 ) {
-                                html = body;
+
+                    if(!puppeteer_enabled){
+                        var options = {
+                            headers: {
+                                    'connection': 'keep-alive',
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
+                                    //'Accept-Language': 'en-US,en;q=0.5', 
+                                },                        
+                            encoding: null,
+                            jar: true 
+                        }
+
+                        console.log("loading page: " + url_obj.act_url);
+                        options['url'] = url_obj.act_url;
+                        options['resolveWithFullResponse'] = true;
+                        options['encoding'] = 'utf8';               
+                        var html ="";
+                        try {
+                            await request(options, function(error, response, body){ 
+                                console.log('statusCode=========='+response.statusCode);
+                                // fileSystem.writeFile('test_scrap.html', body , function (err) {
+                                //     if (err) throw err;
+                                //     console.log('HTML File Saved!!!!!');
+                                // });                            
+                                if ( response.statusCode === 200 ) {
+                                    html = body;
+                                }
+                            });                        
+                        }
+                        catch(err) {                        
+                            //console.log('Error: '+err.message);
+                        }                    
+
+                        if(html){
+                            //console.log("=======data get=======");           
+
+                            //console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
+                            //console.log("=============================parse done============================:");
+                            //console.log(body);
+                            // var parser = new DOMParser()
+                            // var document = parser.parseFromString(body, "text/html");
+                            // let scraped_data = await parsingScript(document, site_config);
+                            let scraped_data = await parsingScript(site_config,html,puppeteer_enabled);
+
+                            if(JSON.stringify(scraped_data) != '{}') {
+                                scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
+                                console.log("saving data....");
+                                await saveParseData(scraped_data, url_list_id);
+                            }
+                        }
+                    }else{
+                        //get and parse html with puppeteer
+                        //proxy setting
+                        var args = []; 
+                        if ( config.proxy_enable ){
+                            if ( config.proxy_type === 'tor'){
+                                args = ['--proxy-server='+config.proxy_url];
+                            }
+                            else if ( config.proxy_type === 'authenticated' ) {
+                                args = ['--proxy-server='+config.proxy_url];
+                            }
+                        }
+
+                        const browser = await puppeteer.launch({args: args});
+                        //const browser = await puppeteer.launch({headless: false}); //for RTech* (if you want to view the scraping on browser)
+                        //const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}); // for ovh
+
+                        const page = await browser.newPage();
+
+                        //proxy authentication
+                        if ( config.proxy_enable && config.proxy_type === 'authenticated' ){
+                                page.authenticate({
+                                username: config.proxy_username,
+                                password: config.proxy_password
+                            });
+                        }
+
+                        await page.setUserAgent('Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko');
+
+                        await page.setViewport({width:1366,height:768});
+                        await page.setRequestInterception(true);
+
+                        page.on('request', (req) => {
+                            if(req.resourceType() === 'stylesheet' || req.resourceType() === 'font' || req.resourceType() === 'image'){
+                                req.abort();
+                            }
+                            else {
+                                req.continue();
                             }
                         });                        
-                    }
-                    catch(err) {                        
-                        //console.log('Error: '+err.message);
-                    }                    
 
-                    if(html){
-                        //console.log("=======data get=======");
-                        let scraped_data = await parsingScript(html, site_config);
-                        //console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
-                        //console.log("=============================parse done============================:");
-                        //console.log(body);
-                        // var parser = new DOMParser()
-                        // var document = parser.parseFromString(body, "text/html");
-                        // let scraped_data = await parsingScript(document, site_config);
+                        console.log(`loading page: ${url_obj.act_url}`);
+                        await page.goto(url_obj.act_url, {
+                            waitUntil: 'networkidle0',
+                            timeout: 120000,
+                        });                        
 
+                        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        // get details
+                        let scraped_data = await page.evaluate(parsingScript,site_config,'',puppeteer_enabled);
+                        console.log(scraped_data);
                         if(JSON.stringify(scraped_data) != '{}') {
-                            scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
-                            console.log("saving data....");
+                            scraped_data.url = url_obj.act_url;
                             await saveParseData(scraped_data, url_list_id);
                         }
+                        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        console.log('close page');
+                        await page.close();
+                        await browser.close();
+
                     }
 
                     //console.log(`closing page: ${url}`);
@@ -185,23 +256,22 @@ async function run()
     }
 }
 
-
-async function parsingScript(html,site_config) 
+async function parsingScript(site_config,html,puppeteer_enabled) 
 {
     var scraped_data = {};
+    var temp_document;
+    if(!puppeteer_enabled){
 
-    try{
-        //var parser = new DOMParser();
-
-        //var document = parser.parseFromString(html, "text/html");
-
-        var dom = new JSDOM(html);
-        var document = dom.window.document;
-        var doc = dom.window.document;
-    }
-    catch(err){
-        console.log('Error: '+err.message);
-        return scraped_data;
+        try{
+            var dom = new JSDOM(html);
+            temp_document = dom.window.document;           
+        }
+        catch(err){
+            console.log('Error: '+err.message);
+            return scraped_data;
+        }                
+    }else{
+        temp_document = document;
     }
 
 
@@ -220,12 +290,12 @@ async function parsingScript(html,site_config)
 
             if ('code_to_inject' in obj){
                 var data_key = obj.key;
-                var html = document.documentElement.innerHTML;
+                var html = temp_document.documentElement.innerHTML;
                 scraped_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
             }
             /* finding element via `id` */
             else if('id' in element_attributes){
-                var element = document.getElementById(element_attributes['id']);
+                var element = temp_document.getElementById(element_attributes['id']);
 
                 if(element){
                     element_flag = true;
@@ -240,7 +310,7 @@ async function parsingScript(html,site_config)
                         condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';                        
                 }
                 if(condition_string != ''){
-                    var candidate_elements  = doc.querySelectorAll(element_tag+condition_string+'');
+                    var candidate_elements  = temp_document.querySelectorAll(element_tag+condition_string+'');
                     var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);                    
                     if(candidate_elements.length > 1){
                         var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
@@ -253,7 +323,7 @@ async function parsingScript(html,site_config)
                             }
                         }
                     }else{
-                        candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;                        
+                        candidate_element = temp_document.evaluate(element_xpath, temp_document, null, 9, null).singleNodeValue;                        
                         if(candidate_element != null){
                             element_flag = true;                            
                             //autoSelectElement(candidate_element, element_key);
@@ -273,7 +343,7 @@ async function parsingScript(html,site_config)
                 }
             }
             if(element_flag === false){
-                var candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
+                var candidate_element = temp_document.evaluate(element_xpath, temp_document, null, 9, null).singleNodeValue;
                 if(candidate_element != null){                    
                     var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
                     if(candidate_parent && candidate_parent == candidate_element.parentElement){
@@ -287,6 +357,7 @@ async function parsingScript(html,site_config)
         }
         catch(err){
             console.log('Error: '+err.message);
+            scraped_data.log = err.message;
         }
     }
     return scraped_data;
@@ -318,7 +389,7 @@ async function parsingScript(html,site_config)
             /* if parent has `id` */
             if(attributes['id']){
                 
-                selected_parent = document.getElementById(attributes['id']);
+                selected_parent = temp_document.getElementById(attributes['id']);
                 if(selected_parent != null){
                     return selected_parent;
                 }else{
@@ -326,7 +397,7 @@ async function parsingScript(html,site_config)
                     var temporary_id_container = attributes['id'];
                     var split_id = temporary_id_container.split(/([0-9]+)/g);
                     for(var x=0; x< split_id.length; x++){
-                        var candidate_parent = doc.querySelector('*[id*="'+split_id[x]+'"]');
+                        var candidate_parent = temp_document.querySelector('*[id*="'+split_id[x]+'"]');
                         if(candidate_parent)
                             return candidate_parent
                     }
@@ -336,7 +407,7 @@ async function parsingScript(html,site_config)
             /* if parent has `class` */
             if(attributes['class']){
                 
-                var candidate_parents = document.getElementsByClassName(attributes['class']);
+                var candidate_parents = temp_document.getElementsByClassName(attributes['class']);
                 if(candidate_parents.length > 0)
                     for(var i=0; i< candidate_parents.length; i++){
                         var candidate_parent = candidate_parents[i];
@@ -354,7 +425,7 @@ async function parsingScript(html,site_config)
                 condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
             }
             if(condition_string != ''){
-                var candidate_parent = doc.querySelector(tag+condition_string);
+                var candidate_parent = temp_document.querySelector(tag+condition_string);
                 if(candidate_parent != null){
                     var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
                     if(candidate_parent_xpath == xpath){
@@ -369,11 +440,11 @@ async function parsingScript(html,site_config)
                         }
                     }
                 }
-                candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                candidate_parent = temp_document.evaluate(xpath, document, null, 9, null).singleNodeValue;
                 if(candidate_parent != null)
                     selected_parent = candidate_parent;
             }else{
-                var candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                var candidate_parent = temp_document.evaluate(xpath, document, null, 9, null).singleNodeValue;
                 if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
                     return candidate_parent;
                 }
@@ -433,7 +504,7 @@ async function saveParseData(scraped_data, url_list_id)
     }     
 
     //database connection setting
-    const connection  = mysql.createConnection({
+    const connection1  = mysql.createConnection({
                           host     : config.mysql_host,
                           user     : config.mysql_user,
                           password : config.mysql_password,
@@ -441,7 +512,7 @@ async function saveParseData(scraped_data, url_list_id)
                           charset : "utf8mb4_unicode_ci"
                       });
     //connect to database
-    connection.connect();
+    connection1.connect();
 
     //save data to database
     var data = {'user_id': user_id, 'source': host_slug, 'data': JSON.stringify(scraped_data)};
@@ -450,7 +521,7 @@ async function saveParseData(scraped_data, url_list_id)
         data.url_list_id = url_list_id;
     }
 
-    var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
+    connection1.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
         //if (error) throw error
         if (error) console.log('Error: '+error);
         if( url_list_id > 0 ){
@@ -466,6 +537,6 @@ async function saveParseData(scraped_data, url_list_id)
         }
     });
     if(parsing_mode == 'normalmode'){
-        connection.end();
+        connection1.end();
     }
 }
