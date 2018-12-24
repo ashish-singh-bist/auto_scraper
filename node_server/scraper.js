@@ -15,31 +15,32 @@ var parsing_mode  = process.argv[2];
 var url_list_array = [];
 //var source = '';
 const thread_count = config.thread_count;
-var host_base_url = '';       //'https://www.youtube.com';
+var host_base_url = '';     //'https://www.youtube.com';
 var host_slug = '';         //'www_youtube_com'
+var source = '';            //'Youtube'
 var site_config;
 
 var puppeteer_enabled = 0;
 
 
 if (parsing_mode == 'databasemode') {
-    host_slug =  process.argv[3];
+    source =  process.argv[3];
     user_id = process.argv[4];
 
-    var data = [user_id, host_slug, 1];
+    var data = [user_id, source, 1];
     var result = [];
 
-    var  getInformationFromDB = function(callback) {
-        const connection    = mysql.createConnection({
-                                  host     : config.mysql_host,
-                                  user     : config.mysql_user,
-                                  password : config.mysql_password,
-                                  database : config.mysql_database
-                              });
-        //connect to database
-        connection.connect();
-        console.log("Scraper: Database connected");
+    const connection    = mysql.createConnection({
+                              host     : config.mysql_host,
+                              user     : config.mysql_user,
+                              password : config.mysql_password,
+                              database : config.mysql_database
+                          });
+    //connect to database
+    connection.connect();
+    console.log("Scraper: Database connected");
 
+    var  getInformationFromDB = function(callback) {
         //execute query to select url to parse
         connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and actual_url IS NOT NULL limit 10", data, function (error, results, fields){
             if (error)  return callback(error);
@@ -237,6 +238,7 @@ async function run()
                     processChunk();
                 }
                 else if(parsing_mode == 'databasemode'){
+                    console.log('databasemode exit');
                     process.exit();
                 }                
             } catch (error) {
@@ -495,7 +497,7 @@ async function saveParseData(scraped_data, url_list_id)
     }     
 
     //database connection setting
-    const connection1  = mysql.createConnection({
+    const connection  = mysql.createConnection({
                           host     : config.mysql_host,
                           user     : config.mysql_user,
                           password : config.mysql_password,
@@ -503,31 +505,35 @@ async function saveParseData(scraped_data, url_list_id)
                           charset : "utf8mb4_unicode_ci"
                       });
     //connect to database
-    connection1.connect();
+    connection.connect();
 
     //save data to database
-    var data = {'user_id': user_id, 'source': host_slug, 'data': JSON.stringify(scraped_data)};
+    var data = {'user_id': user_id, 'source': source, 'data': JSON.stringify(scraped_data)};
 
     if(url_list_id > 0){
         data.url_list_id = url_list_id;
     }
 
-    connection1.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
+    console.log('Tring to insert data in db');
+    connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
         //if (error) throw error
         if (error) console.log('Error: '+error);
+        console.log('Data inserted');
         if( url_list_id > 0 ){
             var d = new Date();
             var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
             //update status of url in database
-            var query = connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (error, results, fields) {
+            console.log('Tring to update url list id');
+            connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (error, results, fields) {
                 //if (error) throw error;
                 connection.end();
                 console.log("Parsed url_list_id: " + url_list_id);
                 if (error) console.log('Error: '+error);
+                console.log('Url list updated');
             });
         }
     });
     if(parsing_mode == 'normalmode'){
-        connection1.end();
+        connection.end();
     }
 }
