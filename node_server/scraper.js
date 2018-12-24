@@ -152,15 +152,7 @@ async function run()
                         }                    
 
                         if(html){
-                            //console.log("=======data get=======");           
-
-                            //console.log("=============================parse done============================:" + JSON.stringify(scraped_data));
-                            //console.log("=============================parse done============================:");
-                            //console.log(body);
-                            // var parser = new DOMParser()
-                            // var document = parser.parseFromString(body, "text/html");
-                            // let scraped_data = await parsingScript(document, site_config);
-                            let scraped_data = await parsingScript(site_config,html,puppeteer_enabled);
+                              let scraped_data = await parsingScript(site_config,html,puppeteer_enabled);
 
                             if(JSON.stringify(scraped_data) != '{}') {
                                 scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
@@ -224,10 +216,9 @@ async function run()
                             await saveParseData(scraped_data, url_list_id);
                         }
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        console.log('close page');
                         await page.close();
                         await browser.close();
-
+                        console.log(`page closed`);
                     }
 
                     //console.log(`closing page: ${url}`);
