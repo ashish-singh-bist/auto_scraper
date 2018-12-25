@@ -5,7 +5,6 @@ const mysql     = require('mysql')
 const DOMParser = require('xmldom').DOMParser;
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
-//const https = require('https');
 const request = require("request-promise");
 const config    = require(path.join(__dirname, 'config/config.js'));
 
@@ -30,35 +29,28 @@ if (parsing_mode == 'databasemode') {
     var data = [user_id, source, 1];
     var result = [];
 
-    const connection    = mysql.createConnection({
+    let connection    = mysql.createConnection({
                               host     : config.mysql_host,
                               user     : config.mysql_user,
                               password : config.mysql_password,
-                              database : config.mysql_database
+                              database : config.mysql_database,
+                              charset  : config.charset,
                           });
     //connect to database
-    connection.connect();
-    console.log("Scraper: Database connected");
+    connection.connect(function(err) {
+        if (err) {
+            console.error('==Error db connecting: ' + err.stack);
+            return;
+        }
 
-    var  getInformationFromDB = function(callback) {
-        //execute query to select url to parse
-        connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and actual_url IS NOT NULL limit 10", data, function (error, results, fields){
-            if (error)  return callback(error);
+        //console.log('db connected as id ' + connection.threadId);
+        connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and actual_url IS NOT NULL limit 10", data, function (err, results, fields){
+            if (err)  console.log('==Error 1: ' + err);
             if(results.length){
                 for(var i = 0; i < results.length; i++){
-                    result.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});
+                    url_list_array.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});
                 }
             }
-            callback(null, result);
-        });
-        //connection.end();
-        //run();
-    };
-
-    getInformationFromDB(function (error, result) {
-        if (error) console.log("Database error!");
-        else {
-            url_list_array = result;
             if ( url_list_array.length > 0 )  {
                 var url_ = url_list_array[0].act_url;
                 host_slug = (url_.split('/'))[2].replace(/\./g,'_');
@@ -66,8 +58,9 @@ if (parsing_mode == 'databasemode') {
                 var split_ar = url_.split('/');
                 host_base_url = split_ar[0] + '//' + split_ar[2];
             }
-            run();            
-        }
+            connection.end();
+            run();
+        });
     });
 }
 else{
@@ -106,19 +99,10 @@ async function run()
             try {
                 const pages = url_list_chunk.map(async (url_obj, i) => {
 
-                    //create url to process
-                    // let temp_url = windowOpenWith+url_obj.act_url.replace(host_base_url, '').replace(/\;/g,'');
-                    // var url = temp_url+'&config=true&host='+host_slug+'&uid='+user_id ;
-
-                    //add some more parameter in url
                     var url_list_id = 0;
                     if ( parsing_mode == 'databasemode'){
                         url_list_id = url_obj.url_list_id;
-                        //url += '&url_list_id='+url_obj.url_list_id+'&ref_id='+url_obj.ref_id+'&source='+url_obj.source;
                     }
-
-                    //console.log(`loading page: ${url}`);
-
 
                     if(!puppeteer_enabled){
                         var options = {
@@ -126,7 +110,7 @@ async function run()
                                     'connection': 'keep-alive',
                                     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
                                     //'Accept-Language': 'en-US,en;q=0.5', 
-                                },                        
+                                },
                             encoding: null,
                             jar: true 
                         }
@@ -137,7 +121,7 @@ async function run()
                         options['encoding'] = 'utf8';               
                         var html ="";
                         try {
-                            await request(options, function(error, response, body){ 
+                            await request(options, function(err, response, body){ 
                                 console.log('statusCode=========='+response.statusCode);
                                 // fileSystem.writeFile('test_scrap.html', body , function (err) {
                                 //     if (err) throw err;
@@ -149,11 +133,11 @@ async function run()
                             });                        
                         }
                         catch(err) {                        
-                            //console.log('Error: '+err.message);
+                            console.log('==Error 2: '+err.message);
                         }                    
 
                         if(html){
-                              let scraped_data = await parsingScript(site_config,html,puppeteer_enabled);
+                            let scraped_data = await parsingScript(site_config,html,puppeteer_enabled);
 
                             if(JSON.stringify(scraped_data) != '{}') {
                                 scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
@@ -209,9 +193,9 @@ async function run()
                         });                        
 
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        // get details
+                        // get details from html (parse html)
                         let scraped_data = await page.evaluate(parsingScript,site_config,'',puppeteer_enabled);
-                        console.log(scraped_data);
+                        //console.log(scraped_data);
                         if(JSON.stringify(scraped_data) != '{}') {
                             scraped_data.url = url_obj.act_url;
                             await saveParseData(scraped_data, url_list_id);
@@ -235,17 +219,21 @@ async function run()
                 });
                 process_index += url_list_chunk.length;
                 if(process_index < all_url_count){
-                    processChunk();
+                    setTimeout(processChunk, 3000); //run next url block with 3 sec delay
                 }
                 else if(parsing_mode == 'databasemode'){
-                    console.log('databasemode exit');
-                    process.exit();
+                    setTimeout(endParsing, 5000);
                 }                
-            } catch (error) {
+            } catch (err) {
                 //console error if any
-                //console.log("error" + error);
+                console.log('==Error 3: ' + err.message);
             }
         })();
+    }
+
+    async function endParsing() {
+        console.log('Parsing completed');
+        process.exit();        
     }
 }
 
@@ -260,7 +248,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
             temp_document = dom.window.document;           
         }
         catch(err){
-            console.log('Error: '+err.message);
+            console.log('==Error 4: '+err.message);
             return scraped_data;
         }                
     }else{
@@ -349,8 +337,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
             }
         }
         catch(err){
-            console.log('Error: '+err.message);
-            scraped_data.log = err.message;
+            console.log('==Error 5: '+err.message);
         }
     }
     return scraped_data;
@@ -444,7 +431,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
             }
             return selected_parent;
         }catch(err){
-            console.log('Error: '+err.message);
+            console.log('==Error 6: '+err.message);
             return selected_parent;
         }            
     }
@@ -470,7 +457,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
             }
             return paths.length ? "/" + paths.join("/"): null;
         }catch(err){
-            console.log('Error: '+err.message);
+            console.log('==Error 7: '+err.message);
             return null;
         }
     }
@@ -480,60 +467,62 @@ async function saveParseData(scraped_data, url_list_id)
 {
     //save data to file
     var filename = host_slug + '_' + user_id;
-    var scrapedContent = [];
-    try{
-        if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
-            scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
-            if(scrapedContent != ''){
-             scrapedContent = JSON.parse(scrapedContent);
+    if (parsing_mode == 'normalmode') {
+        var scrapedContentArray = [];
+        try{
+            if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
+                scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
+                if(scrapedContent != ''){
+                    scrapedContentArray = JSON.parse(scrapedContent);
+                }
             }
+            scrapedContentArray.push(scraped_data);
+            fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContentArray), function (err) {
+                if (err) throw err;
+            });
+        } catch(err) {
+            console.log('==Error 8: '+err.message);
         }
-        scrapedContent.push(scraped_data);
-        fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
-            if (err) throw err;
-        });
-    } catch(err) {                        
-        //console.log('Error: '+err.message);
-    }     
+    }
 
     //database connection setting
-    const connection  = mysql.createConnection({
+    let connection  = mysql.createConnection({
                           host     : config.mysql_host,
                           user     : config.mysql_user,
                           password : config.mysql_password,
                           database : config.mysql_database,
-                          charset : "utf8mb4_unicode_ci"
+                          charset  : config.charset,
                       });
     //connect to database
-    connection.connect();
-
-    //save data to database
-    var data = {'user_id': user_id, 'source': source, 'data': JSON.stringify(scraped_data)};
-
-    if(url_list_id > 0){
-        data.url_list_id = url_list_id;
-    }
-
-    console.log('Tring to insert data in db');
-    connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
-        //if (error) throw error
-        if (error) console.log('Error: '+error);
-        console.log('Data inserted');
-        if( url_list_id > 0 ){
-            var d = new Date();
-            var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
-            //update status of url in database
-            console.log('Tring to update url list id');
-            connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (error, results, fields) {
-                //if (error) throw error;
-                connection.end();
-                console.log("Parsed url_list_id: " + url_list_id);
-                if (error) console.log('Error: '+error);
-                console.log('Url list updated');
-            });
+    connection.connect(function(err) {
+        if (err) {
+            console.error('==Error db connecting: ' + err.stack);
+            return;
         }
+
+        //console.log('db connected as id ' + connection.threadId);
+        //save data to database
+        var data = {'user_id': user_id, 'source': source, 'data': JSON.stringify(scraped_data)};
+
+        if(url_list_id > 0){
+            data.url_list_id = url_list_id;
+        }
+        connection.query("INSERT INTO scraped_data SET ?", data, function (err, results, fields) {
+            //if (error) throw error
+            if (err) console.log('==Error 9: '+err);
+            if( url_list_id > 0 ){
+                var d = new Date();
+                var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+                //update status of url in database
+                connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (err, results, fields) {
+                    //if (error) throw error;
+                    if (err) console.log('==Error 10: '+err);
+                    connection.end();                  
+                    console.log('Url list updated for id:- ' + url_list_id);
+                });
+            }else{
+                connection.end();
+            }
+        });
     });
-    if(parsing_mode == 'normalmode'){
-        connection.end();
-    }
 }
