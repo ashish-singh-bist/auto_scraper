@@ -143,7 +143,11 @@ async function run()
                                 scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
                                 console.log("saving data....");
                                 await saveParseData(scraped_data, url_list_id);
+                            }else{
+                                await increaseErrorCount(url_list_id);
                             }
+                        }else{
+                            await increaseErrorCount(url_list_id);
                         }
                     }else{
                         //get and parse html with puppeteer
@@ -199,6 +203,8 @@ async function run()
                         if(JSON.stringify(scraped_data) != '{}') {
                             scraped_data.url = url_obj.act_url;
                             await saveParseData(scraped_data, url_list_id);
+                        }else{
+                            await increaseErrorCount(url_list_id);
                         }
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
                         await page.close();
@@ -420,11 +426,11 @@ async function parsingScript(site_config,html,puppeteer_enabled)
                         }
                     }
                 }
-                candidate_parent = temp_document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                candidate_parent = temp_document.evaluate(xpath, temp_document, null, 9, null).singleNodeValue;
                 if(candidate_parent != null)
                     selected_parent = candidate_parent;
             }else{
-                var candidate_parent = temp_document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                var candidate_parent = temp_document.evaluate(xpath, temp_document, null, 9, null).singleNodeValue;
                 if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
                     return candidate_parent;
                 }
@@ -510,6 +516,7 @@ async function saveParseData(scraped_data, url_list_id)
         connection.query("INSERT INTO scraped_data SET ?", data, function (err, results, fields) {
             //if (error) throw error
             if (err) console.log('==Error 9: '+err);
+            console.log("Inserted Id: " + results.insertId);
             if( url_list_id > 0 ){
                 var d = new Date();
                 var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
@@ -524,5 +531,38 @@ async function saveParseData(scraped_data, url_list_id)
                 connection.end();
             }
         });
+    });
+}
+
+async function increaseErrorCount(url_list_id)
+{
+
+    //database connection setting
+    let connection  = mysql.createConnection({
+                          host     : config.mysql_host,
+                          user     : config.mysql_user,
+                          password : config.mysql_password,
+                          database : config.mysql_database,
+                          charset  : config.charset,
+                      });
+    //connect to database
+    connection.connect(function(err) {
+        if (err) {
+            console.error('==Error db connecting: ' + err.stack);
+            return;
+        }
+
+        //console.log('db connected as id ' + connection.threadId);
+        var d = new Date();
+        var data = [d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), url_list_id];
+
+        if(url_list_id > 0){
+            connection.query("update tbl_url_lists set error_count = error_count + 1, updated_at=? where id=?", data, function (err, results, fields) {
+                //if (error) throw error
+                if (err) console.log('==Error 11: '+err);
+                console.log("Error count increased");
+            });
+        }
+        connection.end();
     });
 }
