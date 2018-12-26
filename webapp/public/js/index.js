@@ -271,11 +271,20 @@ $( document ).ready(function(){
 								if (obj.hasOwnProperty(key)){
 									if( key == 'url' ){
 										var trim_title = obj[key];
-										if (trim_title.length > 29 )
+										if (trim_title.length > 29 ){
 											trim_title = trim_title.substring(0, 28)+"...";
-										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + trim_title + "</a></td>";
-									}else
-										html += "<td>" + obj[key] + "</td>";
+										}											
+										html += "<td><a target='blank' href='http://" + obj[key] + "'>" + trim_title + "</a></td>";																				
+									}
+									else{
+										if (  typeof(obj[key]) == 'object'){
+											html += "<td>" + JSON.stringify(obj[key]) + "</td>";
+										}
+										else{
+											html += "<td>" + obj[key] + "</td>";
+										}
+										
+									}
 								}else{
 									html += "<td></td>";
 								}
