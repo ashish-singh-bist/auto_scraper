@@ -137,8 +137,8 @@ async function run()
                         }                    
 
                         if(html){
-                            let scraped_data = await parsingScript(site_config,html,puppeteer_enabled);
-
+                            let scraped_data = await startHTMLParsing(site_config,html,puppeteer_enabled);
+                            console.log(scraped_data);
                             if(JSON.stringify(scraped_data) != '{}') {
                                 scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
                                 console.log("saving data....");
@@ -198,10 +198,10 @@ async function run()
 
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
                         // get details from html (parse html)
-                        let scraped_data = await page.evaluate(parsingScript,site_config,'',puppeteer_enabled);
+                        let scraped_data = await page.evaluate(startHTMLParsing,site_config,'',puppeteer_enabled);
                         //console.log(scraped_data);
                         if(JSON.stringify(scraped_data) != '{}') {
-                            scraped_data.url = url_obj.act_url;
+                            scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
                             await saveParseData(scraped_data, url_list_id);
                         }else{
                             await increaseErrorCount(url_list_id);
@@ -243,24 +243,26 @@ async function run()
     }
 }
 
-async function parsingScript(site_config,html,puppeteer_enabled) 
+async function startHTMLParsing(site_config,html,puppeteer_enabled) 
 {
-    var scraped_data = {};
-    var temp_document;
     if(!puppeteer_enabled){
-
         try{
             var dom = new JSDOM(html);
-            temp_document = dom.window.document;           
+            var temp_document = dom.window.document;
+            return parseHtml(site_config,temp_document);
         }
         catch(err){
             console.log('==Error 4: '+err.message);
             return scraped_data;
         }                
     }else{
-        temp_document = document;
-    }
+        return parseHtml(site_config,document);
+    }    
+}
 
+async function parseHtml(site_config,document) 
+{
+    var scraped_data = {};
 
     for(var obj of site_config) {
         try{
@@ -277,16 +279,16 @@ async function parsingScript(site_config,html,puppeteer_enabled)
 
             if ('code_to_inject' in obj){
                 var data_key = obj.key;
-                var html = temp_document.documentElement.innerHTML;
+                var html = document.documentElement.innerHTML;
                 scraped_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
             }
             /* finding element via `id` */
             else if('id' in element_attributes){
-                var element = temp_document.getElementById(element_attributes['id']);
+                var element = document.getElementById(element_attributes['id']);
 
                 if(element){
                     element_flag = true;
-                    scraped_data[element_key] = autoSelectElement(element, element_key, element_tag);
+                    scraped_data[element_key] = getElementData(element, element_key, element_tag);
                     continue;
                 }
             } 
@@ -297,24 +299,22 @@ async function parsingScript(site_config,html,puppeteer_enabled)
                         condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';                        
                 }
                 if(condition_string != ''){
-                    var candidate_elements  = temp_document.querySelectorAll(element_tag+condition_string+'');
+                    var candidate_elements  = document.querySelectorAll(element_tag+condition_string+'');
                     var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);                    
                     if(candidate_elements.length > 1){
                         var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
                         for(var x=0; x < candidate_elements.length; x++){                            
                             if(candidate_elements[x].parentElement === candidate_parent  && candidate_elements[x] != null){
                                 element_flag = true;
-                                //autoSelectElement(candidate_elements[x], element_key);
-                                scraped_data[element_key] = autoSelectElement(candidate_elements[x], element_key, element_tag);
+                                scraped_data[element_key] = getElementData(candidate_elements[x], element_key, element_tag);
                                 break;
                             }
                         }
                     }else{
-                        candidate_element = temp_document.evaluate(element_xpath, temp_document, null, 9, null).singleNodeValue;                        
+                        candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;                        
                         if(candidate_element != null){
                             element_flag = true;                            
-                            //autoSelectElement(candidate_element, element_key);
-                            scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);                            
+                            scraped_data[element_key] = getElementData(candidate_element, element_key, element_tag);                            
                         }
                     }
                 }else{
@@ -324,20 +324,18 @@ async function parsingScript(site_config,html,puppeteer_enabled)
                     if(candidate_parent && JSON.stringify(postGetAttr(candidate_parent)) === JSON.stringify(parent_attributes)){
                         var candidate_element = candidate_parent.childNodes[element_index];
                         
-                        //autoSelectElement(candidate_element, element_key);
-                        scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
+                        scraped_data[element_key] = getElementData(candidate_element, element_key, element_tag);
                     }                    
                 }
             }
             if(element_flag === false){
-                var candidate_element = temp_document.evaluate(element_xpath, temp_document, null, 9, null).singleNodeValue;
+                var candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
                 if(candidate_element != null){                    
                     var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
                     if(candidate_parent && candidate_parent == candidate_element.parentElement){
                         element_flag = true;
                         
-                        //autoSelectElement(candidate_element, element_key);
-                        scraped_data[element_key] = autoSelectElement(candidate_element, element_key, element_tag);
+                        scraped_data[element_key] = getElementData(candidate_element, element_key, element_tag);
                     }                    
                 }
             }
@@ -350,21 +348,20 @@ async function parsingScript(site_config,html,puppeteer_enabled)
 
 
      /* select element */
-    function autoSelectElement(ele, label, element_tag){
-        var targetelement = ele;
+    function getElementData(element, label, element_tag){
         //console.log('textContent================='+ele.textContent);        
         //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');        
         //console.log('elementTag================'+element_tag);
         if ( element_tag === 'img' ){                                 
-           return targetelement.getAttribute('src');
+           return element.getAttribute('src');
         }
 
         // else if( element_tag === 'a' ){
-        //    return targetelement.getAttribute('href');
+        //    return element.getAttribute('href');
         // }
 
         else {
-           return ele.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
+           return element.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
         }
     }                
 
@@ -375,7 +372,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
             /* if parent has `id` */
             if(attributes['id']){
                 
-                selected_parent = temp_document.getElementById(attributes['id']);
+                selected_parent = document.getElementById(attributes['id']);
                 if(selected_parent != null){
                     return selected_parent;
                 }else{
@@ -383,7 +380,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
                     var temporary_id_container = attributes['id'];
                     var split_id = temporary_id_container.split(/([0-9]+)/g);
                     for(var x=0; x< split_id.length; x++){
-                        var candidate_parent = temp_document.querySelector('*[id*="'+split_id[x]+'"]');
+                        var candidate_parent = document.querySelector('*[id*="'+split_id[x]+'"]');
                         if(candidate_parent)
                             return candidate_parent
                     }
@@ -393,7 +390,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
             /* if parent has `class` */
             if(attributes['class']){
                 
-                var candidate_parents = temp_document.getElementsByClassName(attributes['class']);
+                var candidate_parents = document.getElementsByClassName(attributes['class']);
                 if(candidate_parents.length > 0)
                     for(var i=0; i< candidate_parents.length; i++){
                         var candidate_parent = candidate_parents[i];
@@ -411,7 +408,7 @@ async function parsingScript(site_config,html,puppeteer_enabled)
                 condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
             }
             if(condition_string != ''){
-                var candidate_parent = temp_document.querySelector(tag+condition_string);
+                var candidate_parent = document.querySelector(tag+condition_string);
                 if(candidate_parent != null){
                     var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
                     if(candidate_parent_xpath == xpath){
@@ -426,11 +423,11 @@ async function parsingScript(site_config,html,puppeteer_enabled)
                         }
                     }
                 }
-                candidate_parent = temp_document.evaluate(xpath, temp_document, null, 9, null).singleNodeValue;
+                candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
                 if(candidate_parent != null)
                     selected_parent = candidate_parent;
             }else{
-                var candidate_parent = temp_document.evaluate(xpath, temp_document, null, 9, null).singleNodeValue;
+                var candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
                 if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
                     return candidate_parent;
                 }
