@@ -1,5 +1,5 @@
 echo $#
-if [$# == 0]
+if [ $# -eq 0 ];
 	then
 		echo "please enter port"
 		exit 1		
@@ -7,12 +7,6 @@ if [$# == 0]
 		echo "your port is $1"		
 fi
 
-if lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null ; then
-    echo "$1 port already in use"
-    else
-    	echo "server started..."
-    	node node_server/server.js > /dev/null 2>/dev/null &
-fi
 
 result=`ps aux | grep -i "node node_server/scraper.js databasemode VidaXL 4" | grep -v "grep" | wc -l`
 
