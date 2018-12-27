@@ -18,10 +18,10 @@
                                         <label>Soucre</label>
                                         <select class="form-control" id="url_source">
                                             <option value="" selected="">Choose Source</option>
-                                            <option value="vidaxl">VidaXL</option>
-                                            <option value="youtube">Youtube</option>
-                                            <option value="ebay">Ebay</option>
-                                            <option value="piscineo">Piscineo</option>
+                                            <option value="VidaXL">VidaXL</option>
+                                            <option value="Youtube">Youtube</option>
+                                            <option value="Ebay">Ebay</option>
+                                            <option value="Piscineo">Piscineo</option>
                                         </select>
                                     </div>
                                 </div>
