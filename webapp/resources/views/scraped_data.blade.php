@@ -110,7 +110,15 @@
                 columns: [
                     { data: 'id', name: 'id' },
                     { data: 'source', name: 'source' },
-                    { data: 'actual_url', name: 'actual_url' },
+                    { 
+                        "data" : "actual_url", 
+                        render: function(data, type, row, meta){
+                            if(data){
+                                data = '<a target="_blank" href="' + data + '">Link</a>';
+                            }
+                            return data;
+                        }
+                    },
                     { data: 'data', name: 'data' },
                     { 
                         "data": "id",
@@ -121,7 +129,9 @@
                     },                    
                 ],
                 columnDefs: [
-                   { orderable: false, targets: [2,3,4] }
+                   { orderable: false, targets: [2,3,4] },
+                   { width: 130, targets: 1 },
+                   { width: 40, targets: 2 }
                 ]                
             });
 
