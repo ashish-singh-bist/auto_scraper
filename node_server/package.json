@@ -18,5 +18,10 @@
     "mysql": "^2.16.0",
     "puppeteer": "^1.7.0",
     "request": "^2.87.0"
+  },
+  "devDependencies": {
+    "jsdom": "^13.1.0",
+    "request-promise": "^4.2.2",
+    "xmldom": "^0.1.27"
   }
 }
