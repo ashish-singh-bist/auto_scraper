@@ -2,6 +2,7 @@ var cm = '';        //contextmenu
 var lpt = '';       //labelinput
 var pl = '';        //panel
 var ta = '';        //top alerts
+var ba = '';        //bottom alerts
 var hb = '';        //help_block
 
 //contextmenu
@@ -70,6 +71,9 @@ pl += '</div>';
 //top alerts
 ta += '<div class="msg-panel avoid-ele"></div>';
 
+//bootom alerts
+ba += '<div id="tag_info_block" class="avoid-ele"><div id="tag_info"></div></div>';
+
 //help_block
 hb += '<div id="help_block" class="help-block avoid-ele">';
   hb += '<div id="help-modal" class="modal">';
@@ -87,4 +91,4 @@ hb += '<div id="help_block" class="help-block avoid-ele">';
 hb += '</div>';
 
 
-document.body.innerHTML +=  lpt + pl + ta + hb;
+document.body.innerHTML +=  lpt + pl + ta + ba + hb;

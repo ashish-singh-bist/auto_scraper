@@ -164,11 +164,46 @@ document.addEventListener("DOMContentLoaded", function(event) {
         if(event.target.className.indexOf('option-selected') < 0){
             event.target.classList.add('hover-selected');
         }
+        targetelement = event.target;
+        if(event.target.closest(".avoid-ele") == null){
+            $('#tag_info_block').show();
+            var tag_info = '';
+            if (targetelement.tagName.toLowerCase())
+                tag_info += '<span class="_tag"><span style="color:#fff">Target - </span>'+ targetelement.tagName.toLowerCase()+'</span>';
+            var targetelement_classList = Array.from(targetelement.classList);
+            var index = targetelement_classList.indexOf('hover-selected');
+            if (index > -1)
+                 targetelement_classList.splice(index, 1);
+            var index = targetelement_classList.indexOf('option-selected');
+            if (index > -1)
+                 targetelement_classList.splice(index, 1);
+
+            if (targetelement_classList.length > 0)
+                tag_info += ' | <span class="_class"><span style="color:#fff">Class - </span>'+ targetelement_classList + '</span>';
+            if (targetelement.id)
+                tag_info += ' | <span class="_id"><span style="color:#fff">Id - </span>'+ targetelement.id + '</span>';
+            
+            tag_info += '<span class="tag_info_spliter">|</span>';
+            if (targetelement.parentElement.tagName.toLowerCase())
+                tag_info += '<span class="_tag"><span style="color:#fff">Parent - </span>'+ targetelement.parentElement.tagName.toLowerCase()+'</span>';
+            if (targetelement.parentElement.classList.length > 0)
+                tag_info += ' | <span class="_class"><span style="color:#fff">Class - </span>'+ targetelement.parentElement.classList + '</span>';
+            if (targetelement.parentElement.id)
+                tag_info += ' | <span class="_id"><span style="color:#fff">Id - </span>'+ targetelement.parentElement.id + '</span>';
+            
+            $('#tag_info').html( tag_info );
+        }
+        else{
+            $('#tag_info_block').hide();
+            $('#tag_info').html('');
+        }
     }
 
     /* function for removing border on hover out */
     function mouseoutevent(event){
         event.target.classList.remove('hover-selected');
+        $('#tag_info_block').hide();
+        $('#tag_info').html('');
     }
 
     /* function for handeling clicks on right-click-menu items */
@@ -391,7 +426,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var display_selected_list = '<tr class="'+label+'_tr"><td><span class="closebtn" key="'+label+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('label_item_value').value+'</td></tr>';
         }
 
-        
         $('#selected_elements_list').append(display_selected_list);
          document.getElementById("done_config").title = 'Create config';
          document.getElementById("done_config").disabled = false;
