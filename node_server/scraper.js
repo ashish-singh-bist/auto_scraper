@@ -520,7 +520,7 @@ async function saveParseData(scraped_data, url_list_id, ref_id)
             console.log("Inserted Id: " + results.insertId);
             if( url_list_id > 0 ){
                 var d = new Date();
-                var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+                var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
                 //update status of url in database
                 connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (err, results, fields) {
                     //if (error) throw error;
@@ -555,7 +555,7 @@ async function increaseErrorCount(url_list_id)
 
         //console.log('db connected as id ' + connection.threadId);
         var d = new Date();
-        var data = [d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), url_list_id];
+        var data = [d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+ d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), url_list_id];
 
         if(url_list_id > 0){
             connection.query("update tbl_url_lists set error_count = error_count + 1, updated_at=? where id=?", data, function (err, results, fields) {
