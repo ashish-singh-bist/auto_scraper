@@ -43,11 +43,15 @@ if (parsing_mode == 'databasemode') {
         }
 
         //console.log('db connected as id ' + connection.threadId);
-        connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and actual_url IS NOT NULL limit 10", data, function (err, results, fields){
+        connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and (actual_url IS NOT NULL or url IS NOT NULL) limit 10", data, function (err, results, fields){
             if (err)  console.log('==Error 1: ' + err);
             if(results.length){
                 for(var i = 0; i < results.length; i++){
-                    url_list_array.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});
+                    if(results[i].actual_url == null){
+                        url_list_array.push({ 'act_url':results[i].url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});    
+                    }else{
+                        url_list_array.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});
+                    }
                 }
             }
             if ( url_list_array.length > 0 )  {
@@ -100,10 +104,15 @@ async function run()
 
                     var url_list_id = 0;
                     var ref_id = 0;
+                    url = url_obj.act_url;
                     if ( parsing_mode == 'databasemode'){
                         url_list_id = url_obj.url_list_id;
                         if(url_obj.ref_id != null){
                             ref_id = url_obj.ref_id;
+                        }
+
+                        if(url_obj.act_url == null){
+                            url = url_obj.url;
                         }
                     }
 
@@ -118,11 +127,12 @@ async function run()
                             jar: true 
                         }
 
-                        console.log("loading page: " + url_obj.act_url);
-                        options['url'] = url_obj.act_url;
+                        console.log("loading page: " + url);
+                        options['url'] = url;
                         options['resolveWithFullResponse'] = true;
                         options['encoding'] = 'utf8';
                         var html ="";
+                        var final_url = '';
                         try {
                             await request(options, function(err, response, body){ 
                                 console.log('statusCode=========='+response.statusCode);
@@ -132,6 +142,7 @@ async function run()
                                 // });
                                 if ( response.statusCode === 200 ) {
                                     html = body;
+                                    final_url = response.request.uri.href.replace('https://', '').replace('http://','');
                                 }
                             });
                         }
@@ -143,7 +154,7 @@ async function run()
                             let scraped_data = await startHTMLParsing(site_config,html,puppeteer_enabled);
                             console.log(scraped_data);
                             if(JSON.stringify(scraped_data) != '{}') {
-                                scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
+                                scraped_data.url = final_url;
                                 console.log("saving data....");
                                 await saveParseData(scraped_data, url_list_id, ref_id);
                             }else{
@@ -193,8 +204,8 @@ async function run()
                             }
                         });
 
-                        console.log(`loading page: ${url_obj.act_url}`);
-                        await page.goto(url_obj.act_url, {
+                        console.log(`loading page: ${url}`);
+                        await page.goto(url, {
                             waitUntil: 'networkidle0',
                             timeout: 120000,
                         });
@@ -204,7 +215,7 @@ async function run()
                         let scraped_data = await page.evaluate(startHTMLParsing,site_config,'',puppeteer_enabled);
                         //console.log(scraped_data);
                         if(JSON.stringify(scraped_data) != '{}') {
-                            scraped_data.url = url_obj.act_url.replace('https://', '').replace('http://','');
+                            scraped_data.url = url.replace('https://', '').replace('http://','');
                             await saveParseData(scraped_data, url_list_id, ref_id);
                         }else{
                             await increaseErrorCount(url_list_id);
@@ -520,7 +531,7 @@ async function saveParseData(scraped_data, url_list_id, ref_id)
             console.log("Inserted Id: " + results.insertId);
             if( url_list_id > 0 ){
                 var d = new Date();
-                var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+                var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'actual_url': scraped_data.url };
                 //update status of url in database
                 connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (err, results, fields) {
                     //if (error) throw error;
