@@ -1,15 +1,13 @@
-@import url("//d2v52k3cl9vedd.cloudfront.net/basscss/4.1.7/basscss.min.css");
-
 input[type="file"] {
     display: none;
 }
-#panel *,  #context * , #label_input * {
+#panel *,  #context * , #property_builder * {
     box-shadow: none !important;
 }
 #context .form-check,
 #context .form-check-label, 
-#label_input .form-check,
-#label_input .form-check-label{
+#property_builder .form-check,
+#property_builder .form-check-label{
     margin: 0;
 }
 .custom-file-upload {
@@ -28,7 +26,7 @@ input[type="file"] {
     box-shadow: 2px 2px;
 }
 
-div#context ul, div#label_input ul {
+div#context ul, div#property_builder ul {
     box-shadow: none !important;
     list-style-position: outside;
     list-style-type: none !important;
@@ -37,7 +35,7 @@ div#context ul, div#label_input ul {
     padding: 0 !important;
 }
 
-div#label_input_header, div#context_header {
+div#property_builder_header, div#context_header {
     background-color: #2196F3;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
@@ -48,7 +46,7 @@ div#label_input_header, div#context_header {
     font-size: 14px !important;
     font-weight: 400 !important;
 }
-div#label_input_body, div#context_body{
+div#property_builder_body, div#context_body{
     background: #f1f1f1 !important;
     border-bottom-left-radius: 5px !important;
     border-bottom-right-radius: 5px !important;
@@ -56,10 +54,10 @@ div#label_input_body, div#context_body{
     border: 2px solid #2196F3 !important;
     padding: 6px 7px !important;
 }
-div#label_input_body .add_mode{
+div#property_builder_body .add_mode{
     margin-left: 0;
 }
-div#context span.close-btn_, div#label_input span.close-btn_ {
+div#context span.close-btn_, div#property_builder span.close-btn_ {
     position: absolute;
     right: 7px;
     top: -3px;
@@ -67,20 +65,19 @@ div#context span.close-btn_, div#label_input span.close-btn_ {
     cursor: pointer;
 }
 
-div#context li, div#label_input li {
+div#context li, div#property_builder li {
     list-style: none;
     box-shadow: 0 0 0 0 #800;
     margin-bottom: -7px;
 }
 
-div#context li label, div#label_input li label,
-div#context li label input, div#label_input li label input {
+div#context li label, div#property_builder li label,
+div#context li label input, div#property_builder li label input {
     display: block;
 }
 
-#id_selector_text,
 div#context li label input, 
-div#label_input li label input {
+div#property_builder li label input {
     text-align: center !important;
     width: 100% !important;
     padding: 0 5px !important;
@@ -91,20 +88,18 @@ div#label_input li label input {
     border-radius: 5px !important;
 }
 
-#id_selector_text{
-    margin: .5rem 0 0 0 !important
-}
-div#label_input li a:hover {
+div#property_builder li a:hover {
     box-shadow: 250px 0 0 0 #FF7A62 inset;
 }
 
-div#context, div#label_input {
+div#context, div#property_builder {
     width: 240px;
     position: absolute;
     z-index: 999999;
     -webkit-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
+    display: none;
 }
 
 .btn-default:hover,
@@ -151,7 +146,7 @@ div#context, div#label_input {
 }
 
 /*______for textarea _______*/
-#label_input textarea {
+#property_builder textarea {
     width: 100% !important;
     min-height: 50px !important;
     background-color: lightgray !important;
@@ -170,14 +165,14 @@ div#context, div#label_input {
 #advance_code_input_text{
     display: none;
 }
-#label_input .label_input {
+#property_builder .property_builder {
     background-color: lavender !important;
     font-weight: normal !important;
     border: 1px solid rgb(204, 204, 204);
     box-sizing: border-box;
 }
 
-#label_input input[type=button], #context input[type=button],
+#property_builder input[type=button], #context input[type=button],
 #panel input[type=button]{    
     box-sizing:border-box !important;
     cursor:pointer !important;
@@ -276,8 +271,7 @@ div#context, div#label_input {
     border-bottom: 1px solid grey;
     border-right: 1px solid grey;
 }
-#panel-table-thead tr th:first-child{ width: 15px; }
-#panel-table-thead tr th:nth-child(2){ width: 80px; }
+
 #panelheader {
     padding: 8px;
     cursor: move;
@@ -300,7 +294,7 @@ div#context, div#label_input {
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
-#panel .closebtn,
+/*#panel .closebtn,
 #panel #selection_completed {
     float: none !important;
     color: #FF0000;
@@ -310,7 +304,7 @@ div#context, div#label_input {
     display: inline-block;
     font-size: 22px;
     cursor: pointer;
-}
+}*/
 #panelheader span {
     background: url('mouse-move.png');
     height: 25px;
@@ -322,29 +316,18 @@ div#context, div#label_input {
     top: 7px;
 }
 #panelmm,
-#panel .closebtn,
+/*#panel .closebtn,
 .alert-dismissable .close,
 .alert-dismissible .close{
     -webkit-transition: -webkit-transform 1s;
     transition: transform 1s;
-}
+}*/
 #panelheader:hover #panelmm{
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
 }
 
-.msg-panel {
-    position: fixed;
-    z-index: 99999999999999;
-    top: 7px;
-    right: 7px;
-    width: 39%;
-}
-.msg-panel strong{
-    font-weight: 700;
-}
-
-.closebtn {
+/*.closebtn {
     margin-left: 15px;
     color: white;
     font-weight: bold;
@@ -357,7 +340,7 @@ div#context, div#label_input {
 
 .closebtn:hover {
     color: black;
-}
+}*/
 #panel,
 #panel *,
 .msg-panel,
@@ -399,9 +382,6 @@ div#context, div#label_input {
     font-size: 28px;
     top: -14px;
     text-decoration: none;
-}
-#help-btn{
-    padding: 0 0 .5em 0;
 }
 .help-block .modal {
     display: block;

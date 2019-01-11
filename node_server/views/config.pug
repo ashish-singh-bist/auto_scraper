@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <base href="/">
+        <title>Auto Scraper</title>
+        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+        <link rel="stylesheet" href="css/config_css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="css/config_css/AdminLTE.css">
+        <link rel="stylesheet" href="css/config_css/skin-blue.css">
+        
+        <link href="css/from-the-page.css" rel="stylesheet">
+        <link href="css/config_css/config_css.css" rel="stylesheet">
+
+        script.
+            config_ = "#{config}";
+            editmode_ =  "#{editmode}";
+            host_ =  "#{host}";
+            uid_  = "#{uid}";
+            url_post_part_ =  "#{url_post_part}";
+            url_post_part_ =  "#{url_post_part}";
+            root_port = "#{ root_port }";
+            root_ip = "#{ root_ip }";
+            config_obj = "#{ config_obj }";
+            protocol_ = "#{ protocol_ }";
+    </head>
+    <body class="skin-blue sidebar-mini" style="height:auto;min-height:100%" cz-shortcut-listen="true">
+        <div class="progress-bar" id="progress_bar" style="display:none">
+            <div class="progress-bar-popup">
+                <svg class="lds-spin" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><g transform="translate(80,50)"><g transform="rotate(0)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="1"><animateTransform attributeName="transform" type="scale" begin="-0.875s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.875s"></animate></circle></g></g><g transform="translate(71.21320343559643,71.21320343559643)"><g transform="rotate(45)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.875"><animateTransform attributeName="transform" type="scale" begin="-0.75s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.75s"></animate></circle></g></g><g transform="translate(50,80)"><g transform="rotate(90)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.75"><animateTransform attributeName="transform" type="scale" begin="-0.625s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.625s"></animate></circle></g></g><g transform="translate(28.786796564403577,71.21320343559643)"><g transform="rotate(135)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.625"><animateTransform attributeName="transform" type="scale" begin="-0.5s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.5s"></animate></circle></g></g><g transform="translate(20,50.00000000000001)"><g transform="rotate(180)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.5"><animateTransform attributeName="transform" type="scale" begin="-0.375s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.375s"></animate></circle></g></g><g transform="translate(28.78679656440357,28.786796564403577)"><g transform="rotate(225)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.375"><animateTransform attributeName="transform" type="scale" begin="-0.25s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.25s"></animate></circle></g></g><g transform="translate(49.99999999999999,20)"><g transform="rotate(270)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.25"><animateTransform attributeName="transform" type="scale" begin="-0.125s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="-0.125s"></animate></circle></g></g><g transform="translate(71.21320343559643,28.78679656440357)"><g transform="rotate(315)"><circle cx="0" cy="0" r="10" fill="#000" fill-opacity="0.125"><animateTransform attributeName="transform" type="scale" begin="0s" values="1.1 1.1;1 1" keyTimes="0;1" dur="1s" repeatCount="indefinite"></animateTransform><animate attributeName="fill-opacity" keyTimes="0;1" dur="1s" repeatCount="indefinite" values="1;0" begin="0s"></animate></circle></g></g></svg>
+            </div>
+        </div>
+        <div class="wrapper" style="height:auto;min-height:100%">
+            <header class="main-header">
+                <a href="http://192.168.1.117:6500/home" class="logo">
+                    <span class="logo-mini"><b>A</b>S</span>
+                    <span class="logo-lg"><b>Auto</b>Scraper</span>
+                </a>
+                <nav class="navbar navbar-static-top" role="navigation">
+                    <a href="#" class="sidebar-toggle hidden-sm hidden-md hidden-lg" data-toggle="push-menu" role="button">
+                        <span class="sr-only">Toggle navigation</span>
+                    </a>
+                    <div class="navbar-custom-menu">
+                        <ul class="nav navbar-nav">
+                            <!-- <li>
+                                <a href="#" onclick='event.preventDefault(),document.getElementById("logout-form").submit()'>
+                                    <i class="fa fa-fw fa-power-off"></i> Log Out
+                                </a>
+                                <form id="logout-form" action="http://192.168.1.117:6500/logout" method="POST" style="display:none">
+                                    <input name="_token" value="LqTq5DOKcdCd5EcAcuolw52FSixD77oiwtyarNAI" type="hidden">
+                                </form>
+                            </li> -->
+                        </ul>
+                    </div>
+                </nav>
+            </header>
+            <aside class="main-sidebar">
+                <section class="sidebar" style="height:auto">
+                    <ul class="sidebar-menu tree" data-widget="tree">
+                        <li class="header text-center">Configuration Panel </li>
+                        <li class="menu_">
+                            <span id="help-btn">Need Help ?</span>
+                        </li>
+                        <li class="menu_">
+                            <span>
+                                <label class="label_"><input name="puppeteer_enabled" id="puppeteer_enabled" value="puppeteer_enabled" type="checkbox"> Puppeteer Enable</label>
+                            </span>
+                        </li>
+                        <li class="menu_">
+                            <span id="create_config">Create config</span>
+                        </li>
+                        <li class="menu_">
+                            <span id="id_selector_btn">Enter ID selector</span>
+                        </li>
+                        <li class="table_">
+                            <table id="panel_table" class="table table-bordered">
+                                <thead id="panel_table_thead">
+                                    <tr>
+                                        <td><span id="del_all_prop_btn" title="Remove All items">×</span></td>
+                                        <td>Property</td>
+                                        <td>Property Content</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="selected_props_list_tbody"></tbody>
+                            </table>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+            <div class="content-wrapper">
+                <section class="content">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-dismissible" id="msgBox" style="display:none">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                <span id="msgBoxMessage"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="box box-primary mb-0">
+                                    <div class="box-body box-body-loader"></div>
+                                    <div class="box-body box-body-container">
+                                        <!-- <iframe id="config_page" class="config-page" src="http://192.168.1.117:6001/watch?v=8ULXqEx6KQc&config=true&editmode=true&host=www_youtube_com&uid=1" onload="myFunction();"></iframe> -->
+                                        <iframe id="config_page" class="config-page" src="#" onload="myFunction();"></iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div>
+                <div id="property_builder" class="avoid-ele">
+                    <div id="property_builder_header">Property Builder <span class="close-btn_" title="close">&times;</span></div>
+                    <div id="property_builder_body">
+                        <label class="advance-mode" title="Enable advance mode for regex code">
+                            <input name="add_mode" class="add_mode" value="" type="checkbox"> Advance mode
+                        </label>
+                        <ul>
+                            <li>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <form class="form-inline" id="property_builder_form">
+                                            <input class="block sm-col-4 field-light h3 property_builder" name="property_builder_text" type="text" maxsize="30" title="Property Name" placeholder="property name" id="property_builder_text" />
+                                            <textarea disabled class="block sm-col-4 field-light h3" id="label_item_value" title="Property Content"></textarea>
+                                            <textarea class="" name="property_builder_text" placeholder="JS Code" id="advance_code_input_text"></textarea>
+                                            <input class="perform_action" type="button" id="property_builder_ok_btn" value="OK!">
+                                        </form>
+                                    </label>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="id_selector_modal" class="modal fade" role="dialog">
+            <div class="modal-dialog text-left">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Enter ID selector</h4>
+                    </div>
+                    <div class="modal-body text-left">
+                        <input class="form-control input-sm" type="text" name="id_selector_text" id="id_selector_text"/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tag_info_block" class="avoid-ele"><div id="tag_info"></div></div>
+        <div class="msg-panel avoid-ele"></div>
+        <script src="js/config_js/jquery.js"></script>
+        <script src="js/config_js/bootstrap.js"></script>
+        <script src="js/config_js/adminlte.js"></script>
+        <script src="js/config_js/config_page_script.js"></script>
+    </body>
+</html>
