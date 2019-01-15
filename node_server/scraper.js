@@ -92,11 +92,32 @@ async function run()
             url_list_chunk = url_list_array.slice(process_index, process_index + thread_count);
         }
         if(url_list_chunk.length > 0){
-            site_config_json = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8'));
-            site_config = site_config_json.data;
-            if(site_config_json.puppeteer_enabled != undefined && site_config_json.puppeteer_enabled == '1'){
-                puppeteer_enabled = 1;
-            }
+            //site_config_json = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8'));
+
+            //database connection setting
+            let connection  = mysql.createConnection({
+                                  host     : config.mysql_host,
+                                  user     : config.mysql_user,
+                                  password : config.mysql_password,
+                                  database : config.mysql_database,
+                                  charset  : config.charset,
+                              });
+
+            //read config from db
+            connection.query("select config from config_list where user_id= ? and config_name = ?", [user_id, host_slug], function (err, results, fields) {
+                if (err){ 
+                    console.log('==Error 9: '+err);
+                }else{
+                    if(results.length){
+                        site_config_json = JSON.parse(results[0].config);
+                        site_config = site_config_json.data;
+                        if(site_config_json.puppeteer_enabled != undefined && site_config_json.puppeteer_enabled == '1'){
+                            puppeteer_enabled = 1;
+                        }
+                    }
+                }
+                connection.end();
+            });
         }
         (async () => {
             try {
@@ -142,7 +163,8 @@ async function run()
                                 // });
                                 if ( response.statusCode === 200 ) {
                                     html = body;
-                                    final_url = response.request.uri.href.replace('https://', '').replace('http://','');
+                                    //f = response.request.uri.href.replace('https://', '').replace('http://','');
+                                    final_url = response.request.uri.href;
                                 }
                             });
                         }
@@ -490,6 +512,8 @@ async function saveParseData(scraped_data, url_list_id, ref_id)
                     scrapedContentArray = JSON.parse(scrapedContent);
                 }
             }
+            let temp_data = scraped_data;
+            temp_data.url = temp_data.url.replace('https://', '').replace('http://','');
             scrapedContentArray.push(scraped_data);
             fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContentArray), function (err) {
                 if (err) throw err;
@@ -526,6 +550,63 @@ async function saveParseData(scraped_data, url_list_id, ref_id)
             data.url_list_id = url_list_id;
         }
         connection.query("INSERT INTO scraped_data SET ?", data, function (err, results, fields) {
+            //if (error) throw error
+            if (err) console.log('==Error 9: '+err);
+            console.log("Inserted Id: " + results.insertId);
+            if( url_list_id > 0 ){
+                var d = new Date();
+                var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'actual_url': scraped_data.url };
+                //update status of url in database
+                connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (err, results, fields) {
+                    //if (error) throw error;
+                    if (err) console.log('==Error 10: '+err);
+                    connection.end();
+                    console.log('Url list updated for id:- ' + url_list_id);
+                });
+            }else{
+                connection.end();
+            }
+        });
+    });
+}
+
+async function saveParseDataMV(scraped_data, url_list_id, ref_id)
+{
+    //database connection setting
+    let connection  = mysql.createConnection({
+                          host     : config.mysql_host,
+                          user     : config.mysql_user,
+                          password : config.mysql_password,
+                          database : config.mysql_database,
+                          charset  : config.charset,
+                      });
+    //connect to database
+    connection.connect(function(err) {
+        if (err) {
+            console.error('==Error db connecting: ' + err.stack);
+            return;
+        }
+
+        var data = {};
+
+        /////////////////////////////////////////////////////////////////////////////////
+                                //manage data according mv
+        /////////////////////////////////////////////////////////////////////////////////
+        data.source = "xyz";
+        data.url = scraped_data.url;
+        delete scraped_data["url"]; 
+        data.data = JSON.stringify(scraped_data);
+        /////////////////////////////////////////////////////////////////////////////////
+
+        if(ref_id > 0){
+            data.ref_id = ref_id;
+        }
+
+        if(url_list_id > 0){
+            data.url_list_id = url_list_id;
+        }
+        //save data to database
+        connection.query("INSERT INTO mv_table SET ?", data, function (err, results, fields) {
             //if (error) throw error
             if (err) console.log('==Error 9: '+err);
             console.log("Inserted Id: " + results.insertId);
