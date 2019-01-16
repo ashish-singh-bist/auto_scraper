@@ -6,7 +6,7 @@ $( document ).ready(function(){
 
 	//declaring reqired variables
 	var url_list_array = [], parsedJson = [];
-	var extracted_host_name, flag, process_host_name, argument_analyze_, url_post_part;
+	var extracted_host_name, flag, process_host_name, argument_analyze_, url_post_part, actual_url;
 	var windowOpenWith = 'http://' + config.root_ip + ':' + config.root_port;
 
 	function removeSpaces(input_url){
@@ -70,6 +70,7 @@ $( document ).ready(function(){
 				flag = res.config_exist 							// true or false
 				extracted_host_name = res.extracted_host_name;  	// domain name eg- http://google.co.in
 				process_host_name = res.process_host_name;  		// domain name eg- google_co_in
+				actual_url = res.actual_url;
 				proceedWithUrls();
 			}else{
 				showMsg('error', 'Something going wrong refresh the window');

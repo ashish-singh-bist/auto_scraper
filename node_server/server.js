@@ -203,10 +203,108 @@ app.set("view engine","pug");
 
 //#================================================================
 
+
+    async function getPage(data,url,user_id,req, res){
+        //var final_url = '';
+        //======================for the redirect urls=========================
+        function redirectOn302(body, response, resolveWithFullResponse) {
+
+            if ( response.statusCode != 200 ) {
+                // Set the new url (this is the options object)
+                //this.url = response.['the redirect url somehow'];
+                //console.log('1 : statusCode======='+response.statusCode);
+                this.url = response.headers.location;
+                var options = {
+                    url: response.headers.location,            
+                    resolveWithFullResponse : true,
+                    transform: redirectOn302            
+                };        
+                return request(options).then(function(body){
+                    //console.log('body+++++++'+body);
+                    }).catch(function(err){
+                    console.log(err);
+                });
+            } else {
+                return resolveWithFullResponse ? response : body;
+            }
+        }
+        //======================================================================
+
+        var options = {
+            url: url,
+            resolveWithFullResponse : true,
+            transform: redirectOn302            
+        }; 
+        
+        request(options, function(error, response, body){
+            if (!error && response.statusCode == 200) {
+                var url_ = response.request.uri.href;
+                var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
+
+                var temp= {};
+                temp[filename_+'_success']  = false;
+                temp[filename_+'_done']  = false;
+
+                writeSession(user_id, temp);
+
+                //console.log(sess);        
+                if(data.url_list.length>0){                     
+                    var split_ar = url_.split('/');
+                    var host_url = split_ar[0] + '//' + split_ar[2];
+                    var config_exist;
+
+                    var array_received = (data.url_list).join('\r\n');
+                    //save list in db
+                    fileSystem.writeFile(path.join(__dirname, 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt'), array_received, 'utf-8', function(err) {
+                        if(err) {
+                            res.send({status: 500, file_location: err, 'process_host_name':filename_ , 'extracted_host_name':host_url });
+                        }
+                    });
+
+                    connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename_], function (err, results, fields) {
+                        //if (error) throw error
+                        config_exist = false;
+                        if (err){ 
+                            console.log('==Error 9: '+err);
+                        }else{
+                            if(results.length){
+                                config_exist = true;
+                                res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
+                            }else{
+                                if (fileSystem.existsSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'))) {
+                                    var scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'), 'utf8');
+                                    scrapedContent = JSON.parse(scrapedContent);
+                                    scrapedContent.user_id = user_id;
+                                    console.log("Trying to save config");
+                                    var data = {'user_id': user_id, 'config_name': filename_, 'config': JSON.stringify(scrapedContent)};
+                                    connection.query("INSERT INTO config_list SET ?", data, function (err, results, fields) {
+                                        //if (error) throw error
+                                        if (err) { 
+                                            console.log('==Error 10: '+err);
+                                            res.send({status: 500, file_location: err, 'process_host_name':filename_ , 'extracted_host_name':host_url });
+                                        }else{
+                                            config_exist = true;
+                                            res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
+                                        }
+                                    });
+                                }                                
+                            }
+                        }
+                    });
+                }
+                else{
+                    res.send({status: 500, file_location: err});
+                }                
+            }
+        });
+
+    }
+
+
 //#================================================================GET REQUEST HANDLER
     async function sendRequest(req, res, host, uid, options, config, new_url, analyze){
         var headers, obj;
-
+        var final_url = '';
         //======================for the redirect urls=========================
         function redirectOn302(body, response, resolveWithFullResponse) {
             console.log('Calling function redirectOn302');
@@ -280,7 +378,7 @@ app.set("view engine","pug");
                 // console.log(body.toString().length);
                 // console.log(inject_code_flag)
                 // console.log('++++++++++++++++++++++++++++++++++++>\n');
-
+                final_url = response.request.uri.href;
         
                 //#================================================================RESPONSE HEADERS
                 headers = response.headers;
@@ -288,13 +386,17 @@ app.set("view engine","pug");
 
                 //checking if headers do not contain invalid characters (like \u0001)
                 //this was included while parsing `https://www.hobbylobby.com/Home-Decor-Frames/Candles-Fragrance/Warmers-Wax-Melts/Pomegranate-Sorbet-Wickless-Fragrance-Cubes/p/80869733`
-                if(header.validHeaderName(headers) === false){
-                    headers = header.cleanHeaderName(headers);
-                }
+                
 
-                if(header.validHeaderValue(headers) === false){
-                    headers = header.cleanHeaderValue(headers);
-                }
+
+                //commenting below code because it stop to send header in response 200 ObjectObject
+                // if(header.validHeaderName(headers) === false){
+                //     headers = header.cleanHeaderName(headers);
+                // }
+
+                // if(header.validHeaderValue(headers) === false){
+                //     headers = header.cleanHeaderValue(headers);
+                // }
 
                 res.writeHead(200, headers);
                 //#================================================================
@@ -516,14 +618,6 @@ app.set("view engine","pug");
                     })
                     //#================================================================
 
-                    //#================================================================CONFIG
-                    // if(config === 'true'){
-                    //     obj = fileSystem.readFileSync(path.join(__dirname,'storage/site_config/'+host+'_'+uid+'.json'), 'utf8');
-                    //     var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
-                    //     $('body').append(scriptNodeWithJson);
-                    // }
-                    //#================================================================
-
                     //#================================================================META
                     $("meta").each(function(){
                         if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
@@ -539,11 +633,24 @@ app.set("view engine","pug");
                             let redirect_config = 'false';
 
                             if(redirect_host){
-                                if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+redirect_host.replace(/\./g, '_')+'_'+uid+'.json'))) {
-                                    redirect_config= 'true';
-                                }else{
+
+                                connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
+                                    //if (error) throw error
                                     redirect_config = 'false';
-                                }
+                                    if (err){ 
+                                        console.log('==Error 11: '+err);
+                                    }else{
+                                        if(results.length){
+                                            redirect_config= 'true';
+                                        }
+                                    }
+                                });
+
+                                // if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+redirect_host.replace(/\./g, '_')+'_'+uid+'.json'))) {
+                                //     redirect_config= 'true';
+                                // }else{
+                                //     redirect_config = 'false';
+                                // }
 
                                 if(analyze === true){
                                     let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
@@ -573,6 +680,9 @@ app.set("view engine","pug");
                     $('body').append(scriptNode);
                     $('body').attr('id', 'enable_right_click');
                     //#================================================================
+
+                    //add actual url for site-config file name
+                    $('body').attr('actual_url', final_url);
 
                     //#================================================================INJECT CSS CODE
                     //for hover/selection border, and css for menu
@@ -607,7 +717,32 @@ app.set("view engine","pug");
                     // console.log($.html());
                     // console.log('=======================================>\n');
 
-                    res.end($.html());
+                    //#================================================================CONFIG
+                    if(config === 'true'){
+                        //console.log("connection");
+                        connection.query("select config from config_list where user_id= ? and config_name = ?", [uid, host], function (err, results, fields) {
+                            //if (error) throw error
+                            //console.log("config");
+                            if (err){ 
+                                console.log('==Error 12: '+err);
+                            }else{
+                                if(results.length){
+                                    //console.log("config retrive" + results[0].config);
+                                    var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+results[0].config+'</script>';
+                                    $('body').append(scriptNodeWithJson);
+                                }
+                                res.end($.html());
+                            }
+                        });
+
+                        // no need to this code now we are using db to store config
+                        // obj = fileSystem.readFileSync(path.join(__dirname,'storage/site_config/'+host+'_'+uid+'.json'), 'utf8');
+                        // var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
+                        // $('body').append(scriptNodeWithJson);
+                    }else{
+                        res.end($.html());
+                    }
+                    //#================================================================
                     
                 }else {
 
@@ -685,12 +820,27 @@ app.set("view engine","pug");
 
     }
 
+    function isConfigExists(user_id, host_slug)
+    {
+        connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, host_slug], function (err, results, fields) {
+            //if (error) throw error
+            if (err){ 
+                console.log('==Error 9: '+err);
+            }else{
+                if(results.length){
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+
 //#================================================================POST
     //this will start the scrapping process
     app.post('/rtech/api/scrape_pages', (req, res) => {
         var body_data = req.body;
         if( 'source' in body_data ){
-            console.log("databasemode");
             var result = [], url_list_array = [];
             var query_data = [ body_data.user_id, body_data.source, 1];
             var  getInformationFromDB = function(callback) {
@@ -719,8 +869,7 @@ app.set("view engine","pug");
                         var url_ = url_list_array[0].act_url;
                         var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
                         var config_exist;
-                        console.log('storage/site_config/'+filename_+'_'+body_data.user_id+'.json');
-                        if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+body_data.user_id+'.json'))) {
+                        if (isConfigExists(body_data.user_id, filename_)) {
                             config_exist = true;
                             server = require('child_process').spawn('node', [path.join(__dirname, 'scraper.js'), 'databasemode', body_data.source, body_data.user_id], { shell: true });
                             res.send({status: 200, message: "Scraping start from database" });
@@ -729,16 +878,29 @@ app.set("view engine","pug");
                             var scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'), 'utf8');
                             scrapedContent = JSON.parse(scrapedContent);
                             scrapedContent.user_id = user_id;
-                            fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename_+'_'+body_data.user_id+'.json'), JSON.stringify(scrapedContent), 'utf-8', function(err) {
-                                if(err) {
-                                    // config_exist = false;
+
+                            var data = {'user_id': body_data.user_id, 'config_name': filename_, 'config': JSON.stringify(scrapedContent)};
+                            connection.query("INSERT INTO config_list SET ?", data, function (err, results, fields) {
+                                //if (error) throw error
+                                if (err) { 
+                                    console.log('==Error 13: '+err);
                                     res.send({status: 200, 'config_exist':false, message: "Config not exist, Make config first", 'url':url_ });
                                 }else{
-                                    // config_exist = true;
                                     server = require('child_process').spawn('node', [path.join(__dirname, 'scraper.js'), 'databasemode', body_data.source, body_data.user_id], { shell: true });
                                     res.send({status: 200, message: "Scraping start from database" });
                                 }
                             });
+
+                            // fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename_+'_'+body_data.user_id+'.json'), JSON.stringify(scrapedContent), 'utf-8', function(err) {
+                            //     if(err) {
+                            //         // config_exist = false;
+                            //         res.send({status: 200, 'config_exist':false, message: "Config not exist, Make config first", 'url':url_ });
+                            //     }else{
+                            //         // config_exist = true;
+                            //         server = require('child_process').spawn('node', [path.join(__dirname, 'scraper.js'), 'databasemode', body_data.source, body_data.user_id], { shell: true });
+                            //         res.send({status: 200, message: "Scraping start from database" });
+                            //     }
+                            // });
                         }else{
                             res.send({status: 200, 'config_exist':false, message: "Config not exist, Make config first", 'url':url_ });
                         }
@@ -797,68 +959,59 @@ app.set("view engine","pug");
         var data = req.body;
         var user_id  = data.user_id;
         var url_     = data.url_list[0];
-        var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
-        
-        var temp= {};
 
-        temp[filename_+'_success']  = false;
-        temp[filename_+'_done']  = false;
+        //get actual url       
+        // request(options, function(error, response, body){
+        //     url_ = response.request.uri.href;
+        //     console.log(url_);
+        // });
 
-        writeSession(user_id, temp);
-
-        //console.log(sess);        
-        if(data.url_list.length>0){                     
-            var split_ar = url_.split('/');
-            var host_url = split_ar[0] + '//' + split_ar[2];
-            var config_exist;
-
-            if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+filename_+'_'+user_id+'.json'))) {
-                config_exist = true;
-                //res.send({'exists': true, 'extracted_host_name': filename_})
-            }else if (fileSystem.existsSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'))) {
-                var scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'), 'utf8');
-                scrapedContent = JSON.parse(scrapedContent);
-                scrapedContent.user_id = user_id;
-                fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename_+'_'+user_id+'.json'), JSON.stringify(scrapedContent), 'utf-8', function(err) {
-                    if(err) {
-                        config_exist = false;
-                    }else{
-                        config_exist = true;
-                    }
-                });
-            }else{
-                config_exist = false;
-                //res.send({'exists': false, 'extracted_host_name': filename_})
-            }
-
-            var array_received = (data.url_list).join('\r\n');
-
-            fileSystem.writeFile(path.join(__dirname, 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt'), array_received, 'utf-8', function(err) {
-                if(err) {
-                    res.send({status: 500, file_location: err, 'config_exist':config_exist, 'process_host_name':filename_ , 'extracted_host_name':host_url });
-                }else{
-                    res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url });
-                }
-            });
-        }
-        else{
-            res.send({status: 500, file_location: err});
-        }
+        url_ = getPage(data,url_,user_id,req, res);
 	})
 
 	//this will create the config file
 	app.post('/rtech/api/done_config', (req, res) => {
 		var filename = req.body.url;
 		var user_id = req.body.user_id;
-
+        console.log(filename);
 		if(typeof req.body.data === 'string'){
 			req.body.data = JSON.parse(req.body.data);
 		}
 
-		fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
-			if (err) throw err;
-			console.log('Saved!');
-		});
+		// fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
+		// 	if (err) throw err;
+		// 	console.log('Saved!');
+		// });
+
+        connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
+            //if (error) throw error
+            if (err){ 
+                console.log('==Error 14: '+err);
+            }else{
+                if(!results.length){
+                    //save data to database
+                    var data = {'user_id': user_id, 'config_name': filename, 'config': JSON.stringify(req.body)};
+                    connection.query("INSERT INTO config_list SET ?", data, function (err, results, fields) {
+                        //if (error) throw error
+                        if (err) { 
+                            console.log('==Error 15: '+err);
+                        }else{
+                            console.log("Inserted Id: " + results.insertId);
+                        }
+                    });
+                }else{
+                    var data = {'config' : JSON.stringify(req.body)};
+                    var query = connection.query("update config_list SET ? where user_id=" + user_id + " and config_name='" + filename + "'", data, function (err, results, fields) {
+                        //if (error) throw error
+                        if (err) { 
+                            console.log('==Error 16: '+err);
+                        }
+
+                    });
+                }
+            }
+        });
+
 		res.send({})
 	})
 
