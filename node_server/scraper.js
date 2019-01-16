@@ -14,7 +14,6 @@ var parsing_mode  = process.argv[2];
 var url_list_array = [];
 //var source = '';
 const thread_count = config.thread_count;
-var host_base_url = '';     //'https://www.youtube.com';
 var host_slug = '';         //'www_youtube_com'
 var source = '';            //'Youtube'
 var site_config;
@@ -46,20 +45,10 @@ if (parsing_mode == 'databasemode') {
         connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and (actual_url IS NOT NULL or url IS NOT NULL) limit 10", data, function (err, results, fields){
             if (err)  console.log('==Error 1: ' + err);
             if(results.length){
-                for(var i = 0; i < results.length; i++){
-                    if(results[i].actual_url == null){
-                        url_list_array.push({ 'act_url':results[i].url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});    
-                    }else{
-                        url_list_array.push({ 'act_url':results[i].actual_url, 'url_list_id':results[i].id, 'ref_id':results[i].ref_id, 'source':results[i].source});
-                    }
-                }
+                url_list_array = results;
             }
             if ( url_list_array.length > 0 )  {
-                var url_ = url_list_array[0].act_url;
-                host_slug = (url_.split('/'))[2].replace(/\./g,'_');
-
-                var split_ar = url_.split('/');
-                host_base_url = split_ar[0] + '//' + split_ar[2];
+                host_slug = url_list_array[0].source;
             }
             connection.end();
             run();
@@ -68,13 +57,12 @@ if (parsing_mode == 'databasemode') {
 }
 else{
     host_slug   = source = process.argv[3];      //slug of host_base_url
-    host_base_url = process.argv[4];    //base url of website
     user_id = process.argv[5];              //user id of login user
 
     //read url list to parse, which user uploaded recently
     var url_arr_ = (fileSystem.readFileSync(path.join(__dirname, 'storage/product_url/'+host_slug+'_'+user_id+'_url_list_.txt'), 'utf8')).split('\r\n');
     for(var i = 0; i < url_arr_.length; i++){
-        url_list_array.push({ 'act_url':url_arr_[i] });
+        url_list_array.push({ 'actual_url':url_arr_[i] });
     }
     run();
 }
@@ -85,7 +73,33 @@ async function run()
     // this is a loop to process all urls in chunk
     var process_index = 0;
     var all_url_count = url_list_array.length;
-    processChunk();
+
+    //database connection setting
+    let connection  = mysql.createConnection({
+                          host     : config.mysql_host,
+                          user     : config.mysql_user,
+                          password : config.mysql_password,
+                          database : config.mysql_database,
+                          charset  : config.charset,
+                      });
+
+    //read config from db
+    connection.query("select config from config_list where user_id= ? and config_name = ?", [user_id, host_slug], function (err, results, fields) {
+        if (err){ 
+            console.log('==Error 9: '+err);
+        }else{
+            if(results.length){
+                site_config_json = JSON.parse(results[0].config);
+                site_config = site_config_json.data;
+                if(site_config_json.puppeteer_enabled != undefined && site_config_json.puppeteer_enabled == '1'){
+                    puppeteer_enabled = 1;
+                }
+            }
+        }
+        connection.end();
+        processChunk();
+    });
+
     async function processChunk() {
         var url_list_chunk = [];
         if (all_url_count > process_index){
@@ -93,48 +107,15 @@ async function run()
         }
         if(url_list_chunk.length > 0){
             //site_config_json = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8'));
-
-            //database connection setting
-            let connection  = mysql.createConnection({
-                                  host     : config.mysql_host,
-                                  user     : config.mysql_user,
-                                  password : config.mysql_password,
-                                  database : config.mysql_database,
-                                  charset  : config.charset,
-                              });
-
-            //read config from db
-            connection.query("select config from config_list where user_id= ? and config_name = ?", [user_id, host_slug], function (err, results, fields) {
-                if (err){ 
-                    console.log('==Error 9: '+err);
-                }else{
-                    if(results.length){
-                        site_config_json = JSON.parse(results[0].config);
-                        site_config = site_config_json.data;
-                        if(site_config_json.puppeteer_enabled != undefined && site_config_json.puppeteer_enabled == '1'){
-                            puppeteer_enabled = 1;
-                        }
-                    }
-                }
-                connection.end();
-            });
         }
         (async () => {
             try {
-                const pages = url_list_chunk.map(async (url_obj, i) => {
-
-                    var url_list_id = 0;
-                    var ref_id = 0;
-                    url = url_obj.act_url;
-                    if ( parsing_mode == 'databasemode'){
-                        url_list_id = url_obj.url_list_id;
-                        if(url_obj.ref_id != null){
-                            ref_id = url_obj.ref_id;
-                        }
-
-                        if(url_obj.act_url == null){
-                            url = url_obj.url;
-                        }
+                const pages = url_list_chunk.map(async (url_row_obj, i) => {
+                    var url;
+                    if(url_row_obj.actual_url != null){
+                        url = url_row_obj.actual_url;
+                    }else{
+                        url = url_row_obj.url;
                     }
 
                     if(!puppeteer_enabled){
@@ -153,7 +134,6 @@ async function run()
                         options['resolveWithFullResponse'] = true;
                         options['encoding'] = 'utf8';
                         var html ="";
-                        var final_url = '';
                         try {
                             await request(options, function(err, response, body){ 
                                 console.log('statusCode=========='+response.statusCode);
@@ -164,7 +144,7 @@ async function run()
                                 if ( response.statusCode === 200 ) {
                                     html = body;
                                     //f = response.request.uri.href.replace('https://', '').replace('http://','');
-                                    final_url = response.request.uri.href;
+                                    url_row_obj.actual_url = response.request.uri.href;
                                 }
                             });
                         }
@@ -176,14 +156,14 @@ async function run()
                             let scraped_data = await startHTMLParsing(site_config,html,puppeteer_enabled);
                             console.log(scraped_data);
                             if(JSON.stringify(scraped_data) != '{}') {
-                                scraped_data.url = final_url;
                                 console.log("saving data....");
-                                await saveParseData(scraped_data, url_list_id, ref_id);
+                                await saveParseData(scraped_data, url_row_obj);
+                                
                             }else{
-                                await increaseErrorCount(url_list_id);
+                                await increaseErrorCount(url_row_obj.id);
                             }
                         }else{
-                            await increaseErrorCount(url_list_id);
+                            await increaseErrorCount(url_row_obj.id);
                         }
                     }else{
                         //get and parse html with puppeteer
@@ -238,9 +218,9 @@ async function run()
                         //console.log(scraped_data);
                         if(JSON.stringify(scraped_data) != '{}') {
                             scraped_data.url = url.replace('https://', '').replace('http://','');
-                            await saveParseData(scraped_data, url_list_id, ref_id);
+                            await saveParseData(scraped_data, url_row_obj);                            
                         }else{
-                            await increaseErrorCount(url_list_id);
+                            await increaseErrorCount(url_row_obj.id);
                         }
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
                         await page.close();
@@ -499,8 +479,9 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
     }
 }
 
-async function saveParseData(scraped_data, url_list_id, ref_id)
+async function saveParseData(scraped_data, url_row_obj)
 {
+    scraped_data.url = url_row_obj.actual_url;
     //save data to file
     var filename = host_slug + '_' + user_id;
     if (parsing_mode == 'normalmode') {
@@ -542,26 +523,26 @@ async function saveParseData(scraped_data, url_list_id, ref_id)
         //save data to database
         var data = {'user_id': user_id, 'source': source, 'data': JSON.stringify(scraped_data)};
 
-        if(ref_id > 0){
-            data.ref_id = ref_id;
+        if(url_row_obj.ref_id != null){
+            data.ref_id = url_row_obj.ref_id;
         }
 
-        if(url_list_id > 0){
-            data.url_list_id = url_list_id;
+        if(url_row_obj.id != null){
+            data.url_list_id = url_row_obj.id;
         }
         connection.query("INSERT INTO scraped_data SET ?", data, function (err, results, fields) {
             //if (error) throw error
             if (err) console.log('==Error 9: '+err);
             console.log("Inserted Id: " + results.insertId);
-            if( url_list_id > 0 ){
+            if( url_row_obj.id != null ){
                 var d = new Date();
                 var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'actual_url': scraped_data.url };
                 //update status of url in database
-                connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (err, results, fields) {
+                connection.query("update tbl_url_lists SET ? where id="+url_row_obj.id, _data, function (err, results, fields) {
                     //if (error) throw error;
                     if (err) console.log('==Error 10: '+err);
                     connection.end();
-                    console.log('Url list updated for id:- ' + url_list_id);
+                    console.log('Url list updated for id:- ' + url_row_obj.id);
                 });
             }else{
                 connection.end();
@@ -570,62 +551,66 @@ async function saveParseData(scraped_data, url_list_id, ref_id)
     });
 }
 
-async function saveParseDataMV(scraped_data, url_list_id, ref_id)
-{
-    //database connection setting
-    let connection  = mysql.createConnection({
-                          host     : config.mysql_host,
-                          user     : config.mysql_user,
-                          password : config.mysql_password,
-                          database : config.mysql_database,
-                          charset  : config.charset,
-                      });
-    //connect to database
-    connection.connect(function(err) {
-        if (err) {
-            console.error('==Error db connecting: ' + err.stack);
-            return;
-        }
+// async function saveParseDataMV(scraped_data, url_row_obj)
+// {
+//     //database connection setting
+//     let connection  = mysql.createConnection({
+//                           host     : '192.168.1.1',//config.mysql_host,
+//                           user     : 'root',//config.mysql_user,
+//                           password : 'tick98',//config.mysql_password,
+//                           database : 'ean_scraping',//config.mysql_database,
+//                           charset  : config.charset,
+//                       });
+//     //connect to database
+//     connection.connect(function(err) {
+//         if (err) {
+//             console.error('==Error db connecting: ' + err.stack);
+//             return;
+//         }
 
-        var data = {};
+//         var data = {};
 
-        /////////////////////////////////////////////////////////////////////////////////
-                                //manage data according mv
-        /////////////////////////////////////////////////////////////////////////////////
-        data.source = "xyz";
-        data.url = scraped_data.url;
-        delete scraped_data["url"]; 
-        data.data = JSON.stringify(scraped_data);
-        /////////////////////////////////////////////////////////////////////////////////
+//         /////////////////////////////////////////////////////////////////////////////////
+//                                 //manage data according mv
+//         /////////////////////////////////////////////////////////////////////////////////
+//         data.source = url_row_obj.source;
+//         data.ean = url_row_obj.ean;
+//         if 'images' in scraped_data:
+//             data.images = JSON.stringify(scraped_data['images']);
+//             delete scraped_data['images'];
+//         delete scraped_data["url"]; 
+//         data.data = JSON.stringify(scraped_data);
+//         /////////////////////////////////////////////////////////////////////////////////
 
-        if(ref_id > 0){
-            data.ref_id = ref_id;
-        }
+//         ////////////////////////    
+//         if(url_row_obj.ref_id != null){
+//             data.ref_id = url_row_obj.ref_id;
+//         }
 
-        if(url_list_id > 0){
-            data.url_list_id = url_list_id;
-        }
-        //save data to database
-        connection.query("INSERT INTO mv_table SET ?", data, function (err, results, fields) {
-            //if (error) throw error
-            if (err) console.log('==Error 9: '+err);
-            console.log("Inserted Id: " + results.insertId);
-            if( url_list_id > 0 ){
-                var d = new Date();
-                var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'actual_url': scraped_data.url };
-                //update status of url in database
-                connection.query("update tbl_url_lists SET ? where id="+url_list_id, _data, function (err, results, fields) {
-                    //if (error) throw error;
-                    if (err) console.log('==Error 10: '+err);
-                    connection.end();
-                    console.log('Url list updated for id:- ' + url_list_id);
-                });
-            }else{
-                connection.end();
-            }
-        });
-    });
-}
+//         if(url_list_id != null){
+//             data.url_list_id = url_row_obj.id;
+//         }
+//         //save data to database
+//         connection.query("INSERT INTO ean_products_details SET ?", data, function (err, results, fields) {
+//             //if (error) throw error
+//             if (err) console.log('==Error 9: '+err);
+//             console.log("Inserted Id: " + results.insertId);
+//             if( url_row_obj.id != null ){
+//                 var d = new Date();
+//                 var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'final_url': url_row_obj.actual_url };
+//                 //update status of url in database
+//                 connection.query("update ean_list SET ? where id="+url_row_obj.id, _data, function (err, results, fields) {
+//                     //if (error) throw error;
+//                     if (err) console.log('==Error 10: '+err);
+//                     connection.end();
+//                     console.log('Url list updated for id:- ' + url_row_obj.id);
+//                 });
+//             }else{
+//                 connection.end();
+//             }
+//         });
+//     });
+// }
 
 async function increaseErrorCount(url_list_id)
 {
@@ -649,7 +634,7 @@ async function increaseErrorCount(url_list_id)
         var d = new Date();
         var data = [d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+ d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), url_list_id];
 
-        if(url_list_id > 0){
+        if(url_list_id != null){
             connection.query("update tbl_url_lists set error_count = error_count + 1, updated_at=? where id=?", data, function (err, results, fields) {
                 //if (error) throw error
                 if (err) console.log('==Error 11: '+err);

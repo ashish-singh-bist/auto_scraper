@@ -988,12 +988,13 @@ connection.connect();
                         }
                     });
                 }else{
-                    var data = {'user_id': user_id, 'config_name': filename, 'config': JSON.stringify(req.body)};
-                    connection.query("update config_list SET ?", data, function (err, results, fields) {
+                    var data = {'config' : JSON.stringify(req.body)};
+                    var query = connection.query("update config_list SET ? where user_id=" + user_id + " and config_name='" + filename + "'", data, function (err, results, fields) {
                         //if (error) throw error
                         if (err) { 
                             console.log('==Error 16: '+err);
                         }
+
                     });
                 }
             }
