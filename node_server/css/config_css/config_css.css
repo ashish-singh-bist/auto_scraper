@@ -10,74 +10,75 @@
 .sidebar-menu, .main-sidebar .user-panel, .sidebar-menu > li.header {
     white-space: normal;
 }
+.skin-blue .sidebar-menu > li.header {
+    color: white;
+    background: #1a2226;
+    font-size: 14px;
+}
+.wrapper {
+    height: 100vh !important;
+    min-height: 100vh !important;
+}
 /* over the layout of AdminLTE */
 table tbody{
 	word-wrap: break-word;
     word-break: break-all;
 }
-.progress-bar {
-    display: none;
-    background: rgba(0, 0, 0, 0.5);
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    cursor: pointer;
-    z-index: 9999;
-}
-.progress-bar-popup {
-    width: 120px;
-    height: 120px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-top: -35px;
-    margin-left: -35px;
-}
-.progress-bar-popup img {
-    vertical-align: middle;
-    max-width: 100%;
-}
-.box-body-loader{
-    display: none;
-}
-.page-loading .box-body-loader {
-    display: block;
+.page-loading .page-loader {
+    /*display: block;
     background-image: url('https://i.gifer.com/Qgyn.gif');
     height: calc(100vh - 90px);
     background-repeat: no-repeat;
+    background-position: center;*/
+
+    display: block;
+    background-image: url('waiting.gif');
+    height: 100vh;
+    background-repeat: no-repeat;
     background-position: center;
+    position: fixed;
+    left: 0;
+    z-index: 999999999999999;
+    top: 0;
+    width: 100%;
+    background-color: rgba(255,255,255,0.5);
 }
+.box-body-loader,
+#property_builder_advance_code,
 .page-loading .box-body-container{
     display: none;
 }
-.config-page{
+.highlight-rec{
+    background-color: yellow;
+    color: black;
+}
+.config-page {
     border: 0;
     width: 100%;
     height: calc(100vh - 110px);
-    background-image: url('https://i.gifer.com/Qgyn.gif');
-    background-repeat: no-repeat;
-    background-position: center;
 }
-.mb-0{
-    margin-bottom: 0;
-}
+.mb-0{ margin-bottom: 0 !important; }
+.mr-10{ margin-right: 10px !important; }
+.w-100{ width: 100% !important; }
 .hover-selected{
     color: red !important;
 }
+.sidebar-menu > li.menu_ {
+    margin: 0 5px 8px 5px;
+    background-color: rgb(0, 166, 90,1) !important;
+    border-radius: 2px;
+}
 .sidebar-menu > li.menu_ > span {
-    padding: 12px 5px 12px 5px;
+    padding: 7px 4px;
     display: block;
-    color: #b8c7ce;
+    color: white;
     cursor: pointer;
     border-left: 3px solid transparent;
 }
 .skin-blue .sidebar-menu > li.menu_:hover > span, .skin-blue .sidebar-menu > li.active > span, .skin-blue .sidebar-menu > li.menu-open > span {
     color: #fff;
-    background: #1e282c;
-    border-left: 3px solid #3c8dbc;
+    background: transparent;
+    border-left: 3px solid #06ec82;
 }
 .sidebar-menu > li.table_ #panel_table {
     display: none;
@@ -85,20 +86,37 @@ table tbody{
     margin: 12px 5px 12px 5px;
     width: calc(100% - 10px);
 }
-.del_prop_btn,
-#del_all_prop_btn {
-    cursor: pointer;
+.del_prop_btn_c{
+    position: relative;
 }
-#panel_table_thead tr td:first-child{ width: 25px; }
+.del_prop_btn, #del_all_prop_btn {
+    height: 15px;
+    width: 15px;
+    position: absolute;
+    top: 10px;
+    left: 4px;
+    cursor: pointer;
+    font-size: 24px !important;
+    line-height: 14px !important;
+}
+#panel_table_thead{ color: white;background-color: rgb(210, 214, 222,.4); }
+#panel_table_thead tr td:first-child{ width: 25px; padding: 0; position: relative; }
 #panel_table_thead tr td:nth-child(2){ width: 80px; }
 #panel_table_thead tr td:nth-child(3){ width: 158px; }
 
-#selected_props_list_tbody tr td:first-child{ width: 25px; }
+#selected_props_list_tbody tr td:first-child{ width: 25px; padding: 0 ; position: relative;}
 #selected_props_list_tbody tr td:nth-child(2){ width: 80px; }
 #selected_props_list_tbody tr td:nth-child(3){ width: 158px; }
 
-.sidebar-menu > li.menu_ .label_ { margin: 0; }
-.sidebar-menu > li.menu_ .label_ #puppeteer_enabled { margin-right: 10px; }
+.sidebar-menu > li.menu_ .label_ { margin: 0; font-weight: normal; position: relative;}
+.sidebar-menu > li.menu_ .label_ div { margin-left: 30px; }
+.sidebar-menu > li.menu_ .label_ #puppeteer_enabled {
+    height: 22px;
+    width: 22px;
+    padding: 0;
+    position: absolute;
+    margin: 0;
+}
 
 .msg-panel {
     position: fixed;
@@ -146,17 +164,14 @@ table tbody{
 #tag_info_block #tag_info_p ._tag{
     color: #DA7DFD;
 }
-
 #tag_info_block #tag_info ._class,
 #tag_info_block #tag_info_p ._class{
     color: #53ACE0;
 }
-
 #tag_info_block #tag_info ._id,
 #tag_info_block #tag_info_p ._id{
     color: #7AC04B;
 }
-
 #tag_info_block #tag_info_p {
     background: #000;
     padding: 10px;
@@ -168,4 +183,84 @@ table tbody{
     margin: 0 10px;
     font-weight: bold;
     letter-spacing: -1px;
+}
+/* bootstrap style codes*/
+.alert {
+    padding: 7.5px 15px;
+    margin-bottom: 5px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    position: relative;
+}
+.alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #3c763d;
+}
+.alert-info {
+    color: #31708f;
+    background-color: #d9edf7;
+    border-color: #31708f;
+}
+.alert-danger {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #a94442;
+}
+.alert-dismissable .close, .alert-dismissible .close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 27px !important;
+    line-height: 14px !important;
+    text-decoration: none;
+    color: white;
+    font-weight: 100;
+    opacity: 1;
+}
+/*. js confirm */
+.jconfirm-buttons .ok-btn{
+    width: 100% !important;
+    float: none;
+}
+.jconfirm.jconfirm-white .jconfirm-box .jconfirm-buttons,
+.jconfirm.jconfirm-light .jconfirm-box .jconfirm-buttons {
+    float: none;
+    width: 100%;
+    text-align: right;
+}
+.jconfirm .jconfirm-box .jconfirm-buttons > button {
+    margin: 0;
+}
+.jconfirm .jconfirm-box div.jconfirm-content-pane{
+    margin-bottom: 5px;
+}
+.formName .form-group{
+    margin-bottom: 7px;
+}
+.jconfirm .jconfirm-box div.jconfirm-title-c .jconfirm-title {
+    padding-bottom: 10px;
+    font-size: 18px;
+}
+/*. js confirm */
+#property_builder_text, #property_builder_value, #property_builder_advance_code, #id_selector_ele_key, #id_selector_ele_id{
+    border-radius: 5px;
+}
+#property_builder_text, #property_builder_advance_code, #id_selector_ele_key, #id_selector_ele_id {
+    background: rgba(230, 230, 250, .3);
+    height: 30px;
+    padding: 5px 12px;
+    line-height: 1;
+}
+#property_builder_advance_code, #property_builder_value{
+    height: 70px;
+}
+
+.advance-mode {
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+    margin-bottom: 0px;
 }
