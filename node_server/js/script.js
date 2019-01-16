@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     document.querySelectorAll(".perform_action").forEach(function(ele){ //for clicking on right-click-menu items
         ele.addEventListener("click", contextmenuclick);
     })
-    document.getElementById("label_input_button").addEventListener("click", labelbuttonclick)   //for left click menu
+    document.getElementById("property_builder_button").addEventListener("click", labelbuttonclick)   //for left click menu
     
     /* function for removing context menu on `esc` button*/
     function keyupevent(event){
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         if(event.keyCode === 27){
             
             // document.getElementById('context').style.display = 'none';
-            document.getElementById('label_input').style.display = 'none';
+            document.getElementById('property_builder').style.display = 'none';
         }else if(event.keyCode === 13 && event.target.name === 'id_selector_text'){
             
             let selector_ = document.querySelector('#id_selector_text').value;
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        let label = document.getElementById('label_input_text').value;
+        let label = document.getElementById('property_builder_text').value;
         label = label.trim().replace(/\s+/g, '_');
 
         if(label != '')
@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     /* function for handeling clicks on left-click-menu items */
     function clickevent(event){
         //the elemnts on which the left click functionality (of showing label input box) should not work
-        // var avoid_element_id = ['label_input_text', 'label_input_button', 'selection_completed', 'done_config', 'select_id', 'id_selector_text', 'panelfooter', 'panelheader', 'panel-table', 'panel-table-thead']
+        // var avoid_element_id = ['property_builder_text', 'property_builder_button', 'selection_completed', 'done_config', 'select_id', 'id_selector_text', 'panelfooter', 'panelheader', 'panel_table', 'panel_table-thead']
         // var _classes_str = event.target.getAttribute('class');
         // console.log(event.target.closest(".avoid-ele"));
         // var _classes_arr = _classes_str.split(" ");
@@ -116,10 +116,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
             $( ".add_mode" ).prop( "checked", false );
             $('#label_item_value').show();
             $('#advance_code_input_text').hide();
-            document.getElementById('label_input_text').value = '';
+            document.getElementById('property_builder_text').value = '';
             document.getElementById('advance_code_input_text').value = '';
-            // document.getElementById('label_input_text').setAttribute('placeholder','Label');
-            document.getElementById('label_input_text').style.borderColor = '#ccc';
+            // document.getElementById('property_builder_text').setAttribute('placeholder','Label');
+            document.getElementById('property_builder_text').style.borderColor = '#ccc';
             
             getXPath(event.target);
             checkForClass(x_paths, event.pageX, event.pageY); 
@@ -130,8 +130,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     function rightclickevent(event){
         
         // if(event.target.closest(".avoid-ele") == null){
-        //     if(document.getElementById("label_input").style.display === 'block'){
-        //         document.getElementById("label_input").style.display = "none";
+        //     if(document.getElementById("property_builder").style.display === 'block'){
+        //         document.getElementById("property_builder").style.display = "none";
         //     }
 
         //     // event.preventDefault();
@@ -148,10 +148,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
             $( ".add_mode" ).prop( "checked", false );
             $('#label_item_value').show();
             $('#advance_code_input_text').hide();
-            document.getElementById('label_input_text').value = '';
+            document.getElementById('property_builder_text').value = '';
             document.getElementById('advance_code_input_text').value = '';
-            // document.getElementById('label_input_text').setAttribute('placeholder','Label');
-            document.getElementById('label_input_text').style.borderColor = '#ccc';
+            // document.getElementById('property_builder_text').setAttribute('placeholder','Label');
+            document.getElementById('property_builder_text').style.borderColor = '#ccc';
             
             getXPath(event.target);
             checkForClass(x_paths, event.pageX, event.pageY); 
@@ -307,13 +307,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var _key = targetelement.getAttribute('labelkey');
             showMessage( _key, 'already selected, see record in table', 'danger' );
             // document.getElementById("context").style.display = "none";
-            document.getElementById("label_input").style.display = "none";
-            // document.getElementById('label_input').style.display = 'none';
+            document.getElementById("property_builder").style.display = "none";
+            // document.getElementById('property_builder').style.display = 'none';
             // targetelement.classList.remove('option-selected');
             dataHighlighter(_key);
         }else{
             /* if not selected, select it and display the label input box, so that user can enter a label */
-            document.getElementById('label_input').setAttribute('style', 'display:block; left:'+x+'px;top:'+y+'px;');
+            document.getElementById('property_builder').setAttribute('style', 'display:block; left:'+x+'px;top:'+y+'px;');
             document.getElementById('label_item_value').setAttribute('class','textareabox');
 
             //for cases like one in `https://www.airbnb.co.in/rooms/20814508` where the <div> contains the image url in its `style` property
@@ -357,10 +357,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
     	for(var x=0; x< data_object.length; x++){
     		if(data_object[x]["key"] === label){
     			key_flag = true;
-    			// document.getElementById('label_input').setAttribute('color','red');
-    			document.getElementById('label_input_text').value = '';
+    			// document.getElementById('property_builder').setAttribute('color','red');
+    			document.getElementById('property_builder_text').value = '';
                 document.getElementById('advance_code_input_text').value = '';
-                document.getElementById('label_input_text').style.borderColor = 'red';
+                document.getElementById('property_builder_text').style.borderColor = 'red';
                 showMessage( label, ' is duplicate name, see record in table', 'danger' );
                 dataHighlighter(label);
     		}
@@ -444,8 +444,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
             return temp;
         }
-        document.getElementById('label_input').style.display = 'none';
-        document.getElementById('label_input_text').value = '';
+        document.getElementById('property_builder').style.display = 'none';
+        document.getElementById('property_builder_text').value = '';
         document.getElementById('advance_code_input_text').value = '';
     }
 
@@ -782,17 +782,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     $(document).on('click', '.close-btn_', function(){
         // document.getElementById('context').style.display = 'none';
-        document.getElementById('label_input').style.display = 'none';
+        document.getElementById('property_builder').style.display = 'none';
     });
     $(document).on('click', '.closebtn', function(){
             var _key = this.getAttribute('key');
             unselectElement(_key);
             $('.opt_selected_'+_key).removeClass("option-selected");
             var i = this.parentNode.parentNode.rowIndex;
-            document.getElementById("panel-table").deleteRow(i);
+            document.getElementById("panel_table").deleteRow(i);
             // document.getElementById('context').style.display = 'none';
-            document.getElementById('label_input').style.display = 'none';
-            var rowCount = document.getElementById("panel-table").rows.length;
+            document.getElementById('property_builder').style.display = 'none';
+            var rowCount = document.getElementById("panel_table").rows.length;
             if( rowCount == 1){
                 document.getElementById("done_config").title = 'First creates property';
                 document.getElementById("done_config").disabled = true;
@@ -832,9 +832,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     function resetConfigurationPanelData(){
         showMessage('', '<strong>All records are delete.</strong>', 'success');
-        var rowCount = document.getElementById("panel-table").rows.length;
+        var rowCount = document.getElementById("panel_table").rows.length;
         for (var i = rowCount - 1; i > 0; i--) {
-            document.getElementById("panel-table").deleteRow(i);
+            document.getElementById("panel_table").deleteRow(i);
         }
         document.getElementById("done_config").title = 'First creates property';
         document.getElementById("done_config").disabled = true;

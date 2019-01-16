@@ -18,7 +18,7 @@ const connection    = mysql.createConnection({
                           database : rtech_config.mysql_database
                       });
 connection.connect();
-
+app.set("view engine","pug");
 //#================================================================CONFIGURING NODE `APP`
     // parse application/x-www-form-urlencoded
     app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
@@ -69,6 +69,18 @@ connection.connect();
 //#================================================================
 //#================================================================GET
     //this will send the sttaus of the scrapper, whether completed or not
+    app.get('/config/*', (req, res) => {
+        // const {config, host, uid, analyze}  = req.query;
+        const { config, editmode, host, uid, url_post_part, prtocol } = req.query;
+        if(config === 'true'){
+            obj = fileSystem.readFileSync(path.join(__dirname,'storage/site_config/'+host+'_'+uid+'.json'), 'utf8');
+            res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, config_obj: obj, protocol_: prtocol })
+        }
+        else{
+            res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, protocol_: prtocol })
+        }
+    })
+    
     app.post('/rtech/api/check_scrape', (req, res) => {     
         var user_id = req.body.user_id;     
         var logFileContent;
@@ -542,26 +554,26 @@ connection.connect();
                     // //#================================================================
 
                     //#================================================================HREF
-                    $("*[href]").each(function(){
-                        var link = $(this).attr('href');
-                        if(!link.match(new_url)){
-                            if(starts_with(link, IGNORE_PREFIXES)){
-                                return ;
-                            }
+                    // $("*[href]").each(function(){
+                    //     var link = $(this).attr('href');
+                    //     if(!link.match(new_url)){
+                    //         if(starts_with(link, IGNORE_PREFIXES)){
+                    //             return ;
+                    //         }
 
-                            if(starts_with(link, REL_PREFIX) ){
-                                var new_link = new_url + 'https:' + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
+                    //         if(starts_with(link, REL_PREFIX) ){
+                    //             var new_link = new_url + 'https:' + link;
+                    //             $(this).attr('href', new_link);
+                    //             return ;
+                    //         }
 
-                            if(starts_with(link, VALID_PREFIXES)){
-                                var new_link = new_url + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
-                        }
-                    })
+                    //         if(starts_with(link, VALID_PREFIXES)){
+                    //             var new_link = new_url + link;
+                    //             $(this).attr('href', new_link);
+                    //             return ;
+                    //         }
+                    //     }
+                    // })
                     //#================================================================
 
                     //#================================================================DATA HREF
@@ -674,27 +686,27 @@ connection.connect();
 
                     //#================================================================INJECT CSS CODE
                     //for hover/selection border, and css for menu
-                    var customcss = '<link href="http://'+use_ip+'/css/from-the-page.css" rel="stylesheet">';
-                    $('head').append(customcss);
+                    // var customcss = '<link href="http://'+use_ip+'/css/from-the-page.css" rel="stylesheet">';
+                    // $('head').append(customcss);
                     //#================================================================
 
                     //#================================================================INJECT HTML CODE
-                    $('body').append('<script src="http://'+use_ip+'/js/script_inject_html_code.js">');
+                    // $('body').append('<script src="http://'+use_ip+'/js/script_inject_html_code.js">');
                     //#================================================================
 
                     //#================================================================INJECT JS CODE
-                    var customjs = '<script src="http://'+use_ip+'/js/script.js" ></script><script src="http://'+use_ip+'/js/jquery-3.3.1.min.js" ></script><script src="http://'+use_ip+'/js/jquery-ui.min.js" ></script><script src="http://'+use_ip+'/js/bootstrap.min.js" ></script><script src="http://'+use_ip+'/config/config.js" ></script>' 
-                    $('body').append(customjs);
+                    // var customjs = '<script src="http://'+use_ip+'/js/script.js" ></script><script src="http://'+use_ip+'/js/jquery-3.3.1.min.js" ></script><script src="http://'+use_ip+'/js/jquery-ui.min.js" ></script><script src="http://'+use_ip+'/js/bootstrap.min.js" ></script><script src="http://'+use_ip+'/config/config.js" ></script>' 
+                    // $('body').append(customjs);
                     //#================================================================
 
                     //#================================================================INJECT ANALYZE FLAG
-                    var flagDiv = '<div id="rtech_analyze" style="display:none;">'+analyze+'</div>';
-                    $('body').append(flagDiv);
+                    // var flagDiv = '<div id="rtech_analyze" style="display:none;">'+analyze+'</div>';
+                    // $('body').append(flagDiv);
                     //#================================================================
-                    if(analyze == true){
-                        var loaderDiv = ' <div class="loader_analyze"></div>'
-                        $('body').append(loaderDiv);
-                    }
+                    // if(analyze == true){
+                    //     var loaderDiv = ' <div class="loader_analyze"></div>'
+                    //     $('body').append(loaderDiv);
+                    // }
 
                     jsonArrayFromGET_Item['RES_body']   = body.toString();
                     jsonArrayFromGET_Item['method']         = response.request.method;

@@ -167,26 +167,20 @@ $( document ).ready(function(){
 		});
 	}
 
+	
 	function proceedForAnalysis(){
-		let url_ = windowOpenWith + url_post_part.replace(/\;/g,'');
-		if(url_.indexOf('?') > -1){
-			var str = url_+'&config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
-			window.open(str,'_blank');
-		}else{
-			var str = url_+'?config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
-			window.open(str,'_blank');
-		}
+		var split_url_arr = extracted_host_name.split('/');
+		let url_ = windowOpenWith;
+		var str = url_+'?config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+		window.open(str,'_blank');
 	}
 
 	function proceedForConfig(editmode = false){
-		let url_ = windowOpenWith + actual_url.replace(extracted_host_name, '');
-		if(url_.indexOf('?') > -1){
-			var str = url_+'&config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID;
-			window.open(str,'_blank');
-		}else{
-			var str = url_+'?config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID;
-			window.open(str,'_blank');
-		}
+		var split_url_arr = extracted_host_name.split('/');
+		let url_ = windowOpenWith;
+		url_post_part = url_post_part.replace(/\/\/+/g, '/');
+		var str = url_+'/config?config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID+'&url_post_part='+encodeURIComponent(url_post_part);
+		window.open(str,'_blank');
 	}
 
 	//calling function for opening link in browsers

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <base href="/">
+        <title>Auto Scraper</title>
+        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+        <link rel="stylesheet" href="css/config_css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="css/config_css/jquery-confirm-3.2.0.min.css">
+        <link rel="stylesheet" href="css/config_css/AdminLTE.css">
+        <link href="css/config_css/config_css.css" rel="stylesheet">
+        script.
+            config_ = "#{config}";
+            editmode_ =  "#{editmode}";
+            host_ =  "#{host}";
+            uid_  = "#{uid}";
+            url_post_part_ =  "#{url_post_part}";
+            url_post_part_ =  "#{url_post_part}";
+            root_port = "#{ root_port }";
+            root_ip = "#{ root_ip }";
+            config_obj = "#{ config_obj }";
+            protocol_ = "#{ protocol_ }";
+    </head>
+    <body class="skin-blue sidebar-mini" style="height:auto;min-height:100%" cz-shortcut-listen="true">
+        <div class="page-loader"></div>
+        <div class="wrapper" style="height:auto;min-height:100%">
+            <header class="main-header">
+                <a href="http://192.168.1.117:6500/home" class="logo">
+                    <span class="logo-mini"><b>A</b>S</span>
+                    <span class="logo-lg"><b>Auto</b>Scraper</span>
+                </a>
+                <nav class="navbar navbar-static-top" role="navigation">
+                    <a href="#" class="sidebar-toggle hidden-sm hidden-md hidden-lg" data-toggle="push-menu" role="button">
+                        <span class="sr-only">Toggle navigation</span>
+                    </a>
+                    <div class="navbar-custom-menu">
+                        <ul class="nav navbar-nav">
+                            <!-- <li>
+                                <a href="#" onclick='event.preventDefault(),document.getElementById("logout-form").submit()'>
+                                    <i class="fa fa-fw fa-power-off"></i> Log Out
+                                </a>
+                                <form id="logout-form" action="http://192.168.1.117:6500/logout" method="POST" style="display:none">
+                                    <input name="_token" value="LqTq5DOKcdCd5EcAcuolw52FSixD77oiwtyarNAI" type="hidden">
+                                </form>
+                            </li> -->
+                        </ul>
+                    </div>
+                </nav>
+            </header>
+            <aside class="main-sidebar">
+                <section class="sidebar" style="height:auto">
+                    <ul class="sidebar-menu tree" data-widget="tree">
+                        <li class="header text-center">Configuration Panel </li>
+                        <li class="menu_">
+                            <span id="help-btn">Need Help ?</span>
+                        </li>
+                        <li class="menu_">
+                            <span id="create_config">Create config</span>
+                        </li>
+                        <li class="menu_">
+                            <span id="id_selector_btn">Property selector ( ID )</span>
+                        </li>
+                        <li class="menu_">
+                            <span>
+                                <label class="label_"><input name="puppeteer_enabled" id="puppeteer_enabled" value="puppeteer_enabled" type="checkbox"><div>Puppeteer Enable</div></label>
+                            </span>
+                        </li>
+                        <li class="table_">
+                            <table id="panel_table" class="table table-bordered">
+                                <thead id="panel_table_thead">
+                                    <tr>
+                                        <td><span id="del_all_prop_btn" title="Remove All items">×</span></td>
+                                        <td>Property</td>
+                                        <td>Property Content</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="selected_props_list_tbody"></tbody>
+                            </table>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+            <div class="content-wrapper">
+                <section class="content">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-dismissible" id="msgBox" style="display:none">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                <span id="msgBoxMessage"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="box box-primary mb-0">
+                                    <div class="box-body box-body-container">
+                                        <!-- <iframe id="config_page" class="config-page" src="http://192.168.1.117:6001/watch?v=8ULXqEx6KQc&config=true&editmode=true&host=www_youtube_com&uid=1" onload="myFunction();"></iframe> -->
+                                        <iframe id="config_page" class="config-page" src="#" onload="myFunction();"></iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <div id="tag_info_block" class="avoid-ele"><div id="tag_info"></div></div>
+        <div class="msg-panel avoid-ele"></div>
+        <script src="js/config_js/jquery.js"></script>
+        <script src="js/config_js/bootstrap.js"></script>
+        <script src="js/config_js/adminlte.js"></script>
+        <script src="js/config_js/jquery-confirm-3.2.0.min.js"></script>
+        <script src="js/config_js/config_page_script.js"></script>
+    </body>
+</html>
