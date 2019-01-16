@@ -763,7 +763,7 @@ app.set("view engine","pug");
                 
             }else{
                 // res.send({status: 500, error: error.reason});
-                res.send({status: 500, error: 'Something went wrong'});
+                res.send('<html class="avoid-ele"><head><style>.text-wrapper{height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;}.title-ops{font-size: 4em; color: #EE4B5E;}.title{font-size: 5em; color: #EE4B5E;}.subtitle{font-size: 40px; color: #1FA9D6;}</style></head><body class="avoid-ele"><div class="text-wrapper avoid-ele"> <div class="title-ops avoid-ele">Oops!</div><div class="title avoid-ele" data-content="404"> 404 Not Found</div><div class="subtitle"> Oops, the page you are looking for does not exist. </div></div></body></html>');
 
             }
         });

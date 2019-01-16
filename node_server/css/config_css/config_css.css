@@ -83,8 +83,13 @@ table tbody{
 .sidebar-menu > li.table_ #panel_table {
     display: none;
     color: white;
+    margin: 0;
+    width: 100%;
+}
+.panel-table-div {
     margin: 12px 5px 12px 5px;
-    width: calc(100% - 10px);
+    max-height: 650px;
+    overflow-x: auto;
 }
 .del_prop_btn_c{
     position: relative;

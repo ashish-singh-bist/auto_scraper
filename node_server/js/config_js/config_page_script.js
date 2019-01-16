@@ -1,10 +1,27 @@
 document.body.className += ' ' + 'page-loading';
-if( url_post_part_ && url_post_part_.indexOf('?') > -1)
+
+if ( url_post_part_.slice(-1) == '/')
+    url_post_part_ = url_post_part_.replace(/\/$/, "");
+
+if( url_post_part_ && url_post_part_.indexOf('?') > -1){
     document.getElementById('config_page').src= 'http://' + root_ip + ':' + root_port + url_post_part_ +'&host=' + host_ + '&uid=' + uid_;
-else
-    document.getElementById('config_page').src = 'http://' + root_ip + ':' + root_port + '?host=' + host_ + '&uid=' + uid_;
+}
+else{
+    document.getElementById('config_page').src= 'http://' + root_ip + ':' + root_port + url_post_part_ +'?host=' + host_ + '&uid=' + uid_;
+}
 
 function myFunction(){
+
+    console.log( "config_", config_ );
+    console.log( "editmode_", editmode_ );
+    console.log( "host_", host_ );
+    console.log( "uid_", uid_ );
+    console.log( "url_post_part_", url_post_part_ );
+    console.log( "url_post_part_", url_post_part_ );
+    console.log( "root_port", root_port );
+    console.log( "root_ip", root_ip );
+    console.log( "config_obj", config_obj );
+
     var configPageObj = document.getElementById('config_page');
     var configPageObjDocument = configPageObj.contentWindow.document;
 
@@ -128,11 +145,11 @@ function myFunction(){
     $('#config_page').contents().find('body').bind("contextmenu", rightclickevent);
 
     $('#config_page').contents().find('*').mouseover(function(event){
-        if(event.target.className.indexOf('option-selected') < 0)
-            event.target.classList.add('hover-selected');
-
         targetElement = event.target;
         if(event.target.closest(".avoid-ele") == null){
+            if(event.target.className.indexOf('option-selected') < 0)
+                event.target.classList.add('hover-selected');
+
             $('#tag_info_block').show();
             var tag_info = '';
             if (targetElement.tagName.toLowerCase())
@@ -174,9 +191,11 @@ function myFunction(){
 
     function clickevent(event){
         event.preventDefault();
-        targetElement = event.target;
-        getXPath(event.target);
-        checkForClass(event.target, event.pageX, event.pageY);
+        if(event.target.closest(".avoid-ele") == null){
+            targetElement = event.target;
+            getXPath(event.target);
+            checkForClass(event.target, event.pageX, event.pageY);
+        }
     }
 
     function rightclickevent(event){
