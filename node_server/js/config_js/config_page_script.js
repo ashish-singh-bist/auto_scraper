@@ -105,7 +105,7 @@ function myFunction(){
         var value = targetElement.src? targetElement.src.replace(re, ''): targetElement.textContent? targetElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
         targetElement.classList.add('option-selected');
         targetElement.setAttribute('labelkey', property_obj.key);
-        $('#panel_table').show();
+        $('.panel-table-div').show();
         $('#selected_props_list_tbody').append('<tr class="'+property_obj.key+'_tr"><td><span class="del_prop_btn" key="'+property_obj.key+'" path="'+property_obj.xpath+'" title="Remove this item">×</span></td><td>'+property_obj.key+'</td><td>'+value+'</td></tr>');
     }
     /* to calculate xpath of a given element */
@@ -186,7 +186,12 @@ function myFunction(){
     }
 
     function rightclickevent(event){
-        // event.preventDefault();
+        event.preventDefault();
+        if(event.target.closest(".avoid-ele") == null){
+            targetElement = event.target;
+            getXPath(event.target);
+            checkForClass(event.target, event.pageX, event.pageY);
+        }
     }
 
     /* function for generating xpath */
@@ -241,15 +246,17 @@ function myFunction(){
     /* this function is called in checkForClass() [above] to check for class `option-selected` in the current element and its parents, in order to conclude whether it is already selected or not. [We add class `option-selected` on elements which are selected] A parent is also checked here so as to avoid selecting a child element if its immediate parent is already selected, having the same value*/
     function checkElement(childElement){
         var parentElement = childElement.parentElement;
-        if(childElement.className.indexOf('option-selected') >= 0)
-            return true;
-        else if(parentElement.className && parentElement.className !== ''){
-            if(parentElement.className.indexOf('option-selected') >= 0)
-                return true
-            else
-                return false
-        }else
-            return checkElement(parentElement);
+        if ( parentElement != null) {
+            if(childElement.className.indexOf('option-selected') >= 0)
+                return true;
+            else if(parentElement.className && parentElement.className !== ''){
+                if(parentElement.className.indexOf('option-selected') >= 0)
+                    return true
+                else
+                    return false
+            }else
+                return checkElement(parentElement);
+        }
     }
 
     function showMessage(key, msg, type, duration=10000){
@@ -314,7 +321,7 @@ function myFunction(){
             var display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('property_builder_value').value+'</td></tr>';
         }
 
-        $('#panel_table').show();
+        $('.panel-table-div').show();
         $('#selected_props_list_tbody').append(display_selected_list);
         showMessage( label, 'label successfuly added, see record in table', 'success' );
         dataHighlighter(label);
@@ -347,14 +354,14 @@ function myFunction(){
     /* function for lable input `OK` button*/
     function propertyBuilderWindow( labelItemValue ){
         $.confirm({
-            title: 'Property Builder',closeIcon: true,animation: 'top', boxWidth: '300px',useBootstrap: false,
+            title: 'Property Builder',closeIcon: true,animation: 'top', boxWidth: '300px',useBootstrap: false,escapeKey: true,
             content: '' +
-            '<form action="" class="formName">' +
+            '<form action="" class="formName" autocomplete="off">' +
                 '<div class="form-group">' +
-                    '<label class="advance-mode"  title="Enable advance mode for regex code"><input name="add_mode" class="add_mode" value="" type="checkbox"> Advance mode </label>'+
+                    '<label class="advance-mode"  title="Enable advance mode for regex code"><input name="add_mode" class="add_mode" value="" type="checkbox"> <div>Advance mode</div> </label>'+
                 '</div>' +
                 '<div class="form-group">' +
-                    '<input class="form-control" name="property_builder_text" type="text" maxsize="30" title="Property Name" placeholder="Property Name" id="property_builder_text" />' +
+                    '<input class="form-control" name="property_builder_text" type="text" maxsize="30" title="Property Name" placeholder="Property Name" id="property_builder_text" autofocus/>' +
                 '</div>' +
                 '<div>' +
                     '<textarea class="form-control" id="property_builder_value" title="Property Content" disabled="">'+ labelItemValue +'</textarea>'+
@@ -375,6 +382,12 @@ function myFunction(){
                             return false;
                         }
                     }
+                },
+                cancel: {
+                    text: 'Cancel',
+                    btnClass: 'btn-danger display-none',
+                    keys: ['esc'],
+                    action: function(){}
                 }
             }
         });
@@ -424,7 +437,7 @@ function myFunction(){
                         }
                         else{
                                 $.alert({
-                                    title: 'Alert!',
+                                    title: 'Error !',
                                     icon: 'fa fa-warning',
                                     content: 'Can\'t Create blank config',
                                 });
@@ -451,8 +464,8 @@ function myFunction(){
         var i = this.parentNode.parentNode.rowIndex;
         document.getElementById("panel_table").deleteRow(i);
         var rowCount = document.getElementById("panel_table").rows.length;
-        if( rowCount == 1){
-            $('#panel_table').hide();
+        if( rowCount == 0){
+            $('.panel-table-div').hide();
         }
         showMessage( _key, 'is successfuly removed', 'info' );
     });
@@ -471,18 +484,19 @@ function myFunction(){
     function resetConfigurationPanelData(){
         showMessage('', '<strong>All records are delete.</strong>', 'success');
         var rowCount = document.getElementById("panel_table").rows.length;
-        for (var i = rowCount - 1; i > 0; i--)
+        for (var i = rowCount - 1 ; i >= 0; i--){
             document.getElementById("panel_table").deleteRow(i);
-        $('#panel_table').hide();
+        }
+        $('.panel-table-div').hide();
     }
 
     $(document).on('click', '#id_selector_btn', function(){
         $.confirm({
             title: 'ID Selector',closeIcon: true,animation: 'top', boxWidth: '300px',useBootstrap: false,
             content: '' +
-            '<form action="" class="formName">' +
+            '<form action="" class="formName" autocomplete="off">' +
                 '<div class="form-group">' +
-                    '<input class="form-control" type="text" maxsize="30" placeholder="Property Name" id="id_selector_ele_key" />' +
+                    '<input class="form-control" type="text" maxsize="30" placeholder="Property Name" id="id_selector_ele_key" autofocus />' +
                 '</div>' +
                 '<div><input class="form-control" type="text"  placeholder="Target Element Id"name="id_selector_ele_id" id="id_selector_ele_id"/></div>'+
             '</form>',
@@ -505,6 +519,12 @@ function myFunction(){
                             return false;
                         }
                     }
+                },
+                cancel: {
+                    text: 'Cancel',
+                    btnClass: 'btn-danger display-none',
+                    keys: ['esc'],
+                    action: function(){}
                 }
             }
         });

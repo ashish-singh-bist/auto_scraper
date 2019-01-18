@@ -65,31 +65,61 @@ table tbody{
 }
 .sidebar-menu > li.menu_ {
     margin: 0 5px 8px 5px;
-    background-color: rgb(0, 166, 90,1) !important;
-    border-radius: 2px;
+    background-color: #ddd !important;
+    border: 1px solid;
+    border-radius: 3px;
 }
 .sidebar-menu > li.menu_ > span {
     padding: 7px 4px;
     display: block;
-    color: white;
+    color: black;
     cursor: pointer;
-    border-left: 3px solid transparent;
+    border-radius: 2px;
 }
-.skin-blue .sidebar-menu > li.menu_:hover > span, .skin-blue .sidebar-menu > li.active > span, .skin-blue .sidebar-menu > li.menu-open > span {
-    color: #fff;
-    background: transparent;
-    border-left: 3px solid #06ec82;
+.skin-blue .sidebar-menu > li.m_2_2{
+    border: 0;
+    border-top: 1px solid #FFF;
+}
+.skin-blue .sidebar-menu > li.m_1 span{
+    border-left: 4px solid #008d4c;
+    cursor: default;
+}
+.skin-blue .sidebar-menu > li.m_2 span{
+    border-left: 4px solid #00c0ef;
+}
+.skin-blue .sidebar-menu > li.m_3 span{
+    border-left: 4px solid #d73925;
+}
+.skin-blue .sidebar-menu > li.m_1:hover > span, .skin-blue .sidebar-menu > li.active > span, .skin-blue .sidebar-menu > li.menu-open > span {
+    color: #FFF;
+    background-color: #008d4c;
+}
+.skin-blue .sidebar-menu > li.m_2:hover > span, .skin-blue .sidebar-menu > li.active > span, .skin-blue .sidebar-menu > li.menu-open > span {
+    color: #FFF;
+    background-color: #00c0ef;
+}
+.skin-blue .sidebar-menu > li.m_3:hover > span, .skin-blue .sidebar-menu > li.active > span, .skin-blue .sidebar-menu > li.menu-open > span {
+    color: #FFF;
+    background-color: #d73925;
 }
 .sidebar-menu > li.table_ #panel_table {
-    display: none;
     color: white;
     margin: 0;
     width: 100%;
 }
 .panel-table-div {
     margin: 12px 5px 12px 5px;
+    display: none;
+}
+.panel-table-body-div{
     max-height: calc(100vh - 315px);
     overflow-x: auto;
+}
+.panel-table-div .table-headers_ {
+    margin-bottom: 0;
+    border-left: 1px solid white;
+    border-top: 1px solid white;
+    border-right: 1px solid white;
 }
 .del_prop_btn_c{
     position: relative;
@@ -104,7 +134,7 @@ table tbody{
     font-size: 24px !important;
     line-height: 14px !important;
 }
-#panel_table_thead{ color: white;background-color: rgb(210, 214, 222,.4); }
+#panel_table_thead{ color: white;background-color: rgb(210, 214, 222,.3); }
 #panel_table_thead tr td:first-child{ width: 25px; padding: 0; position: relative; }
 #panel_table_thead tr td:nth-child(2){ width: 80px; }
 #panel_table_thead tr td:nth-child(3){ width: 158px; }
@@ -113,9 +143,20 @@ table tbody{
 #selected_props_list_tbody tr td:nth-child(2){ width: 80px; }
 #selected_props_list_tbody tr td:nth-child(3){ width: 158px; }
 
-.sidebar-menu > li.menu_ .label_ { margin: 0; font-weight: normal; position: relative;}
-.sidebar-menu > li.menu_ .label_ div { margin-left: 30px; }
-.sidebar-menu > li.menu_ .label_ #puppeteer_enabled {
+.sidebar-menu > li.menu_ .label_ ,
+.advance-mode { 
+    margin: 0; 
+    font-weight: normal; 
+    position: relative; 
+    cursor: pointer;
+    font-size: 14px;
+}
+.sidebar-menu > li.menu_ .label_ div,
+.advance-mode div{ 
+    margin-left: 30px; 
+}
+.sidebar-menu > li.menu_ .label_ #puppeteer_enabled ,
+.advance-mode .add_mode{
     height: 22px;
     width: 22px;
     padding: 0;
@@ -261,11 +302,8 @@ table tbody{
 }
 #property_builder_advance_code, #property_builder_value{
     height: 70px;
+    resize: none;
 }
-
-.advance-mode {
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 400;
-    margin-bottom: 0px;
+.display-none{
+    display: none !important;
 }

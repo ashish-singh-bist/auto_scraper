@@ -52,6 +52,10 @@
                                     <input name="_token" value="LqTq5DOKcdCd5EcAcuolw52FSixD77oiwtyarNAI" type="hidden">
                                 </form>
                             </li> -->
+                            <!-- <li>
+                                <a title="Get Help ?" href="javascript:void(0)" id="help-btn">Need Help ?</a>
+                            </li> -->
+
                         </ul>
                     </div>
                 </nav>
@@ -60,34 +64,38 @@
                 <section class="sidebar" style="height:auto">
                     <ul class="sidebar-menu tree" data-widget="tree">
                         <li class="header text-center">Configuration Panel </li>
-                        <li class="menu_">
+                        <!-- <li class="menu_">
                             <span id="help-btn">Need Help ?</span>
-                        </li>
-                        <li class="menu_">
-                            <span id="create_config">Create config</span>
-                        </li>
-                        <li class="menu_">
-                            <span id="id_selector_btn">Property selector ( ID )</span>
-                        </li>
-                        <li class="menu_">
+                        </li> -->
+                        <li class="menu_ m_1">
                             <span>
-                                <label class="label_"><input name="puppeteer_enabled" id="puppeteer_enabled" value="puppeteer_enabled" type="checkbox"><div>Puppeteer Enable</div></label>
+                                <label class="label_" title="Enable Puppeteer"><input name="puppeteer_enabled" id="puppeteer_enabled" value="puppeteer_enabled" type="checkbox"><div>Enable Puppeteer</div></label>
                             </span>
+                        </li>
+                        <li class="menu_ m_2">
+                            <span title="Property Selector" id="id_selector_btn">Property Selector ( ID )</span>
+                        </li>
+                        <li class="menu_ m_2_2"></li>
+                        <li class="menu_ m_3">
+                            <span title="Save Config" id="create_config">Save Config</span>
                         </li>
                         <li class="table_">
                             <div class="panel-table-div">
-                                <table id="panel_table" class="table table-bordered">
-                                <thead id="panel_table_thead">
-                                    <tr>
-                                        <td><span id="del_all_prop_btn" title="Remove All items">×</span></td>
-                                        <td>Property</td>
-                                        <td>Property Content</td>
-                                    </tr>
-                                </thead>
-                                <tbody id="selected_props_list_tbody"></tbody>
-                            </table>    
+                                <table class="table table-headers_">
+                                    <thead id="panel_table_thead">
+                                        <tr>
+                                            <td><span id="del_all_prop_btn" title="Remove All items">×</span></td>
+                                            <td>Property</td>
+                                            <td>Property Content</td>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <div class="panel-table-body-div">
+                                    <table id="panel_table" class="table table-bordered">
+                                        <tbody id="selected_props_list_tbody"></tbody>
+                                    </table>
+                                </div>
                             </div>
-                            
                         </li>
                     </ul>
                 </section>
