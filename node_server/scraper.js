@@ -2,7 +2,6 @@ const puppeteer = require('puppeteer');
 const path      = require('path');
 const fileSystem= require('fs');
 const mysql     = require('mysql')
-const DOMParser = require('xmldom').DOMParser;
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const request = require("request-promise");
@@ -21,17 +20,18 @@ var site_config;
 var puppeteer_enabled = 0;
 
 if (parsing_mode == 'databasemode') {
-    source =  process.argv[3];
+    host_slug =  process.argv[3];
     user_id = process.argv[4];
 
-    var data = [user_id, source, 1];
+    var data = [user_id, host_slug, 1];
+    //var data = ['Blue Tomato'];
     var result = [];
 
     let connection    = mysql.createConnection({
                               host     : config.mysql_host,
                               user     : config.mysql_user,
                               password : config.mysql_password,
-                              database : config.mysql_database,
+                              database : config.mysql_database,//config.mysql_database,
                               charset  : config.charset,
                           });
     //connect to database
@@ -43,12 +43,13 @@ if (parsing_mode == 'databasemode') {
 
         //console.log('db connected as id ' + connection.threadId);
         connection.query("select * from tbl_url_lists Where user_id = ? and source = ? and is_active = ? and updated_at IS NULL and (actual_url IS NOT NULL or url IS NOT NULL) limit 10", data, function (err, results, fields){
+        //connection.query("select * from ean_list Where source = ? and status_flag = 0 and updated_at IS NULL and url IS NOT NULL limit 10", data, function (err, results, fields){
             if (err)  console.log('==Error 1: ' + err);
             if(results.length){
                 url_list_array = results;
             }
             if ( url_list_array.length > 0 )  {
-                host_slug = url_list_array[0].source;
+                source = url_list_array[0].source;
             }
             connection.end();
             run();
@@ -105,9 +106,9 @@ async function run()
         if (all_url_count > process_index){
             url_list_chunk = url_list_array.slice(process_index, process_index + thread_count);
         }
-        if(url_list_chunk.length > 0){
+        //if(url_list_chunk.length > 0){
             //site_config_json = JSON.parse(fileSystem.readFileSync(path.join(__dirname, 'storage/site_config/'+host_slug+'_'+user_id+'.json'), 'utf8'));
-        }
+        //}
         (async () => {
             try {
                 const pages = url_list_chunk.map(async (url_row_obj, i) => {
@@ -551,76 +552,76 @@ async function saveParseData(scraped_data, url_row_obj)
     });
 }
 
-// async function saveParseDataMV(scraped_data, url_row_obj)
-// {
-//     //database connection setting
-//     let connection  = mysql.createConnection({
-//                           host     : '192.168.1.1',//config.mysql_host,
-//                           user     : 'root',//config.mysql_user,
-//                           password : 'tick98',//config.mysql_password,
-//                           database : 'ean_scraping',//config.mysql_database,
-//                           charset  : config.charset,
-//                       });
-//     //connect to database
-//     connection.connect(function(err) {
-//         if (err) {
-//             console.error('==Error db connecting: ' + err.stack);
-//             return;
-//         }
-
-//         var data = {};
-
-//         /////////////////////////////////////////////////////////////////////////////////
-//                                 //manage data according mv
-//         /////////////////////////////////////////////////////////////////////////////////
-//         data.source = url_row_obj.source;
-//         data.ean = url_row_obj.ean;
-//         if 'images' in scraped_data:
-//             data.images = JSON.stringify(scraped_data['images']);
-//             delete scraped_data['images'];
-//         delete scraped_data["url"]; 
-//         data.data = JSON.stringify(scraped_data);
-//         /////////////////////////////////////////////////////////////////////////////////
-
-//         ////////////////////////    
-//         if(url_row_obj.ref_id != null){
-//             data.ref_id = url_row_obj.ref_id;
-//         }
-
-//         if(url_list_id != null){
-//             data.url_list_id = url_row_obj.id;
-//         }
-//         //save data to database
-//         connection.query("INSERT INTO ean_products_details SET ?", data, function (err, results, fields) {
-//             //if (error) throw error
-//             if (err) console.log('==Error 9: '+err);
-//             console.log("Inserted Id: " + results.insertId);
-//             if( url_row_obj.id != null ){
-//                 var d = new Date();
-//                 var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'final_url': url_row_obj.actual_url };
-//                 //update status of url in database
-//                 connection.query("update ean_list SET ? where id="+url_row_obj.id, _data, function (err, results, fields) {
-//                     //if (error) throw error;
-//                     if (err) console.log('==Error 10: '+err);
-//                     connection.end();
-//                     console.log('Url list updated for id:- ' + url_row_obj.id);
-//                 });
-//             }else{
-//                 connection.end();
-//             }
-//         });
-//     });
-// }
-
-async function increaseErrorCount(url_list_id)
+async function saveParseDataMV(scraped_data, url_row_obj)
 {
-
     //database connection setting
     let connection  = mysql.createConnection({
                           host     : config.mysql_host,
                           user     : config.mysql_user,
                           password : config.mysql_password,
-                          database : config.mysql_database,
+                          database : config.mysql_database,//config.mysql_database,
+                          charset  : config.charset,
+                      });
+    //connect to database
+    connection.connect(function(err) {
+        if (err) {
+            console.error('==Error db connecting: ' + err.stack);
+            return;
+        }
+
+        var data = {};
+
+        /////////////////////////////////////////////////////////////////////////////////
+                                //manage data according mv
+        /////////////////////////////////////////////////////////////////////////////////
+        data.source = url_row_obj.source;
+        data.ean = url_row_obj.ean;
+        data.product_actual_url = url_row_obj.actual_url;
+        if(scraped_data.images != null){
+            data.images = JSON.stringify(scraped_data.images);
+            delete scraped_data['images'];
+        }        
+        data.product_details = JSON.stringify(scraped_data);
+        /////////////////////////////////////////////////////////////////////////////////
+
+        ////////////////////////    
+        if(url_row_obj.id != null){
+            data.ean_ref_id = url_row_obj.id;
+        }
+
+        //if(url_list_id != null){
+        //    data.url_list_id = url_row_obj.id;
+        //}
+        //save data to database
+        connection.query("INSERT INTO ean_products_details SET ?", data, function (err, results, fields) {
+            //if (error) throw error
+            if (err) console.log('==Error 9: '+err);
+            console.log("Inserted Id: " + results.insertId);
+            if( url_row_obj.id != null ){
+                var d = new Date();
+                var _data = { 'updated_at': d.getFullYear() +'-'+ (d.getMonth() + 1) +'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), 'final_url': url_row_obj.actual_url };
+                //update status of url in database
+                connection.query("update ean_list SET ? where id="+url_row_obj.id, _data, function (err, results, fields) {
+                    //if (error) throw error;
+                    if (err) console.log('==Error 10: '+err);
+                    connection.end();
+                    console.log('Url list updated for id:- ' + url_row_obj.id);
+                });
+            }else{
+                connection.end();
+            }
+        });
+    });
+}
+
+async function increaseErrorCount(url_list_id)
+{
+    //database connection setting
+    let connection  = mysql.createConnection({
+                          host     : config.mysql_host,
+                          user     : config.mysql_user,
+                          password : config.mysql_password,
+                          database : config.mysql_database,//config.mysql_database,
                           charset  : config.charset,
                       });
     //connect to database
@@ -636,6 +637,7 @@ async function increaseErrorCount(url_list_id)
 
         if(url_list_id != null){
             connection.query("update tbl_url_lists set error_count = error_count + 1, updated_at=? where id=?", data, function (err, results, fields) {
+            //connection.query("update ean_list set status_flag = 2, updated_at=? where id=?", data, function (err, results, fields) {
                 //if (error) throw error
                 if (err) console.log('==Error 11: '+err);
                 console.log("Error count increased");
