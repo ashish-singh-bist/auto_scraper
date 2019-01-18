@@ -73,8 +73,16 @@ app.set("view engine","pug");
         // const {config, host, uid, analyze}  = req.query;
         const { config, editmode, host, uid, url_post_part, prtocol } = req.query;
         if(config === 'true'){
-            obj = fileSystem.readFileSync(path.join(__dirname,'storage/site_config/'+host+'_'+uid+'.json'), 'utf8');
-            res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, config_obj: obj, protocol_: prtocol })
+            connection.query("select config from config_list where user_id= ? and config_name = ?", [uid, host], function (err, results, fields) {
+                if (err){ 
+                    console.log('Error connection.query select config : '+err);
+                }else{
+                    if(results.length){
+                        var config_object = results[0].config;
+                        res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, config_obj: config_object, protocol_: prtocol })
+                    }
+                }
+            });
         }
         else{
             res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, protocol_: prtocol })
@@ -208,7 +216,6 @@ app.set("view engine","pug");
         //var final_url = '';
         //======================for the redirect urls=========================
         function redirectOn302(body, response, resolveWithFullResponse) {
-
             if ( response.statusCode != 200 ) {
                 // Set the new url (this is the options object)
                 //this.url = response.['the redirect url somehow'];
@@ -218,7 +225,7 @@ app.set("view engine","pug");
                     url: response.headers.location,            
                     resolveWithFullResponse : true,
                     transform: redirectOn302            
-                };        
+                };
                 return request(options).then(function(body){
                     //console.log('body+++++++'+body);
                     }).catch(function(err){
@@ -235,12 +242,10 @@ app.set("view engine","pug");
             resolveWithFullResponse : true,
             transform: redirectOn302            
         }; 
-        
         request(options, function(error, response, body){
             if (!error && response.statusCode == 200) {
                 var url_ = response.request.uri.href;
                 var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
-
                 var temp= {};
                 temp[filename_+'_success']  = false;
                 temp[filename_+'_done']  = false;
@@ -248,7 +253,7 @@ app.set("view engine","pug");
                 writeSession(user_id, temp);
 
                 //console.log(sess);        
-                if(data.url_list.length>0){                     
+                if(data.url_list.length>0){
                     var split_ar = url_.split('/');
                     var host_url = split_ar[0] + '//' + split_ar[2];
                     var config_exist;
@@ -260,12 +265,11 @@ app.set("view engine","pug");
                             res.send({status: 500, file_location: err, 'process_host_name':filename_ , 'extracted_host_name':host_url });
                         }
                     });
-
                     connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename_], function (err, results, fields) {
                         //if (error) throw error
                         config_exist = false;
                         if (err){ 
-                            console.log('==Error 9: '+err);
+                            console.log('Error connection.query : '+err);
                         }else{
                             if(results.length){
                                 config_exist = true;
@@ -279,15 +283,18 @@ app.set("view engine","pug");
                                     var data = {'user_id': user_id, 'config_name': filename_, 'config': JSON.stringify(scrapedContent)};
                                     connection.query("INSERT INTO config_list SET ?", data, function (err, results, fields) {
                                         //if (error) throw error
-                                        if (err) { 
-                                            console.log('==Error 10: '+err);
+                                        if (err) {
+                                            console.log('Error connection.query tey to insert config into DB: '+err);
                                             res.send({status: 500, file_location: err, 'process_host_name':filename_ , 'extracted_host_name':host_url });
                                         }else{
                                             config_exist = true;
                                             res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
                                         }
                                     });
-                                }                                
+                                }
+                                else{
+                                    res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
+                                }
                             }
                         }
                     });
@@ -297,10 +304,7 @@ app.set("view engine","pug");
                 }                
             }
         });
-
     }
-
-
 //#================================================================GET REQUEST HANDLER
     async function sendRequest(req, res, host, uid, options, config, new_url, analyze){
         var headers, obj;
@@ -967,21 +971,21 @@ app.set("view engine","pug");
         // });
 
         url_ = getPage(data,url_,user_id,req, res);
-	})
+    })
 
-	//this will create the config file
-	app.post('/rtech/api/done_config', (req, res) => {
-		var filename = req.body.url;
-		var user_id = req.body.user_id;
+    //this will create the config file
+    app.post('/rtech/api/done_config', (req, res) => {
+        var filename = req.body.url;
+        var user_id = req.body.user_id;
         console.log(filename);
-		if(typeof req.body.data === 'string'){
-			req.body.data = JSON.parse(req.body.data);
-		}
+        if(typeof req.body.data === 'string'){
+            req.body.data = JSON.parse(req.body.data);
+        }
 
-		// fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
-		// 	if (err) throw err;
-		// 	console.log('Saved!');
-		// });
+        // fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
+        //     if (err) throw err;
+        //     console.log('Saved!');
+        // });
 
         connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
             //if (error) throw error
@@ -1012,145 +1016,145 @@ app.set("view engine","pug");
             }
         });
 
-		res.send({})
-	})
+        res.send({})
+    })
 
-	//this will write the scrapped data on a csv file
-	app.post('/rtech/api/save_scraped_data', (req, res) => {	
+    //this will write the scrapped data on a csv file
+    app.post('/rtech/api/save_scraped_data', (req, res) => {    
         res.send({});
         return;
-		//#================================================================FOR WRITING ON CSV FILE
-		var filename = req.body.url+'_'+req.body.user_id;		
-		//sess.filename = filename;
+        //#================================================================FOR WRITING ON CSV FILE
+        var filename = req.body.url+'_'+req.body.user_id;        
+        //sess.filename = filename;
 
-		var options = {includeEndRowDelimiter:true};
+        var options = {includeEndRowDelimiter:true};
         console.log("trying to save data..");
-		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.csv'))){
-			options['headers'] = false;
+        if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.csv'))){
+            options['headers'] = false;
             console.log("data saved");
-		}else{
-			options['headers'] = true;
-		}
-		// var csvStream = csv.createWriteStream(options),
-	 //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'storage/site_output/'+filename+'.csv'), {flags: 'a'});
-	 //    writableStream.on('finish', function(){
-	 //    });
+        }else{
+            options['headers'] = true;
+        }
+        // var csvStream = csv.createWriteStream(options),
+     //        writableStream = fileSystem.createWriteStream(path.join(__dirname, 'storage/site_output/'+filename+'.csv'), {flags: 'a'});
+     //    writableStream.on('finish', function(){
+     //    });
 
-	    if(typeof req.body.data === 'string'){
-	    	req.body.data = JSON.parse(req.body.data)
-	    }
-	    
-	    // csvStream.pipe(writableStream);
-	    // csvStream.write(req.body.data[0]);
-		//parsedDataArray.push(req.body.data[0]);
-	    //console.log(parsedDataArray);
-	    
-	    var scrapedContent = [];
-		if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
-			scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
+        if(typeof req.body.data === 'string'){
+            req.body.data = JSON.parse(req.body.data)
+        }
+        
+        // csvStream.pipe(writableStream);
+        // csvStream.write(req.body.data[0]);
+        //parsedDataArray.push(req.body.data[0]);
+        //console.log(parsedDataArray);
+        
+        var scrapedContent = [];
+        if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
+            scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
             if(scrapedContent != ''){
-			 scrapedContent = JSON.parse(scrapedContent);
+             scrapedContent = JSON.parse(scrapedContent);
             }
-		}
-		scrapedContent.push(req.body.data[0]);
+        }
+        scrapedContent.push(req.body.data[0]);
 
-		
-		var data = {'user_id': req.body.user_id, 'source': req.body.source, 'data': JSON.stringify(req.body.data[0])};
-		
-		if( req.body.hasOwnProperty('url_list_id')){
-			data.url_list_id = req.body.url_list_id;
-		}
+        
+        var data = {'user_id': req.body.user_id, 'source': req.body.source, 'data': JSON.stringify(req.body.data[0])};
+        
+        if( req.body.hasOwnProperty('url_list_id')){
+            data.url_list_id = req.body.url_list_id;
+        }
 
-		if( req.body.hasOwnProperty('ref_id')){
-			data.ref_id = req.body.ref_id;
-		}
-		// var data = {'user_id': req.body.user_id, 'data': 'hello'};
-		var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
-		  if (error) throw error;
-		});
+        if( req.body.hasOwnProperty('ref_id')){
+            data.ref_id = req.body.ref_id;
+        }
+        // var data = {'user_id': req.body.user_id, 'data': 'hello'};
+        var query = connection.query("INSERT INTO scraped_data SET ?", data, function (error, results, fields) {
+          if (error) throw error;
+        });
 
-		if( req.body.hasOwnProperty('url_list_id')){
-			var id = req.body.url_list_id;
-			var d = new Date();
-			var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
-			var query = connection.query("update tbl_url_lists SET ? where id="+id, _data, function (error, results, fields) {
-			  if (error) throw error;
-			});
-		}
+        if( req.body.hasOwnProperty('url_list_id')){
+            var id = req.body.url_list_id;
+            var d = new Date();
+            var _data = { 'updated_at': d.getFullYear() +'-'+ d.getMonth()+'-'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds() };
+            var query = connection.query("update tbl_url_lists SET ? where id="+id, _data, function (error, results, fields) {
+              if (error) throw error;
+            });
+        }
 
-		console.log('query :- ' + query.sql);
-		console.log(req.body.data[0].url + " scrapped data saved in database");
+        console.log('query :- ' + query.sql);
+        console.log(req.body.data[0].url + " scrapped data saved in database");
 
 
-	    fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
-			if (err) throw err;
-		});
+        fileSystem.writeFile(path.join(__dirname, 'storage/site_output/'+filename+'.json'), JSON.stringify(scrapedContent), function (err) {
+            if (err) throw err;
+        });
 
-		if (debugMode === true) {
-			var logData = "Scraped and save data for : "+req.body.data[0].url+"\n";
-			writeLogFile(filename,logData);
-		}
-	    //console.log(req.body.data[0]);
-	    // csvStream.end();
-		res.send({})
-	})
+        if (debugMode === true) {
+            var logData = "Scraped and save data for : "+req.body.data[0].url+"\n";
+            writeLogFile(filename,logData);
+        }
+        //console.log(req.body.data[0]);
+        // csvStream.end();
+        res.send({})
+    })
 
-	//this will handle all the POST requests we have redirected from the website's page to our server
-	app.post('/*', (req, res) => {
+    //this will handle all the POST requests we have redirected from the website's page to our server
+    app.post('/*', (req, res) => {
 
-		var options = {
-			form: req.body,
-			url: default_host + req.originalUrl,
-			hostname: default_host.replace('https://', ''),            
-			headers: {
-				'content-type': req.headers['content-type'],
+        var options = {
+            form: req.body,
+            url: default_host + req.originalUrl,
+            hostname: default_host.replace('https://', ''),            
+            headers: {
+                'content-type': req.headers['content-type'],
                 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36'
-				//'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0'
-			}
-		}
+                //'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0'
+            }
+        }
 
-		if((req.originalUrl).match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/)){
-			options['url'] = req.originalUrl.replace(/^\//, '');
-		}
+        if((req.originalUrl).match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/)){
+            options['url'] = req.originalUrl.replace(/^\//, '');
+        }
 
-		request.post(options, function(err,httpResponse,body){
-			if(!err && httpResponse){
+        request.post(options, function(err,httpResponse,body){
+            if(!err && httpResponse){
 
-				var jsonArrayFromGET_Item = {
-					uri: {},
-				};
-				jsonArrayFromGET_Item['uri']['protocol']= httpResponse.request.uri.protocol;
-				jsonArrayFromGET_Item['uri']['auth']	= httpResponse.request.uri.auth;
-				jsonArrayFromGET_Item['uri']['hostname']= httpResponse.request.uri.hostname;
-				jsonArrayFromGET_Item['uri']['port']	= httpResponse.request.uri.port;
-				jsonArrayFromGET_Item['uri']['query']	= httpResponse.request.uri.query;
-				jsonArrayFromGET_Item['uri']['pathname']= httpResponse.request.uri.pathname;
-				jsonArrayFromGET_Item['uri']['path']	= httpResponse.request.uri.path;
-				jsonArrayFromGET_Item['uri']['href']	= httpResponse.request.uri.href;
+                var jsonArrayFromGET_Item = {
+                    uri: {},
+                };
+                jsonArrayFromGET_Item['uri']['protocol']= httpResponse.request.uri.protocol;
+                jsonArrayFromGET_Item['uri']['auth']    = httpResponse.request.uri.auth;
+                jsonArrayFromGET_Item['uri']['hostname']= httpResponse.request.uri.hostname;
+                jsonArrayFromGET_Item['uri']['port']    = httpResponse.request.uri.port;
+                jsonArrayFromGET_Item['uri']['query']    = httpResponse.request.uri.query;
+                jsonArrayFromGET_Item['uri']['pathname']= httpResponse.request.uri.pathname;
+                jsonArrayFromGET_Item['uri']['path']    = httpResponse.request.uri.path;
+                jsonArrayFromGET_Item['uri']['href']    = httpResponse.request.uri.href;
 
-				jsonArrayFromGET_Item['REQ_headers']	= httpResponse.request.headers;
-				jsonArrayFromGET_Item['RES_headers']	= httpResponse.headers;
+                jsonArrayFromGET_Item['REQ_headers']    = httpResponse.request.headers;
+                jsonArrayFromGET_Item['RES_headers']    = httpResponse.headers;
 
-				if(String(httpResponse.headers['content-type']).indexOf('application/json') !== -1 || String(httpResponse.headers['content-type']).indexOf('text/javascript') !== -1){
-					jsonArrayFromGET_Item['RES_body']	= JSON.parse(body.toString());
-					jsonArrayFromGET_Item['method']			= httpResponse.request.method;
+                if(String(httpResponse.headers['content-type']).indexOf('application/json') !== -1 || String(httpResponse.headers['content-type']).indexOf('text/javascript') !== -1){
+                    jsonArrayFromGET_Item['RES_body']    = JSON.parse(body.toString());
+                    jsonArrayFromGET_Item['method']            = httpResponse.request.method;
 
-					jsonArrayFromGET.push(jsonArrayFromGET_Item);
-					
-				}else{
-					jsonArrayFromGET_Item['method']			= httpResponse.request.method;
+                    jsonArrayFromGET.push(jsonArrayFromGET_Item);
+                    
+                }else{
+                    jsonArrayFromGET_Item['method']            = httpResponse.request.method;
 
-					jsonArrayFromGET.push(jsonArrayFromGET_Item);
-				}
+                    jsonArrayFromGET.push(jsonArrayFromGET_Item);
+                }
 
-				res.writeHead(200, httpResponse.headers);
-				res.end(body);
-			}else{
-				res.writeHead(500);
-				res.end(err);
-			}
-		})
-	})
+                res.writeHead(200, httpResponse.headers);
+                res.end(body);
+            }else{
+                res.writeHead(500);
+                res.end(err);
+            }
+        })
+    })
 //#================================================================
 
 app.listen(rtech_config.root_port, () => console.log('Example app listening on port '+rtech_config.root_port));

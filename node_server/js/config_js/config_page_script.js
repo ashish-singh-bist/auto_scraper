@@ -1,17 +1,4 @@
-document.body.className += ' ' + 'page-loading';
-
-if ( url_post_part_.slice(-1) == '/')
-    url_post_part_ = url_post_part_.replace(/\/$/, "");
-
-if( url_post_part_ && url_post_part_.indexOf('?') > -1){
-    document.getElementById('config_page').src= 'http://' + root_ip + ':' + root_port + url_post_part_ +'&host=' + host_ + '&uid=' + uid_;
-}
-else{
-    document.getElementById('config_page').src= 'http://' + root_ip + ':' + root_port + url_post_part_ +'?host=' + host_ + '&uid=' + uid_;
-}
-
 function myFunction(){
-
     console.log( "config_", config_ );
     console.log( "editmode_", editmode_ );
     console.log( "host_", host_ );

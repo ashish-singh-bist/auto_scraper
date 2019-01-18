@@ -88,7 +88,7 @@ table tbody{
 }
 .panel-table-div {
     margin: 12px 5px 12px 5px;
-    max-height: 650px;
+    max-height: calc(100vh - 315px);
     overflow-x: auto;
 }
 .del_prop_btn_c{
