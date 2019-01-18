@@ -1,13 +1,9 @@
 function myFunction(){
-    console.log( "config_", config_ );
-    console.log( "editmode_", editmode_ );
-    console.log( "host_", host_ );
-    console.log( "uid_", uid_ );
-    console.log( "url_post_part_", url_post_part_ );
-    console.log( "url_post_part_", url_post_part_ );
-    console.log( "root_port", root_port );
-    console.log( "root_ip", root_ip );
-    console.log( "config_obj", config_obj );
+
+    $('#config_page').contents().find('a').each( function(){
+        $( this ).attr('href','javascript:void(0);');
+        $( this ).removeAttr('onClick');
+    });
 
     var configPageObj = document.getElementById('config_page');
     var configPageObjDocument = configPageObj.contentWindow.document;
@@ -178,6 +174,7 @@ function myFunction(){
 
     function clickevent(event){
         event.preventDefault();
+        event.stopPropagation();
         if(event.target.closest(".avoid-ele") == null){
             targetElement = event.target;
             getXPath(event.target);
@@ -187,6 +184,7 @@ function myFunction(){
 
     function rightclickevent(event){
         event.preventDefault();
+        event.stopPropagation();
         if(event.target.closest(".avoid-ele") == null){
             targetElement = event.target;
             getXPath(event.target);
