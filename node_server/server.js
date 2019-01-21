@@ -8,6 +8,7 @@ const bodyParser    = require('body-parser');
 const csv           = require('fast-csv');
 const mysql         = require('mysql');
 const request       = require('request-promise');
+var viewPath = path.join(__dirname, 'views');
 
 const header    = require(path.join(__dirname, 'js/headers'));          //code to clean our headers from invalid characters
 const rtech_config  = require(path.join(__dirname, 'config/config'));   //application config
@@ -18,6 +19,7 @@ const connection    = mysql.createConnection({
                           database : rtech_config.mysql_database
                       });
 connection.connect();
+app.set('views', viewPath);
 app.set("view engine","pug");
 //#================================================================CONFIGURING NODE `APP`
     // parse application/x-www-form-urlencoded
