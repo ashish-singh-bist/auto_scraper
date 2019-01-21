@@ -8,7 +8,7 @@ function myFunction(){
     var configPageObj = document.getElementById('config_page');
     var configPageObjDocument = configPageObj.contentWindow.document;
 
-    var dataObject = [], printable_data = {};
+    var dataObject = [], invalidPropertyObject = [], printable_data = {};
     if ( config_obj ) {
         var coj = $('<textarea />').html(config_obj).text();
         config_obj = JSON.parse( coj );
@@ -95,6 +95,11 @@ function myFunction(){
         }
         if ( matchedStatus )
             mapConfigSelectElementMapping( targetElement, property_obj );
+        else{
+            invalidPropertyObject.push( property_obj );
+            showMessage( property_obj.key, ' - is a invalid property, Click on View Invalid Property Button For More Detail', 'danger', 5000 );
+            $('.invalid-properties').show();
+        }
     }
 
     function mapConfigSelectElementMapping( targetElement, property_obj ){
@@ -223,7 +228,7 @@ function myFunction(){
         var classExistsFlag = checkElement(targetElement);
         if(classExistsFlag){                            /* if already selected, unselect it and don't display label input box */
             var _key = targetElement.getAttribute('labelkey');
-            showMessage( _key, 'already selected, see record in table', 'danger' );
+            showMessage( _key, ' - property already selected, see record in table', 'danger' );
             dataHighlighter(_key);
         }else{                                          /* if not selected, select it and display the label input box, so that user can enter a label */
             let image   = (window.getComputedStyle(targetElement).backgroundImage);
@@ -321,7 +326,7 @@ function myFunction(){
 
         $('.panel-table-div').show();
         $('#selected_props_list_tbody').append(display_selected_list);
-        showMessage( label, 'label successfuly added, see record in table', 'success' );
+        showMessage( label, ' property successfuly added, see record in table', 'success' );
         dataHighlighter(label);
     }
 
@@ -330,7 +335,7 @@ function myFunction(){
         for(var x=0; x< dataObject.length; x++){
             if(dataObject[x]["key"] === label){
                 key_flag = true;
-                showMessage( label, ' is duplicate name, see record in table', 'danger' );
+                showMessage( label, ' - is duplicate property / invalid property, see record in table', 'danger' );
                 dataHighlighter(label);
             }
         }
@@ -344,6 +349,7 @@ function myFunction(){
     }
 
     function unselectElement(key){
+        // console.log('key to be delete - ',key);
         for(var i=0; i<dataObject.length; i++){
             if(dataObject[i].key === key)
                 dataObject.splice(i,1);
@@ -465,12 +471,10 @@ function myFunction(){
         if( rowCount == 0){
             $('.panel-table-div').hide();
         }
-        showMessage( _key, 'is successfuly removed', 'info' );
+        showMessage( _key, ' - property is successfuly removed', 'info' );
     });
 
     $(document).on('click', '#del_all_prop_btn', function(){
-        localStorage.removeItem('data');
-        localStorage.removeItem('detailpageflag');
         dataObject = [];
         var selected_items = configPageObjDocument.getElementsByClassName('option-selected');
         if(selected_items.length > 0)
@@ -527,18 +531,64 @@ function myFunction(){
             }
         });
     });
+
+    $(document).on('click', '.del_invalid_prop_btn', function(){
+        var _key = this.getAttribute('key');
+        unselectElement(_key);
+        var i = this.parentNode.parentNode.rowIndex;
+        document.getElementById("invalid_rec_table").deleteRow(i);
+        var rowCount = document.getElementById("invalid_rec_table").rows.length;
+        if( rowCount == 1){
+            $('.invalid-properties, .invalid-records-tbl').hide();
+        }
+        showMessage( _key, ' - invalid property are removed from config file.', 'info' );
+    });
+
+    $(document).on('click', '#del_all_invalid_prop_btn', function(){
+        for(var invalidObject of invalidPropertyObject){
+            unselectElement( invalidObject.key );
+        }
+        $('.invalid-properties, .invalid-records-tbl').hide();
+        showMessage( 'x', 'All Invalid Properties are removed from config file.', 'info' );
+    });
+
+    $(document).on('click', '#invalid_property', function(){
+        var table = "", tableContent_ = '';
+        tableContent_ += '<tr><th><span id="del_all_invalid_prop_btn" title="Remove All Invalid properties">×</span></th><th>Key</th><th>Tag</th><th>Parent Tag</th></tr>';
+        for(var invalidObject of invalidPropertyObject){
+            tableContent_ += '<tr><td><span class="del_invalid_prop_btn" key="'+ invalidObject.key +'" title="Remove property">×</span></td><td>'+ invalidObject.key +'</td><td>'+ invalidObject.tag +'</td><td>'+ invalidObject.parent_tag +'</td></tr>';
+        }
+        $.confirm({
+            title: 'Invalid Properties',closeIcon: true, animation: 'top',icon: 'fa fa-warning', titleClass: 'panel-title_',
+            content: '' +
+            '<form action="" class="formName invalid-records-tbl" autocomplete="off">' +
+                '<div class="form-group">' +
+                    '<table class="table table-bordered" id="invalid_rec_table"><tbody>' + tableContent_ + '</tbody></table>' +
+                '</div>' +
+            '</form>',
+            buttons: {
+                cancel: {
+                    text: 'Cancel',
+                    btnClass: 'btn-danger display-none',
+                    keys: ['esc'],
+                    action: function(){}
+                }
+            }
+        });
+    });
+    
     
     $(document).on('click', '.add_mode', function(){
         var _key = this.getAttribute('key');
         if($(this).is(":checked")){
             $('#property_builder_value').hide();
             $('#property_builder_advance_code').show();
-            showMessage( _key, 'Advance mode for this key successfuly enabled', 'success' );
+            showMessage( _key, ' - Advance mode for this property successfuly enabled', 'success' );
         }
         else{
             $('#property_builder_value').show();
             $('#property_builder_advance_code').hide();
-            showMessage( _key, 'Advance mode for this key successfuly disabled', 'danger' );
+            showMessage( _key, ' - Advance mode for this property successfuly disabled', 'danger' );
         }
     });
 }

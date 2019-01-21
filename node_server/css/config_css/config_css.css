@@ -24,6 +24,9 @@ table tbody{
 	word-wrap: break-word;
     word-break: break-all;
 }
+.invalid-properties{
+    display: none;
+}
 .page-loading .page-loader {
     /*display: block;
     background-image: url('https://i.gifer.com/Qgyn.gif');
@@ -124,12 +127,19 @@ table tbody{
 .del_prop_btn_c{
     position: relative;
 }
-.del_prop_btn, #del_all_prop_btn {
+.del_prop_btn, #del_all_prop_btn{
     height: 15px;
     width: 15px;
     position: absolute;
     top: 10px;
     left: 4px;
+    cursor: pointer;
+    font-size: 24px !important;
+    line-height: 14px !important;
+}
+.del_invalid_prop_btn, #del_all_invalid_prop_btn {
+    height: 15px;
+    width: 15px;
     cursor: pointer;
     font-size: 24px !important;
     line-height: 14px !important;
@@ -143,6 +153,10 @@ table tbody{
 #selected_props_list_tbody tr td:nth-child(2){ width: 80px; }
 #selected_props_list_tbody tr td:nth-child(3){ width: 158px; }
 
+/* invalid-records-tbl title */
+.panel-title_{ 
+    color: red !important; 
+}
 .sidebar-menu > li.menu_ .label_ ,
 .advance-mode { 
     margin: 0; 
@@ -288,6 +302,13 @@ table tbody{
 }
 .jconfirm .jconfirm-box div.jconfirm-title-c .jconfirm-title {
     padding-bottom: 10px;
+    font-size: 18px;
+}
+.jconfirm .jconfirm-box div.jconfirm-title-c .jconfirm-icon-c {
+    padding-bottom: 5px;
+}
+.jconfirm .jconfirm-box div.jconfirm-title-c .jconfirm-icon-c i {
+    vertical-align: top;
     font-size: 18px;
 }
 /*. js confirm */
