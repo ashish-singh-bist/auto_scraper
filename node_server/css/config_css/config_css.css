@@ -83,9 +83,11 @@ table tbody{
     border: 0;
     border-top: 1px solid #FFF;
 }
+.default-cursor{
+    cursor: default !important;
+}
 .skin-blue .sidebar-menu > li.m_1 span{
     border-left: 4px solid #008d4c;
-    cursor: default;
 }
 .skin-blue .sidebar-menu > li.m_2 span{
     border-left: 4px solid #00c0ef;
@@ -115,7 +117,7 @@ table tbody{
     display: none;
 }
 .panel-table-body-div{
-    max-height: calc(100vh - 315px);
+    max-height: calc(100vh - 380px);
     overflow-x: auto;
 }
 .panel-table-div .table-headers_ {

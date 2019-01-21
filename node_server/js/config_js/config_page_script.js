@@ -36,9 +36,11 @@ function myFunction(){
     function mapConfig(){
         for(var obj of dataObject){
             if ('code_to_inject' in obj){
-                var data_key = obj.key;
-                var html = document.documentElement.innerHTML;
-                printable_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
+                var label = obj.key;
+                var jsResult_ = configPageObj.contentWindow.eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
+                var display_selected_list_ = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ jsResult_ +'</td></tr>';
+                $('.panel-table-div').show();
+                $('#selected_props_list_tbody').append( display_selected_list_ );
             }
             /* finding element via `id` */
             else if('id' in obj.attributes){
@@ -183,7 +185,7 @@ function myFunction(){
         if(event.target.closest(".avoid-ele") == null){
             targetElement = event.target;
             getXPath(event.target);
-            checkForClass(event.target, event.pageX, event.pageY);
+            checkIsPropertyExist(event.target, event.pageX, event.pageY);
         }
     }
 
@@ -193,7 +195,7 @@ function myFunction(){
         if(event.target.closest(".avoid-ele") == null){
             targetElement = event.target;
             getXPath(event.target);
-            checkForClass(event.target, event.pageX, event.pageY);
+            checkIsPropertyExist(event.target, event.pageX, event.pageY);
         }
     }
 
@@ -224,7 +226,7 @@ function myFunction(){
     }
 
     /* check whether an element is already selected or not */
-    function checkForClass(targetElement, x, y){
+    function checkIsPropertyExist(targetElement, x, y){
         var classExistsFlag = checkElement(targetElement);
         if(classExistsFlag){                            /* if already selected, unselect it and don't display label input box */
             var _key = targetElement.getAttribute('labelkey');
@@ -246,7 +248,7 @@ function myFunction(){
         }
     }
 
-    /* this function is called in checkForClass() [above] to check for class `option-selected` in the current element and its parents, in order to conclude whether it is already selected or not. [We add class `option-selected` on elements which are selected] A parent is also checked here so as to avoid selecting a child element if its immediate parent is already selected, having the same value*/
+    /* this function is called in checkIsPropertyExist() [above] to check for class `option-selected` in the current element and its parents, in order to conclude whether it is already selected or not. [We add class `option-selected` on elements which are selected] A parent is also checked here so as to avoid selecting a child element if its immediate parent is already selected, having the same value*/
     function checkElement(childElement){
         var parentElement = childElement.parentElement;
         if ( parentElement != null) {
@@ -285,7 +287,8 @@ function myFunction(){
     function postElement(label, targetElement){
         let newDataObject = {};
         let child = targetElement;
-        let i = 0;
+        let i = 0, jsResult = '';
+        var display_selected_list;
         while( (child = child.previousSibling) != null ) // to get the index of the element in its parent's child list
             i++;
         label = label.trim().replace(/\s+/g, '_');
@@ -308,26 +311,31 @@ function myFunction(){
             newDataObject["parent_attributes"]  = getAttr(targetElement.parentElement);
             newDataObject["parent_tag"]         = targetElement.parentElement.tagName.toLowerCase();    
         }
-        dataObject.push(newDataObject)
-        console.log("data[insert]: ", dataObject)
-
         /*Display selected item in panel*/
         if(document.getElementById('property_builder_advance_code') && document.getElementById('property_builder_advance_code').value){
-            var html = document.documentElement.innerHTML;
-            var res = eval('try {' + document.getElementById('property_builder_advance_code').value + '}catch(err) {err.message}');
-            var display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ res +'</td></tr>';
+            jsResult = configPageObj.contentWindow.eval('try {' + document.getElementById('property_builder_advance_code').value + '}catch(err) {err.message}');
+            display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ jsResult +'</td></tr>';
         }
         else if(document.getElementById('id_selector_ele_id') && document.getElementById('id_selector_ele_id').value){
-            var display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+configPageObjDocument.getElementById(document.getElementById('id_selector_ele_id').value).textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2'); +'</td></tr>';
+            display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+configPageObjDocument.getElementById(document.getElementById('id_selector_ele_id').value).textContent.replace(/[\n\t\r]/g, '').replace(/\s\s+/g, ' ').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2'); +'</td></tr>';
         }
         else{
-            var display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('property_builder_value').value+'</td></tr>';
+            display_selected_list = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+document.getElementById('property_builder_value').value+'</td></tr>';
         }
 
-        $('.panel-table-div').show();
-        $('#selected_props_list_tbody').append(display_selected_list);
-        showMessage( label, ' property successfuly added, see record in table', 'success' );
-        dataHighlighter(label);
+        if ( jsResult == null || jsResult == undefined || jsResult == 'null') {
+            $('.alert').hide();
+            showMessage( '', 'Advance mode JS code return invalid result for property - '+label, 'danger', 15000 );
+        }
+        else{
+            console.log("data[insert]: ", dataObject)
+            dataObject.push(newDataObject)
+            $('.panel-table-div').show();
+            $('#selected_props_list_tbody').append(display_selected_list);
+            showMessage( label, ' - property successfuly added, see record in table', 'success' );
+            dataHighlighter(label);
+        }
+        
     }
 
     function selectElement(path, label){
@@ -342,8 +350,10 @@ function myFunction(){
         if(!key_flag){
             console.log(path);
             var targetElement = configPageObjDocument.evaluate( path, configPageObjDocument, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            targetElement.classList.add('option-selected');
-            targetElement.setAttribute('labelkey', label);
+            if(document.getElementById('property_builder_advance_code') && document.getElementById('property_builder_advance_code').value == false){
+                targetElement.classList.add('option-selected');
+                targetElement.setAttribute('labelkey', label);    
+            }
             postElement(label, targetElement);
         }
     }
@@ -355,7 +365,22 @@ function myFunction(){
                 dataObject.splice(i,1);
         }
     }
-    /* function for lable input `OK` button*/
+
+    // click for enable advnace mode
+    $(document).on('click', '.add_mode', function(){
+        if($(this).is(":checked")){
+            $('#property_builder_value').hide();
+            $('#property_builder_advance_code').show();
+            showMessage( '', 'Advance mode enable for this property', 'success' );
+        }
+        else{
+            $('#property_builder_value').show();
+            $('#property_builder_advance_code').hide();
+            showMessage( '', 'Advance mode disable for this property.', 'danger' );
+        }
+    });
+
+    /* function for lable input `OK` button */
     function propertyBuilderWindow( labelItemValue ){
         $.confirm({
             title: 'Property Builder',closeIcon: true,animation: 'top', boxWidth: '300px',useBootstrap: false,escapeKey: true,
@@ -397,6 +422,7 @@ function myFunction(){
         });
     }
 
+    // click of ok button of property Builder window
     function _propertyBuilderOkBtn(event){
         let label = document.getElementById('property_builder_text').value;
         label = label.trim().replace(/\s+/g, '_');
@@ -404,6 +430,8 @@ function myFunction(){
         if(label != '')
             selectElement(x_paths, label);
     }
+
+    // click for save config
     $(document).on('click', '#create_config', function(event){
         $.confirm({
             title: 'Confirm!',
@@ -456,9 +484,9 @@ function myFunction(){
                 }
             }
         });
-        
     });
 
+    // click for delete specific property from property table
     $(document).on('click', '.del_prop_btn', function(){
         var _key = this.getAttribute('key');
         var _path = this.getAttribute('path');
@@ -474,24 +502,24 @@ function myFunction(){
         showMessage( _key, ' - property is successfuly removed', 'info' );
     });
 
+    // click for delete all property from property table
     $(document).on('click', '#del_all_prop_btn', function(){
         dataObject = [];
+        invalidPropertyObject = [];
         var selected_items = configPageObjDocument.getElementsByClassName('option-selected');
         if(selected_items.length > 0)
             while(selected_items.length)
                 selected_items[0] = selected_items[0].classList.remove('option-selected');
-        resetConfigurationPanelData();
-    });
-
-    function resetConfigurationPanelData(){
-        showMessage('', '<strong>All records are delete.</strong>', 'success');
+        
+        $('.panel-table-div, .invalid-properties, .invalid-records-tbl').hide();
         var rowCount = document.getElementById("panel_table").rows.length;
         for (var i = rowCount - 1 ; i >= 0; i--){
             document.getElementById("panel_table").deleteRow(i);
         }
-        $('.panel-table-div').hide();
-    }
+        showMessage('', '<strong>All properties from config are deleted.</strong>', 'success');
+    });
 
+    // click for open a popup for select property by Id
     $(document).on('click', '#id_selector_btn', function(){
         $.confirm({
             title: 'ID Selector',closeIcon: true,animation: 'top', boxWidth: '300px',useBootstrap: false,
@@ -532,6 +560,7 @@ function myFunction(){
         });
     });
 
+    // click for delete specific invalid property from property table    
     $(document).on('click', '.del_invalid_prop_btn', function(){
         var _key = this.getAttribute('key');
         unselectElement(_key);
@@ -544,14 +573,16 @@ function myFunction(){
         showMessage( _key, ' - invalid property are removed from config file.', 'info' );
     });
 
+    // click for delete all invalid property from property table
     $(document).on('click', '#del_all_invalid_prop_btn', function(){
         for(var invalidObject of invalidPropertyObject){
             unselectElement( invalidObject.key );
         }
         $('.invalid-properties, .invalid-records-tbl').hide();
-        showMessage( 'x', 'All Invalid Properties are removed from config file.', 'info' );
+        showMessage( '', 'All Invalid Properties are removed from config file.', 'info' );
     });
 
+    // click for open a popup for delete invalid property from table
     $(document).on('click', '#invalid_property', function(){
         var table = "", tableContent_ = '';
         tableContent_ += '<tr><th><span id="del_all_invalid_prop_btn" title="Remove All Invalid properties">×</span></th><th>Key</th><th>Tag</th><th>Parent Tag</th></tr>';
@@ -575,20 +606,5 @@ function myFunction(){
                 }
             }
         });
-    });
-    
-    
-    $(document).on('click', '.add_mode', function(){
-        var _key = this.getAttribute('key');
-        if($(this).is(":checked")){
-            $('#property_builder_value').hide();
-            $('#property_builder_advance_code').show();
-            showMessage( _key, ' - Advance mode for this property successfuly enabled', 'success' );
-        }
-        else{
-            $('#property_builder_value').show();
-            $('#property_builder_advance_code').hide();
-            showMessage( _key, ' - Advance mode for this property successfuly disabled', 'danger' );
-        }
     });
 }
