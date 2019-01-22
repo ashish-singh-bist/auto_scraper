@@ -111,7 +111,15 @@ app.set("view engine","pug");
                 if(fileSystem.existsSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'))){
                     var scrapedDataTemp = fileSystem.readFileSync(path.join(__dirname, 'storage/site_output/'+filename+'.json'), 'utf8');
                     if(scrapedDataTemp){
-                        scrapedData = JSON.parse(scrapedDataTemp);
+                        try{
+                            scrapedData = JSON.parse(scrapedDataTemp);
+                        }
+                        catch(e){
+                            jsonArrayFromGET_Item['RES_body']    = JSON.parse('{}');
+                        }
+                    }
+                    else{
+                        jsonArrayFromGET_Item['RES_body']    = JSON.parse('{}');
                     }
                 }else{
                     console.log("Data not found, may be something went wrong");
@@ -216,36 +224,44 @@ app.set("view engine","pug");
 
     async function getPage(data,url,user_id,req, res){
         //var final_url = '';
+        console.log('pf - 2');
         //======================for the redirect urls=========================
-        function redirectOn302(body, response, resolveWithFullResponse) {
-            if ( response.statusCode != 200 ) {
-                // Set the new url (this is the options object)
-                //this.url = response.['the redirect url somehow'];
-                //console.log('1 : statusCode======='+response.statusCode);
-                this.url = response.headers.location;
-                var options = {
-                    url: response.headers.location,            
-                    resolveWithFullResponse : true,
-                    transform: redirectOn302            
-                };
-                return request(options).then(function(body){
-                    //console.log('body+++++++'+body);
-                    }).catch(function(err){
-                    console.log(err);
-                });
-            } else {
-                return resolveWithFullResponse ? response : body;
-            }
-        }
+        // function redirectOn302(body, response, resolveWithFullResponse) {
+        //     console.log('pf - 3');
+        //     if ( response.statusCode != 200 ) {
+        //         console.log('pf - 4');
+        //         // Set the new url (this is the options object)
+        //         //this.url = response.['the redirect url somehow'];
+        //         //console.log('1 : statusCode======='+response.statusCode);
+        //         this.url = response.headers.location;
+        //         var options = {
+        //             url: response.headers.location,            
+        //             resolveWithFullResponse : true,
+        //             transform: redirectOn302            
+        //         };
+        //         return request(options).then(function(body){
+        //             console.log('pf - 5');
+        //             //console.log('body+++++++'+body);
+        //             }).catch(function(err){
+        //             console.log(err);
+        //         });
+        //     } else {
+        //         console.log('pf - 6');
+        //         return resolveWithFullResponse ? response : body;
+        //     }
+        // }
         //======================================================================
 
         var options = {
             url: url,
             resolveWithFullResponse : true,
-            transform: redirectOn302            
-        }; 
+            //transform: redirectOn302            
+        };
+        console.log('url - ',url);
         request(options, function(error, response, body){
-            if (!error && response.statusCode == 200) {
+            console.log('pf - 7');
+            if (!error && response && response.statusCode ) {
+                console.log('pf - 8');
                 var url_ = response.request.uri.href;
                 var filename_ = (url_.split('/'))[2].replace(/\./g,'_');
                 var temp= {};
@@ -256,6 +272,7 @@ app.set("view engine","pug");
 
                 //console.log(sess);        
                 if(data.url_list.length>0){
+                    console.log('pf - 9');
                     var split_ar = url_.split('/');
                     var host_url = split_ar[0] + '//' + split_ar[2];
                     var config_exist;
@@ -264,20 +281,27 @@ app.set("view engine","pug");
                     //save list in db
                     fileSystem.writeFile(path.join(__dirname, 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt'), array_received, 'utf-8', function(err) {
                         if(err) {
+                            console.log('pf - 10');
                             res.send({status: 500, file_location: err, 'process_host_name':filename_ , 'extracted_host_name':host_url });
                         }
                     });
                     connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename_], function (err, results, fields) {
                         //if (error) throw error
+                        console.log('pf - 11');
                         config_exist = false;
                         if (err){ 
+                            console.log('pf - 12');
                             console.log('Error connection.query : '+err);
                         }else{
+                            console.log('pf - 13');
                             if(results.length){
+                                console.log('pf - 14');
                                 config_exist = true;
                                 res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
                             }else{
+                                console.log('pf - 15');
                                 if (fileSystem.existsSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'))) {
+                                    console.log('pf - 16');
                                     var scrapedContent = fileSystem.readFileSync(path.join(__dirname, 'storage/global_config/'+filename_+'.json'), 'utf8');
                                     scrapedContent = JSON.parse(scrapedContent);
                                     scrapedContent.user_id = user_id;
@@ -286,15 +310,18 @@ app.set("view engine","pug");
                                     connection.query("INSERT INTO config_list SET ?", data, function (err, results, fields) {
                                         //if (error) throw error
                                         if (err) {
+                                            console.log('pf - 17');
                                             console.log('Error connection.query tey to insert config into DB: '+err);
                                             res.send({status: 500, file_location: err, 'process_host_name':filename_ , 'extracted_host_name':host_url });
                                         }else{
+                                            console.log('pf - 18');
                                             config_exist = true;
                                             res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
                                         }
                                     });
                                 }
                                 else{
+                                    console.log('pf - 19');
                                     res.send({status: 200, file_location: 'storage/product_url/'+filename_+'_'+user_id+'_url_list_.txt', file_content: array_received, 'config_exist':config_exist,'process_host_name':filename_ , 'extracted_host_name' : host_url, 'actual_url' : url_ });
                                 }
                             }
@@ -302,8 +329,16 @@ app.set("view engine","pug");
                     });
                 }
                 else{
+                    console.log('pf - 20');
                     res.send({status: 500, file_location: err});
                 }                
+            }
+            else{
+                console.log('pf - 21');
+
+                console.log('response.statusCode - ',response);
+                console.log('error - ',error);
+                
             }
         });
     }
@@ -682,13 +717,13 @@ app.set("view engine","pug");
 
                     //#================================================================INJECT JS CODE
                     //to disable link clicking on page
-                    var scriptNode = '<script>window.setTimeout(function(){document.querySelectorAll("a").forEach((tag) => { if(tag.href)tag.addEventListener("click", e => {e.preventDefault(); e.stopPropagation()})});}, 5000);</script>' 
-                    $('body').append(scriptNode);
-                    $('body').attr('id', 'enable_right_click');
+                    // var scriptNode = '<script>window.setTimeout(function(){document.querySelectorAll("a").forEach((tag) => { if(tag.href)tag.addEventListener("click", e => {e.preventDefault(); e.stopPropagation()})});}, 5000);</script>' 
+                    // $('body').append(scriptNode);
+                    // $('body').attr('id', 'enable_right_click');
                     //#================================================================
 
                     //add actual url for site-config file name
-                    $('body').attr('actual_url', final_url);
+                    // $('body').attr('actual_url', final_url);
 
                     //#================================================================INJECT CSS CODE
                     //for hover/selection border, and css for menu
@@ -753,9 +788,19 @@ app.set("view engine","pug");
                 }else {
 
                     if(String(response.headers['content-type']).indexOf('application/json') !== -1){
-                        jsonArrayFromGET_Item['RES_body']   = JSON.parse(body.toString());
+                        if (body) {
+                            try{
+                                jsonArrayFromGET_Item['RES_body']   = JSON.parse(body.toString());
+                            }
+                            catch(e){
+                                jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
+                            }    
+                        }
+                        else{
+                            jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
+                        }
+                        
                         jsonArrayFromGET_Item['method']         = response.request.method;
-
                         jsonArrayFromGET.push(jsonArrayFromGET_Item);
 
                     }else{
@@ -971,7 +1016,7 @@ app.set("view engine","pug");
         //     url_ = response.request.uri.href;
         //     console.log(url_);
         // });
-
+        console.log('pf - 1');
         url_ = getPage(data,url_,user_id,req, res);
     })
 
@@ -981,7 +1026,17 @@ app.set("view engine","pug");
         var user_id = req.body.user_id;
         console.log(filename);
         if(typeof req.body.data === 'string'){
-            req.body.data = JSON.parse(req.body.data);
+            if (body) {
+                try{
+                    req.body.data = JSON.parse(req.body.data);
+                }
+                catch(e){
+                    req.body.data = JSON.parse('{}');
+                }    
+            }
+            else{
+                req.body.data = JSON.parse('{}');
+            }
         }
 
         // fileSystem.writeFile(path.join(__dirname, 'storage/site_config/'+filename+'_'+user_id+'.json'), JSON.stringify(req.body), function (err) {
@@ -1120,6 +1175,7 @@ app.set("view engine","pug");
         }
 
         request.post(options, function(err,httpResponse,body){
+            console.log('body - ',body);
             if(!err && httpResponse){
 
                 var jsonArrayFromGET_Item = {
@@ -1138,9 +1194,19 @@ app.set("view engine","pug");
                 jsonArrayFromGET_Item['RES_headers']    = httpResponse.headers;
 
                 if(String(httpResponse.headers['content-type']).indexOf('application/json') !== -1 || String(httpResponse.headers['content-type']).indexOf('text/javascript') !== -1){
-                    jsonArrayFromGET_Item['RES_body']    = JSON.parse(body.toString());
+                    if (body) {
+                        try{
+                            jsonArrayFromGET_Item['RES_body']    = JSON.parse(body.toString());
+                        }
+                        catch(e){
+                            jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
+                        }    
+                    }
+                    else{
+                        jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
+                    }
+                    
                     jsonArrayFromGET_Item['method']            = httpResponse.request.method;
-
                     jsonArrayFromGET.push(jsonArrayFromGET_Item);
                     
                 }else{
