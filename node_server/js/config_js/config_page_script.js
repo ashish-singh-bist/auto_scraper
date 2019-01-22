@@ -38,7 +38,7 @@ function myFunction(){
             if ('code_to_inject' in obj){
                 var label = obj.key;
                 var jsResult_ = configPageObj.contentWindow.eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
-                var display_selected_list_ = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="'+x_paths+'" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ jsResult_ +'</td></tr>';
+                var display_selected_list_ = '<tr class="'+label+'_tr"><td><span class="del_prop_btn" key="'+label+'" path="" title="Remove this item">×</span></td><td>'+label+'</td><td>'+ jsResult_ +'</td></tr>';
                 $('.panel-table-div').show();
                 $('#selected_props_list_tbody').append( display_selected_list_ );
             }
@@ -491,8 +491,10 @@ function myFunction(){
         var _key = this.getAttribute('key');
         var _path = this.getAttribute('path');
         unselectElement(_key);
-        var obj_to_del = configPageObjDocument.evaluate( _path, configPageObjDocument, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        obj_to_del.classList.remove('option-selected');
+        if ( _path != 'undefined' && _path != ''){
+            var obj_to_del = configPageObjDocument.evaluate( _path, configPageObjDocument, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            obj_to_del.classList.remove('option-selected');
+        }
         var i = this.parentNode.parentNode.rowIndex;
         document.getElementById("panel_table").deleteRow(i);
         var rowCount = document.getElementById("panel_table").rows.length;
