@@ -73,21 +73,21 @@ app.set("view engine","pug");
     //this will send the sttaus of the scrapper, whether completed or not
     app.get('/config/*', (req, res) => {
         // const {config, host, uid, analyze}  = req.query;
-        const { config, editmode, host, uid, url_post_part, prtocol } = req.query;
+        const { config, host, uid, url_post_part, prtocol } = req.query;
         if(config === 'true'){
             connection.query("select config from config_list where user_id= ? and config_name = ?", [uid, host], function (err, results, fields) {
                 if (err){ 
                     console.log('Error connection.query select config : '+err);
                 }else{
                     if(results.length){
-                        var config_object = results[0].config;
-                        res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, config_obj: config_object, protocol_: prtocol })
+                        var config_object = JSON.stringify(results[0].config);
+                        res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, host: host, uid: uid, url_post_part: url_post_part, config_obj: config_object, protocol_: prtocol })
                     }
                 }
             });
         }
         else{
-            res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config: config, editmode: editmode, host: host, uid: uid, url_post_part: url_post_part, protocol_: prtocol })
+            res.render('config', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, config:config, host: host, uid: uid, url_post_part: url_post_part, config_obj: '{}', protocol_: prtocol })
         }
     })
     

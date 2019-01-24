@@ -276,6 +276,18 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
         return parseHtml(site_config,document);
     }    
 
+    function postGetAttr(ele){
+        let temp = {};
+        let arr  = [];
+        if( ele && ele.attributes ){
+            let attrlist = ele.attributes;
+            for(var i=0; i< attrlist.length; i++){
+                if(attrlist[i].name != 'href' && attrlist[i].name.match('ng-') == null && attrlist[i].name != 'labelkey' && attrlist[i].name != 'style' && (attrlist[i].value !== '' && attrlist[i].value !== ' '))
+                    temp[attrlist[i].name] = attrlist[i].value.replace('option-selected', '').replace(/\s+$/, '');
+            }
+        }
+        return temp;
+    }
     async function parseHtml(site_config,document)
     {
         var scraped_data = {};

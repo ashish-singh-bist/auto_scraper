@@ -171,7 +171,7 @@ $( document ).ready(function(){
 	function proceedForAnalysis(){
 		var split_url_arr = extracted_host_name.split('/');
 		let url_ = windowOpenWith;
-		var str = url_+'?config=false&editmode=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+		var str = url_+'?config=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
 		window.open(str,'_blank');
 	}
 
@@ -179,7 +179,7 @@ $( document ).ready(function(){
 		var split_url_arr = extracted_host_name.split('/');
 		let url_ = windowOpenWith;
 		url_post_part = url_post_part.replace(/\/\/+/g, '/');
-		var str = url_+'/config?config='+flag+'&editmode='+editmode+'&host='+process_host_name+'&uid='+USER_ID+'&url_post_part='+encodeURIComponent(url_post_part);
+		var str = url_+'/config?config='+flag+'&host='+process_host_name+'&uid='+USER_ID+'&url_post_part='+encodeURIComponent(url_post_part);
 		window.open(str,'_blank');
 	}
 
