@@ -58,81 +58,75 @@ function myFunction(){
                     $('.panel-table-div').show();
                     $('#selected_props_list_tbody').append( display_selected_list_ );
                 }
-                
-            }
-            /* finding element via `id` */
-            else if('id' in obj.attributes){
-                var element = configPageObjDocument.getElementById(obj.attributes['id']);
-                if(element){
-                    mapConfigSelectElement( obj, obj.attributes['id'] );
-                    continue;
-                }
             }
             else{
-                mapConfigSelectElement( obj );
+                var propertyValue_ = '';
+                if('id' in obj.attributes){            /* finding element via `id` */
+                    var targetElement = configPageObjDocument.getElementById(obj.attributes['id']);
+                    if( targetElement && targetElement.tagName.toLowerCase() == obj.tag.toLowerCase()){
+                        propertyValue_ = mapConfigSelectElementMapping( targetElement, obj );
+                    }
+                }
+                if ( propertyValue_ )
+                    continue;
+                else
+                    mapConfigSelectElementCheck( obj );
             }
         }
     }
 
-    function mapConfigSelectElement( property_obj, _id = ''){
-        if ( _id ) {
-            var targetElement = configPageObjDocument.getElementById( _id );
-            if ( targetElement )
-                mapConfigSelectElementCheck( targetElement, property_obj );
+    function mapConfigSelectElementCheck( propertyObj ){
+        if ( propertyObj.xpath ){
+            targetElement = configPageObjDocument.evaluate( propertyObj.xpath, configPageObjDocument, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
         }
-        else{
-            if ( property_obj.xpath ) {
-                var targetElement = configPageObjDocument.evaluate( property_obj.xpath, configPageObjDocument, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                if ( targetElement )
-                    mapConfigSelectElementCheck( targetElement, property_obj );
-            }
-        }
-    }
 
-    function mapConfigSelectElementCheck( targetElement, property_obj ){
-        var currentElementAttr = getAttr( targetElement );
-        var currentElementParentAttr = getAttr( targetElement.parentElement );
-        var matchedStatus = false, matchedStatus_currentElementAttrId = true, matchedStatus_currentElementAttrClass = true, matchedStatus_currentElementParentAttrId = true, matchedStatus_currentElementParentAttrClass = true;
+        if ( targetElement ) {
+            var currentElementAttr = getAttr( targetElement );
+            var currentElementParentAttr = getAttr( targetElement.parentElement );
+            var ms = false, ms_currentElementAttrClass = true, ms_currentElementParentAttrId = true, ms_currentElementParentAttrClass = true;
 
-        if ( property_obj.tag.toLowerCase() == targetElement.tagName.toLowerCase()  && property_obj.parent_tag.toLowerCase() ==  targetElement.parentElement.tagName.toLowerCase()) {
-            if ( property_obj.xpath ==  getXPathAutoScraper( targetElement ) && property_obj.parent_xpath ==  getXPathAutoScraper( targetElement.parentElement )){
-                matchedStatus = true;
-                if ( currentElementAttr.id && property_obj.attributes.id){
-                    matchedStatus_currentElementAttrId = false;
-                    matchedStatus_currentElementAttrId = (currentElementAttr.id == property_obj.attributes.id )? true : false ;
-                }
-                if ( currentElementAttr.class && property_obj.attributes.class){
-                    matchedStatus_currentElementAttrClass = false;
-                    matchedStatus_currentElementAttrClass = (currentElementAttr.class == property_obj.attributes.class ) ? true : false ;
-                }
-                // parent 
-                if ( currentElementParentAttr.id && property_obj.parent_attributes.id){
-                    matchedStatus_currentElementParentAttrId = false;
-                    matchedStatus_currentElementParentAttrId = (currentElementParentAttr.id == property_obj.parent_attributes.id ) ? true : false ;
-                }
-                if ( currentElementParentAttr.class && property_obj.parent_attributes.class){
-                    matchedStatus_currentElementParentAttrClass = false;
-                    matchedStatus_currentElementParentAttrClass = (currentElementParentAttr.class == property_obj.parent_attributes.class ) ? true : false ;
+            if ( propertyObj.tag.toLowerCase() == targetElement.tagName.toLowerCase()  && propertyObj.parent_tag.toLowerCase() ==  targetElement.parentElement.tagName.toLowerCase()) {
+                if ( propertyObj.xpath ==  getXPathAutoScraper( targetElement ) && propertyObj.parent_xpath ==  getXPathAutoScraper( targetElement.parentElement )){
+                    ms = true; // matched status
+                    if ( currentElementAttr.class && propertyObj.attributes.class){
+                        ms_currentElementAttrClass = false;
+                        ms_currentElementAttrClass = (currentElementAttr.class == propertyObj.attributes.class ) ? true : false ;
+                    }
+                    // parent 
+                    if ( currentElementParentAttr.id && propertyObj.parent_attributes.id){
+                        ms_currentElementParentAttrId = false;
+                        ms_currentElementParentAttrId = (currentElementParentAttr.id == propertyObj.parent_attributes.id ) ? true : false ;
+                    }
+                    if ( currentElementParentAttr.class && propertyObj.parent_attributes.class){
+                        ms_currentElementParentAttrClass = false;
+                        ms_currentElementParentAttrClass = (currentElementParentAttr.class == propertyObj.parent_attributes.class ) ? true : false ;
+                    }
                 }
             }
-        }
-        if ( matchedStatus && matchedStatus_currentElementAttrId && matchedStatus_currentElementAttrClass &&  matchedStatus_currentElementParentAttrId && matchedStatus_currentElementParentAttrClass){
-            mapConfigSelectElementMapping( targetElement, property_obj );
+            if ( ms && ms_currentElementAttrClass &&  ms_currentElementParentAttrId && ms_currentElementParentAttrClass){
+                var propertyValue_ = mapConfigSelectElementMapping( targetElement, propertyObj );
+            }
+            else{
+                invalidPropertyObject.push( propertyObj );
+                showMessage( propertyObj.key, ' - is a invalid property, Click on View Invalid Property Button For More Detail', 'danger', 5000 );
+                $('.invalid-properties').show();
+            }
         }
         else{
-            invalidPropertyObject.push( property_obj );
-            showMessage( property_obj.key, ' - is a invalid property, Click on View Invalid Property Button For More Detail', 'danger', 5000 );
+            invalidPropertyObject.push( propertyObj );
+            showMessage( propertyObj.key, ' - is a invalid property, Click on View Invalid Property Button For More Detail', 'danger', 5000 );
             $('.invalid-properties').show();
         }
     }
 
-    function mapConfigSelectElementMapping( targetElement, property_obj ){
+    function mapConfigSelectElementMapping( targetElement, propertyObj ){
         var value = targetElement.src? targetElement.src.replace(imgUrlRegExpObj, ''): targetElement.textContent? targetElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
-        var lable = property_obj.key.toLowerCase()
+        var lable = propertyObj.key.toLowerCase()
         targetElement.classList.add('option-selected');
         targetElement.setAttribute('labelkey', lable);
         $('.panel-table-div').show();
-        $('#selected_props_list_tbody').append('<tr class="'+lable+'_tr"><td><span class="del_prop_btn" key="'+lable+'" path="'+property_obj.xpath+'" title="Remove this item">×</span></td><td>'+lable+'</td><td>'+value+'</td></tr>');
+        $('#selected_props_list_tbody').append('<tr class="'+lable+'_tr"><td><span class="del_prop_btn" key="'+lable+'" path="'+propertyObj.xpath+'" title="Remove this item">×</span></td><td>'+lable+'</td><td>'+value+'</td></tr>');
+        return value;
     }
     /* to calculate xpath of a given element */
     function getXPathAutoScraper(element) {

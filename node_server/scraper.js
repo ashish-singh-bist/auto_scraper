@@ -15,8 +15,8 @@ var url_list_array = [];
 const thread_count = config.thread_count;
 var host_slug = '';         //'www_youtube_com'
 var source = '';            //'Youtube'
-var site_config;
-
+var site_config, replace = '(.)+' + config.root_port + '\/';
+var imgUrlRegExpObj = new RegExp(replace, "g");  // object of regular expression  "(.)+<port number>\\/"
 var puppeteer_enabled = 0;
 
 if (parsing_mode == 'databasemode') {
@@ -261,7 +261,8 @@ async function run()
 }
 
 async function startHTMLParsing(site_config,html,puppeteer_enabled) 
-{
+{   
+    // fileSystem.writeFile(path.join(__dirname, 'storage/site_output/html_me.txt'), html, function (err) { if (err) throw err; });
     if(!puppeteer_enabled){
         try{
             var dom = new JSDOM(html);
@@ -276,95 +277,39 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
         return parseHtml(site_config,document);
     }    
 
-    function postGetAttr(ele){
-        let temp = {};
-        let arr  = [];
-        if( ele && ele.attributes ){
-            let attrlist = ele.attributes;
-            for(var i=0; i< attrlist.length; i++){
-                if(attrlist[i].name != 'href' && attrlist[i].name.match('ng-') == null && attrlist[i].name != 'labelkey' && attrlist[i].name != 'style' && (attrlist[i].value !== '' && attrlist[i].value !== ' '))
-                    temp[attrlist[i].name] = attrlist[i].value.replace('option-selected', '').replace(/\s+$/, '');
-            }
-        }
-        return temp;
-    }
     async function parseHtml(site_config,document)
     {
         var scraped_data = {};
+        // console.log( 'document - ',document  );
 
         for(var obj of site_config) {
             try{
-                var element_attributes  = obj.attributes;
-                var element_key = obj.key;
-                var element_xpath   = obj.xpath;
-                var element_tag = obj.tag;
-                var element_index = obj.child_index;
-
-                var parent_attributes   = obj.parent_attributes;
-                var parent_xpath= obj.parent_xpath;
-                var parent_tag  = obj.parent_tag;
-                var element_flag = false;
-
+                var propertyValue_ = '';
+                var propertyName = obj.key.toLowerCase();
+                // console.log( '<br>propertyName - ',propertyName );
                 if ('code_to_inject' in obj){
-                    var data_key = obj.key;
                     var html = document.documentElement.innerHTML;
-                    scraped_data[data_key] = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
+                    var jsResult_ = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
+                    if( jsResult_ ){
+                        scraped_data[ propertyName ] = jsResult_ ;
+                    }
                 }
-                /* finding element via `id` */
-                else if('id' in element_attributes){
-                    var element = document.getElementById(element_attributes['id']);
-
-                    if(element){
-                        element_flag = true;
-                        scraped_data[element_key] = getElementData(element, element_key, element_tag);
+                else{
+                    if('id' in obj.attributes){            /* finding element via `id` */
+                        var candidateElement =  document.getElementById( obj.attributes['id'] );
+                        if( candidateElement && candidateElement.tagName.toLowerCase() == obj.tag.toLowerCase()){
+                            // console.log('key - ',obj.key);
+                            propertyValue_ = mapConfigSelectElementMapping( candidateElement );
+                        }
+                    }
+                    if ( propertyValue_ ){
+                        scraped_data[ propertyName ] = propertyValue_ ;
                         continue;
                     }
-                } 
-                else{
-                    var condition_string = '';
-                    for(var attribute in  element_attributes){
-                        if(element_attributes[attribute] !== '')
-                            condition_string += '['+attribute+'="'+element_attributes[attribute]+'"]';
-                    }
-                    if(condition_string != ''){
-                        var candidate_elements  = document.querySelectorAll(element_tag+condition_string+'');
-                        var candidate_parent    = returnparent(parent_attributes, parent_xpath, parent_tag);
-                        if(candidate_elements.length > 1){
-                            var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
-                            for(var x=0; x < candidate_elements.length; x++){
-                                if(candidate_elements[x].parentElement === candidate_parent  && candidate_elements[x] != null){
-                                    element_flag = true;
-                                    scraped_data[element_key] = getElementData(candidate_elements[x], element_key, element_tag);
-                                    break;
-                                }
-                            }
-                        }else{
-                            candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
-                            if(candidate_element != null){
-                                element_flag = true;
-                                scraped_data[element_key] = getElementData(candidate_element, element_key, element_tag);
-                            }
-                        }
-                    }else{
-                        var candidate_parent = returnparent( parent_attributes, parent_xpath, parent_tag);
-
-                        //check if parent attributes in config is equal to candidate parents extracted attributes
-                        if(candidate_parent && JSON.stringify(postGetAttr(candidate_parent)) === JSON.stringify(parent_attributes)){
-                            var candidate_element = candidate_parent.childNodes[element_index];
-
-                            scraped_data[element_key] = getElementData(candidate_element, element_key, element_tag);
-                        }
-                    }
-                }
-                if(element_flag === false){
-                    var candidate_element = document.evaluate(element_xpath, document, null, 9, null).singleNodeValue;
-                    if(candidate_element != null){
-                        var candidate_parent = returnparent(parent_attributes, parent_xpath, parent_tag);
-                        if(candidate_parent && candidate_parent == candidate_element.parentElement){
-                            element_flag = true;
-
-                            scraped_data[element_key] = getElementData(candidate_element, element_key, element_tag);
-                        }
+                    else{
+                        propertyValue_ = mapConfigSelectElementCheck( obj );
+                        if ( propertyValue_ )
+                        scraped_data[ propertyName ] = propertyValue_ ;
                     }
                 }
             }
@@ -374,99 +319,85 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
         }
         return scraped_data;
 
-
-         /* select element */
-        function getElementData(element, label, element_tag){
-            //console.log('textContent================='+ele.textContent);
-            //var value = targetelement.src? targetelement.src.replace(re, ''): targetelement.textContent? targetelement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetelement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
-            //console.log('elementTag================'+element_tag);
-            if ( element_tag === 'img' ){
-               return element.getAttribute('src');
+        function mapConfigSelectElementCheck( propertyObj ){
+            var propertyValue_ = '';
+            // case 1 query selector
+            var condition_string = '';
+            var candidateElementAttrs  = propertyObj.attributes;
+            for( var attribute in  candidateElementAttrs ){
+                if( candidateElementAttrs[attribute] !== '' )
+                    condition_string += '[' + attribute+'="' + candidateElementAttrs[attribute] + '"]';
             }
-
-            // else if( element_tag === 'a' ){
-            //    return element.getAttribute('href');
-            // }
-
-            else {
-               return element.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
-            }
-        }
-
-        function returnparent(attributes, xpath, tag){
-            var selected_parent;
-
-            try{
-                /* if parent has `id` */
-                if(attributes['id']){
-                    selected_parent = document.getElementById(attributes['id']);
-                    if(selected_parent != null){
-                        return selected_parent;
-                    }else{
-                        //if an id is contains a dynamically generated entity
-                        var temporary_id_container = attributes['id'];
-                        var split_id = temporary_id_container.split(/([0-9]+)/g);
-                        for(var x=0; x< split_id.length; x++){
-                            var candidate_parent = document.querySelector('*[id*="'+split_id[x]+'"]');
-                            if(candidate_parent)
-                                return candidate_parent
+            if( condition_string != '' ){
+                var candidateElements  = document.querySelectorAll( propertyObj.tag + condition_string + '');
+                var candidateParent    = returnParentElement( propertyObj );
+                if( candidateElements.length >= 1 ){
+                    for( var x = 0 ; x < candidateElements.length; x++ ){
+                        if( candidateElements[x].parentElement === candidateParent  && candidateElements[x] != null ){
+                            propertyValue_ = mapConfigSelectElementMapping( candidateElements[x] );
+                            // console.log('propertyValue_ - ',propertyValue_);
+                            break;
                         }
                     }
                 }
+            }
 
-                /* if parent has `class` */
-                if(attributes['class']){
-                    var candidate_parents = document.getElementsByClassName(attributes['class']);
-                    if(candidate_parents.length > 0)
-                        for(var i=0; i< candidate_parents.length; i++){
-                            var candidate_parent = candidate_parents[i];
-                            var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
-                            if(candidate_parent_xpath == xpath){
-                                selected_parent = candidate_parent;
-                                return selected_parent;
+            // case 2 xpath of target element
+            else if( propertyValue_ == '' ){
+                candidateElement = document.evaluate( propertyObj.xpath, document, null, 9, null).singleNodeValue;
+                if ( candidateElement ) {
+                    var candidateElementAttr = getAttr( candidateElement );
+                    var candidateElementParentAttr = getAttr( candidateElement.parentElement );
+                    var ms = false, ms_candidateElementAttrClass = true, ms_candidateElementParentAttrId = true, ms_candidateElementParentAttrClass = true;
+
+                    if ( propertyObj.tag.toLowerCase() == candidateElement.tagName.toLowerCase()  && propertyObj.parent_tag.toLowerCase() ==  candidateElement.parentElement.tagName.toLowerCase()) {
+                        if ( propertyObj.xpath ==  getXPathAutoScraper( candidateElement ) && propertyObj.parent_xpath ==  getXPathAutoScraper( candidateElement.parentElement )){
+                            ms = true; // matched status
+                            if ( candidateElementAttr.class && propertyObj.attributes.class){
+                                ms_candidateElementAttrClass = false;
+                                ms_candidateElementAttrClass = (candidateElementAttr.class == propertyObj.attributes.class ) ? true : false ;
                             }
-                        }
-                }
-
-                /* if parent has attributes other than `id` and `class` */
-                var condition_string = '';
-                for(var attribute in  attributes){
-                    condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
-                }
-                if(condition_string != ''){
-                    var candidate_parent = document.querySelector(tag+condition_string);
-                    if(candidate_parent != null){
-                        var candidate_parent_xpath = getXPathAutoScraper(candidate_parent);
-                        if(candidate_parent_xpath == xpath){
-                            selected_parent = candidate_parent;
-                            return selected_parent;
-                        }else{
-                            var candidate_parent_xpath2 = candidate_parent_xpath.replace(/\[|\]|[1-9]+/g,'');
-                            var xpath2  = xpath.replace(/\[|\]|[1-9]+/g,'');
-                            if(candidate_parent_xpath2 === xpath2){
-                                selected_parent = candidate_parent;
-                                return selected_parent;
+                            // parent 
+                            if ( candidateElementParentAttr.id && propertyObj.parent_attributes.id){
+                                ms_candidateElementParentAttrId = false;
+                                ms_candidateElementParentAttrId = (candidateElementParentAttr.id == propertyObj.parent_attributes.id ) ? true : false ;
+                            }
+                            if ( candidateElementParentAttr.class && propertyObj.parent_attributes.class){
+                                ms_candidateElementParentAttrClass = false;
+                                ms_candidateElementParentAttrClass = (candidateElementParentAttr.class == propertyObj.parent_attributes.class ) ? true : false ;
                             }
                         }
                     }
-                    candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
-                    if(candidate_parent != null)
-                        selected_parent = candidate_parent;
-                }else{
-                    var candidate_parent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
-                    if(candidate_parent && candidate_parent.tagName === tag.toUpperCase()){
-                        return candidate_parent;
+                    if ( ms &&  ms_candidateElementAttrClass &&  ms_candidateElementParentAttrId && ms_candidateElementParentAttrClass){
+                        propertyValue_ = mapConfigSelectElementMapping( candidateElement );
                     }
                 }
-                return selected_parent;
-            }catch(err){
-                console.log('==Error 6: '+err.message);
-                return selected_parent;
             }
+            return propertyValue_;
         }
 
+        function mapConfigSelectElementMapping( candidateElement ){
+            var res_ = candidateElement.src? candidateElement.src.replace(imgUrlRegExpObj, ''): candidateElement.textContent? candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : candidateElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2')
+            // console.log( res_ );
+            return ( res_ );
+        }
+
+        /* to extract and create a list of the element's attributes */
+        function getAttr(ele){
+            let temp = {};
+            let arr  = [];
+            if( ele && ele.attributes ){
+                let attrlist = ele.attributes;
+                for(var i=0; i< attrlist.length; i++){
+                    if(attrlist[i].name != 'href' && attrlist[i].name.match('ng-') == null && attrlist[i].name != 'labelkey' && attrlist[i].name != 'style' && (attrlist[i].value !== '' && attrlist[i].value !== ' '))
+                        temp[attrlist[i].name] = attrlist[i].value.replace('option-selected', '').replace(/\s+$/, '');
+                }
+                return temp;
+            }
+            return temp;
+        }
         /* to calculate xpath of a given element */
-        function getXPathAutoScraper(element) {
+        function getXPathAutoScraper( element ) {
             var paths = [];
             try{
                 for (; element && element.nodeType == 1; element = element.parentNode) {
@@ -487,6 +418,76 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
             }catch(err){
                 console.log('==Error 7: '+err.message);
                 return null;
+            }
+        }
+
+        function returnParentElement( propertyObj ){
+            var attributes = propertyObj.parent_attributes, xpath = propertyObj.parent_xpath, tag = propertyObj.parent_tag, parentElement;
+            try{
+                /* if parent has `id` */
+                if(attributes['id']){
+                    parentElement = document.getElementById(attributes['id']);
+                    if(parentElement != null){
+                        return parentElement;
+                    }else{
+                        //if an id is contains a dynamically generated entity
+                        var temporary_id_container = attributes['id'];
+                        var split_id = temporary_id_container.split(/([0-9]+)/g);
+                        for(var x=0; x< split_id.length; x++){
+                            var candidateParent = document.querySelector('*[id*="'+split_id[x]+'"]');
+                            if(candidateParent)
+                                return candidateParent
+                        }
+                    }
+                }
+                /* if parent has `class` */
+                if(attributes['class']){
+                    var candidateParents = document.getElementsByClassName(attributes['class']);
+                    if(candidateParents.length > 0){
+                        for(var i=0; i< candidateParents.length; i++){
+                            var candidateParent = candidateParents[i];
+                            var candidateParent_xpath = getXPathAutoScraper(candidateParent);
+                            if(candidateParent_xpath == xpath){
+                                parentElement = candidateParent;
+                                return parentElement;
+                            }
+                        }
+                    }    
+                }
+                /* if parent has attributes other than `id` and `class` */
+                var condition_string = '';
+                for(var attribute in  attributes){
+                    condition_string += '['+attribute+'="'+attributes[attribute]+'"]';
+                }
+                if(condition_string != ''){
+                    var candidateParent = document.querySelector(tag+condition_string);
+                    if(candidateParent != null){
+                        var candidateParent_xpath = getXPathAutoScraper(candidateParent);
+                        if(candidateParent_xpath == xpath){
+                            parentElement = candidateParent;
+                            return parentElement;
+                        }else{
+                            var candidateParent_xpath2 = candidateParent_xpath.replace(/\[|\]|[1-9]+/g,'');
+                            var xpath2  = xpath.replace(/\[|\]|[1-9]+/g,'');
+                            if(candidateParent_xpath2 === xpath2){
+                                parentElement = candidateParent;
+                                return parentElement;
+                            }
+                        }
+                    }
+                    candidateParent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                    if(candidateParent != null)
+                        parentElement = candidateParent;
+                }else{
+                    var candidateParent = document.evaluate(xpath, document, null, 9, null).singleNodeValue;
+                    if(candidateParent && candidateParent.tagName === tag.toUpperCase()){
+                        return candidateParent;
+                    }
+                }
+                return parentElement;
+            }catch(err){
+                console.log('==Error 6: '+err.message);
+                return parentElement;
             }
         }
     }
