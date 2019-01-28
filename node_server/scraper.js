@@ -15,8 +15,7 @@ var url_list_array = [];
 const thread_count = config.thread_count;
 var host_slug = '';         //'www_youtube_com'
 var source = '';            //'Youtube'
-var site_config, replace = '(.)+' + config.root_port + '\/';
-var imgUrlRegExpObj = new RegExp(replace, "g");  // object of regular expression  "(.)+<port number>\\/"
+var site_config;
 var puppeteer_enabled = 0;
 
 if (parsing_mode == 'databasemode') {
@@ -215,6 +214,11 @@ async function run()
 
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
                         // get details from html (parse html)
+
+                        // await page.on('console', msg => {
+                        //         console.log(msg);
+                        //  });
+                                                 
                         let scraped_data = await page.evaluate(startHTMLParsing,site_config,'',puppeteer_enabled);
                         //console.log(scraped_data);
                         if(JSON.stringify(scraped_data) != '{}') {
@@ -377,9 +381,21 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
         }
 
         function mapConfigSelectElementMapping( candidateElement ){
-            var res_ = candidateElement.src? candidateElement.src.replace(imgUrlRegExpObj, ''): candidateElement.textContent? candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : candidateElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2')
+            // var replace = '(.)+' + config.root_port + '\/';
+            // var imgUrlRegExpObj = new RegExp(replace, "g");  // object of regular expression  "(.)+<port number>\\/"
+            // var res_ = candidateElement.src? candidateElement.src.replace(imgUrlRegExpObj, ''): candidateElement.textContent? candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : candidateElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2')
             // console.log( res_ );
-            return ( res_ );
+            if ( candidateElement.tagName.toLowerCase() === 'img' ){
+               return candidateElement.getAttribute('src');
+            }
+
+            // else if( candidateElement === 'a' ){
+            //    return element.getAttribute('href');
+            // }
+
+            else {
+               return candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
+            }
         }
 
         /* to extract and create a list of the element's attributes */
