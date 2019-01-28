@@ -266,7 +266,7 @@ async function run()
 
 async function startHTMLParsing(site_config,html,puppeteer_enabled) 
 {   
-    // fileSystem.writeFile(path.join(__dirname, 'storage/site_output/html_me.txt'), html, function (err) { if (err) throw err; });
+    // fileSystem.writeFile(path.join(__dirname, 'storage/site_output/html.txt'), html, function (err) { if (err) throw err; });
     if(!puppeteer_enabled){
         try{
             var dom = new JSDOM(html);
@@ -295,6 +295,7 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
                     var html = document.documentElement.innerHTML;
                     var jsResult_ = eval('try {' + obj.code_to_inject + '}catch(err) {err.message}');
                     if( jsResult_ ){
+                        // console.log('order - 0');
                         scraped_data[ propertyName ] = jsResult_ ;
                     }
                 }
@@ -303,7 +304,8 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
                         var candidateElement =  document.getElementById( obj.attributes['id'] );
                         if( candidateElement && candidateElement.tagName.toLowerCase() == obj.tag.toLowerCase()){
                             // console.log('key - ',obj.key);
-                            propertyValue_ = mapConfigSelectElementMapping( candidateElement );
+                            // console.log('order - 1');
+                            propertyValue_ = mapConfigSelectElementMapping( candidateElement, obj );
                         }
                     }
                     if ( propertyValue_ ){
@@ -313,7 +315,7 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
                     else{
                         propertyValue_ = mapConfigSelectElementCheck( obj );
                         if ( propertyValue_ )
-                        scraped_data[ propertyName ] = propertyValue_ ;
+                            scraped_data[ propertyName ] = propertyValue_ ;
                     }
                 }
             }
@@ -333,12 +335,15 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
                     condition_string += '[' + attribute+'="' + candidateElementAttrs[attribute] + '"]';
             }
             if( condition_string != '' ){
+                // console.log('1 - candidateElements - ', propertyObj.key);
                 var candidateElements  = document.querySelectorAll( propertyObj.tag + condition_string + '');
                 var candidateParent    = returnParentElement( propertyObj );
                 if( candidateElements.length >= 1 ){
+                    // console.log('1 - 2 - candidateElements - ', propertyObj.key);
                     for( var x = 0 ; x < candidateElements.length; x++ ){
                         if( candidateElements[x].parentElement === candidateParent  && candidateElements[x] != null ){
-                            propertyValue_ = mapConfigSelectElementMapping( candidateElements[x] );
+                            // console.log('order - 2');
+                            propertyValue_ = mapConfigSelectElementMapping( candidateElements[x], propertyObj );
                             // console.log('propertyValue_ - ',propertyValue_);
                             break;
                         }
@@ -347,9 +352,11 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
             }
 
             // case 2 xpath of target element
-            else if( propertyValue_ == '' ){
+            if( propertyValue_ == '' ){
+                // console.log('2 - candidateElements - ', propertyObj.key);
                 candidateElement = document.evaluate( propertyObj.xpath, document, null, 9, null).singleNodeValue;
                 if ( candidateElement ) {
+                    // console.log('2 - 1 - candidateElements - ', propertyObj.key);
                     var candidateElementAttr = getAttr( candidateElement );
                     var candidateElementParentAttr = getAttr( candidateElement.parentElement );
                     var ms = false, ms_candidateElementAttrClass = true, ms_candidateElementParentAttrId = true, ms_candidateElementParentAttrClass = true;
@@ -373,19 +380,22 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
                         }
                     }
                     if ( ms &&  ms_candidateElementAttrClass &&  ms_candidateElementParentAttrId && ms_candidateElementParentAttrClass){
-                        propertyValue_ = mapConfigSelectElementMapping( candidateElement );
+                        // console.log('order - 3');
+                        propertyValue_ = mapConfigSelectElementMapping( candidateElement, propertyObj );
                     }
                 }
             }
             return propertyValue_;
         }
 
-        function mapConfigSelectElementMapping( candidateElement ){
+        function mapConfigSelectElementMapping( candidateElement, propertyObj ){
             // var replace = '(.)+' + config.root_port + '\/';
             // var imgUrlRegExpObj = new RegExp(replace, "g");  // object of regular expression  "(.)+<port number>\\/"
             // var res_ = candidateElement.src? candidateElement.src.replace(imgUrlRegExpObj, ''): candidateElement.textContent? candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : candidateElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2')
             // console.log( res_ );
+            // console.log( '1 - propertyObj - ', propertyObj.key);
             if ( candidateElement.tagName.toLowerCase() === 'img' ){
+                // console.log( '2 - propertyObj - ', propertyObj.key);
                return candidateElement.getAttribute('src');
             }
 
@@ -394,7 +404,8 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
             // }
 
             else {
-               return candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
+                // console.log( '3 - propertyObj - ', propertyObj.key);
+                return candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
             }
         }
 
