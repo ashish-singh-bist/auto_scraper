@@ -53,7 +53,6 @@ app.set("view engine","pug");
     //  done: false,
     //  success: false
     // };
-    var inject_code_flag = false;
     
     var HTTP_PREFIX     = "http://";
     var HTTPS_PREFIX    = "https://";
@@ -180,12 +179,6 @@ app.set("view engine","pug");
 
         const {headers, url, method} = req;
         const {config, host, uid, analyze}  = req.query;
-
-        if(config){
-            inject_code_flag = true;
-        }else{
-            inject_code_flag = false;
-        }
 
         if(analyze){
             jsonArrayFromGET = [];
@@ -417,7 +410,6 @@ app.set("view engine","pug");
                 // console.log(options['url']);
                 // console.log(String(response.headers['content-type']));
                 // console.log(body.toString().length);
-                // console.log(inject_code_flag)
                 // console.log('++++++++++++++++++++++++++++++++++++>\n');
                 final_url = response.request.uri.href;
         
@@ -457,13 +449,14 @@ app.set("view engine","pug");
                     jsonArrayFromGET_Item['REQ_headers']    = response.request.headers;
                     jsonArrayFromGET_Item['RES_headers']    = response.headers;
                 
-                if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 && inject_code_flag){
+                if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 ){
                     // console.log('++++++++++++++++++++++++++++++++++++>');
                     // console.log(options['url']);
                     // console.log('++++++++++++++++++++++++++++++++++++>\n');
 
                     var $ = cheerio.load(body);
-
+                    var splitArray = final_url.split('/');
+                    var actualHostUrl = splitArray[0] + '//' + splitArray[2];
                     //#================================================================
                     //  1.  get all the elements with `href` or `data-href` attribute OR elements with script, style tags
                     //  2.  check if they belong to IGNORE_PREFIXES category
@@ -474,25 +467,26 @@ app.set("view engine","pug");
                     //#================================================================SCRIPT
                     $("script").each(function(){
                         if( $(this).attr('src') && $(this).attr('src') !== ''){
-                            var value = $(this).attr('src');
-
+                            var value = $(this).attr('src'), new_value;
                             if(!value && starts_with(value, 'javascript:')){
                                 return;
                             };
-
-                            var new_value;
-
                             if(starts_with(value, REL_PREFIX)){
                                 new_value = new_url + 'https:'+value;
                                 $(this).attr('src', new_value);
                                 return ;
                             }
-
                             if(starts_with(value, VALID_PREFIXES)){
                                 new_value = new_url + value;
                                 $(this).attr('src', new_value);
                                 return;
                             };
+                            if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
+                                new_value = new_url + actualHostUrl + value;
+                                $(this).attr('href', new_value);
+                                // console.log('4.3 href - ' + $(this).attr('href'));
+                                return ;
+                            }
                         }
                     });
 
@@ -519,32 +513,25 @@ app.set("view engine","pug");
                         $(this).html(new_text);
                     })
 
-                    function rewrite_style(value)
-                    {
+                    function rewrite_style(value){
                         var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
-
                         var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
-
                         function style_replacer(match, n1, n2, n3, offset, string) {
                             if(rewrite_url(n2))
                                 return n1 + rewrite_url(n2) + n3;
                             else
                                 return match + new_url
                         }
-
                         if (!value) {
                             return value;
                         }
-
                         if (typeof(value) === "object") {
                             value = value.toString();
                         }
-
                         if (typeof(value) === "string") {
                             value = value.replace(STYLE_REGEX, style_replacer);
                             value = value.replace(IMPORT_REGEX, style_replacer);
                         }
-
                         return value;
                     }
 
@@ -571,20 +558,15 @@ app.set("view engine","pug");
                     //#================================================================IFRAME
                     $("iframe").each(function(){
                         if( $(this).attr('src') && $(this).attr('src') !== ''){
-                            var value = $(this).attr('src');
-
+                            var value = $(this).attr('src'), new_value;
                             if(!value && starts_with(value, 'javascript:')){
                                 return;
                             };
-
-                            var new_value;
-
                             if(starts_with(value, REL_PREFIX)){
                                 new_value = new_url + 'https:'+value;
                                 $(this).attr('src', new_value);
                                 return;
                             }
-
                             if(starts_with(value, VALID_PREFIXES)){
                                 new_value = new_url + value;
                                 $(this).attr('src', new_value);
@@ -617,24 +599,46 @@ app.set("view engine","pug");
                     // })
                     //#================================================================
 
-                    //#================================================================DATA HREF
-                    $("*[data-href]").each(function(){
-                        var link = $(this).attr('data-href');
-
+                    //#================================================================HREF
+                    $("link").each(function(){
+                        var link = $(this).attr('href'), new_link;
                         if(!link.match(new_url)){
-
                             if(starts_with(link, IGNORE_PREFIXES)){
                                 return ;
                             }
-
                             if(starts_with(link, REL_PREFIX) ){
-                                var new_link = new_url + 'https:' + link;
+                                new_link = new_url + 'https:' + link;
+                                $(this).attr('href', new_link);
+                                return ;
+                            }
+                            if(starts_with(link, VALID_PREFIXES)){
+                                new_link = new_url + link;
+                                $(this).attr('href', new_link);
+                                return ;
+                            }
+                            if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
+                                new_link = new_url + actualHostUrl + link;
+                                $(this).attr('href', new_link);
+                                return ;
+                            }
+                        }
+                    })
+                    //#================================================================
+
+                    //#================================================================DATA HREF
+                    $("*[data-href]").each(function(){
+                        var link = $(this).attr('data-href'), new_link;
+                        if(!link.match(new_url)){
+                            if(starts_with(link, IGNORE_PREFIXES)){
+                                return ;
+                            }
+                            if(starts_with(link, REL_PREFIX) ){
+                                new_link = new_url + 'https:' + link;
                                 $(this).attr('data-href', new_link);
                                 return ;
                             }
-
                             if(starts_with(link, VALID_PREFIXES)){
-                                var new_link = new_url + link;
+                                new_link = new_url + link;
                                 $(this).attr('data-href', new_link);
                                 return ;
                             }
@@ -786,6 +790,19 @@ app.set("view engine","pug");
                     //#================================================================
                     
                 }else {
+                    var responseRequestUriHref =response.request.uri.href
+                    if (  responseRequestUriHref.match('.js')) {
+                        console.log('\n\n\n---- URL ----- '+response.request.uri.href);
+                        // console.log('---- 1. Body ----- '+body);
+                        // body = '';
+                        body = body.toString();
+                        body = body.replace(/location/g,'_temp');
+                        // body = body.replace(/document\.location/g,'__temp');
+
+                        // console.log('\n\n---- 2. Body ----- '+body);
+                    }
+                    // body = body.toString();
+                    // body = body.replace(/window\.location/g,'_temp');
 
                     if(String(response.headers['content-type']).indexOf('application/json') !== -1){
                         if (body) {

@@ -120,13 +120,22 @@ function myFunction(){
     }
 
     function mapConfigSelectElementMapping( targetElement, propertyObj ){
-        var value = targetElement.src? targetElement.src.replace(imgUrlRegExpObj, ''): targetElement.textContent? targetElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : targetElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
+        var value = '';
+        if( targetElement.src )
+            value = targetElement.src.replace(imgUrlRegExpObj, '');
+        else if( targetElement.textContent )
+            value = targetElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim()
+        else if( targetElement.value )
+            value = targetElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
+
         var lable = propertyObj.key.toLowerCase()
         targetElement.classList.add('option-selected');
         targetElement.setAttribute('labelkey', lable);
         $('.panel-table-div').show();
         $('#selected_props_list_tbody').append('<tr class="'+lable+'_tr"><td><span class="del_prop_btn" key="'+lable+'" path="'+propertyObj.xpath+'" title="Remove this item">×</span></td><td>'+lable+'</td><td>'+value+'</td></tr>');
-        return value;
+        if ( value )
+            return value;
+        return '-';
     }
     /* to calculate xpath of a given element */
     function getXPathAutoScraper(element) {
@@ -147,8 +156,8 @@ function myFunction(){
         return paths.length ? "/" + paths.join("/"): null;
     }
 
-    $('#config_page').contents().find('head').append( '<style> .option-selected, .option-selected:hover { box-shadow: 0px 0px 0px 3px #529c56 inset !important; cursor: default; } .hover-selected{ box-shadow: 0px 0px 0px 1px #e42a78 inset !important;} </style>' );
-    $('#config_page').contents().find('body').bind("click", clickevent);
+    $('#config_page').contents().find('head').append( '<style> .option-selected, .option-selected:hover { box-shadow: 0px 0px 0px 3px #529c56 inset !important; cursor: default; } .hover-selected{ box-shadow: 0px 0px 0px 1px #e42a78 inset !important;}body{ display: block !important; opacity: 1 !important; visibility: visible !important; } </style>' );
+    // $('#config_page').contents().find('body').bind("click", clickevent);
     $('#config_page').contents().find('body').bind("contextmenu", rightclickevent);
 
     $('#config_page').contents().find('*').mouseover(function(event){

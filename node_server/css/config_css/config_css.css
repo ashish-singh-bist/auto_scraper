@@ -19,6 +19,13 @@
     height: 100vh !important;
     min-height: 100vh !important;
 }
+.content {
+    min-height: 250px;
+    padding: 0 15px 0 15px;
+    margin-right: auto;
+    margin-left: auto;
+    height: 100vh;
+}
 /* over the layout of AdminLTE */
 table tbody{
 	word-wrap: break-word;
@@ -47,9 +54,12 @@ table tbody{
     background-color: rgba(255,255,255,0.5);
 }
 .box-body-loader,
-#property_builder_advance_code,
-.page-loading .box-body-container{
+#property_builder_advance_code{
     display: none;
+}
+.page-loading .box-body-container{
+    opacity: 0;
+    visibility: hidden;
 }
 .highlight-rec{
     background-color: yellow;
@@ -58,7 +68,7 @@ table tbody{
 .config-page {
     border: 0;
     width: 100%;
-    height: calc(100vh - 110px);
+    height: calc(100vh - 5px);
 }
 .mb-0{ margin-bottom: 0 !important; }
 .mr-10{ margin-right: 10px !important; }
