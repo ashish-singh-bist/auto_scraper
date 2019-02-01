@@ -157,7 +157,7 @@ function myFunction(){
     }
 
     $('#config_page').contents().find('head').append( '<style> .option-selected, .option-selected:hover { box-shadow: 0px 0px 0px 3px #529c56 inset !important; cursor: default; } .hover-selected{ box-shadow: 0px 0px 0px 1px #e42a78 inset !important;}body{ display: block !important; opacity: 1 !important; visibility: visible !important; } </style>' );
-    // $('#config_page').contents().find('body').bind("click", clickevent);
+    $('#config_page').contents().find('body').bind("click", clickevent);
     $('#config_page').contents().find('body').bind("contextmenu", rightclickevent);
 
     $('#config_page').contents().find('*').mouseover(function(event){
