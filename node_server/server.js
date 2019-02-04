@@ -337,8 +337,8 @@ app.set("view engine","pug");
     }
 //#================================================================GET REQUEST HANDLER
     async function sendRequest(req, res, host, uid, options, config, new_url, analyze){
-        var headers, obj;
-        var final_url = '';
+        var headers, obj, finalUrl = '', html = '', response = '', actualHostUrl = '', splitArray = '' ;
+        var $;
         //======================for the redirect urls=========================
         function redirectOn302(body, response, resolveWithFullResponse) {
             console.log('Calling function redirectOn302');
@@ -382,89 +382,108 @@ app.set("view engine","pug");
         }
         //======================================================================
 
-        if(options['url'].indexOf('https') === -1){
-            options['url'] = options['url'].replace('http', 'https')
-        }
+        if(options['url'].indexOf('https') === -1)
+            options['url'] = options['url'].replace('http', 'https');
 
-        if(options['url'].match(/\/\/\//)){
-            options['url'] = options['url'].replace(/\/\/\//, '//')
-        }
+        if(options['url'].match(/\/\/\//))
+            options['url'] = options['url'].replace(/\/\/\//, '//');
 
-        if(options['url'].startsWith(REL_PREFIX)){
-            options['url'] = 'https:' + options['url']
-        }
+        if(options['url'].startsWith(REL_PREFIX))
+            options['url'] = 'https:' + options['url'];
 
         //options['proxy'] = 'http://207.180.240.16:3128';        
-             
         options['resolveWithFullResponse'] = true;
-        
-        //options['proxy'] = 'http://doug:vgK4PbpY@172.84.85.127:60099';
         options['transform'] = redirectOn302;
         
-        request(options, function(error, response, body){            
+        (async () => {
+            try {
+                await request(options, function(error, response, body){
+                    html = '';
+
+                    if (!error && response.statusCode == 200) {
+                        finalUrl = response.request.uri.href;
+                        splitArray = finalUrl.split('/');
+                        actualHostUrl = splitArray[0] + '//' + splitArray[2];
+                        //#================================================================RESPONSE HEADERS
+                        headers = response.headers;
+
+                        delete headers['content-length'];   //since we're going to manipulate the response content
+                        delete headers['content-security-policy'];
+                        res.writeHead(200, headers);
+                        //#================================================================
+
+                        var jsonArrayFromGET_Item = { uri: {}, };
+                        jsonArrayFromGET_Item['uri']['protocol'] = response.request.uri.protocol;
+                        jsonArrayFromGET_Item['uri']['auth']     = response.request.uri.auth;
+                        jsonArrayFromGET_Item['uri']['hostname'] = response.request.uri.hostname;
+                        jsonArrayFromGET_Item['uri']['port']     = response.request.uri.port;
+                        jsonArrayFromGET_Item['uri']['query']    = response.request.uri.query;
+                        jsonArrayFromGET_Item['uri']['pathname'] = response.request.uri.pathname;
+                        jsonArrayFromGET_Item['uri']['path']     = response.request.uri.path;
+                        jsonArrayFromGET_Item['uri']['href']     = response.request.uri.href;
+
+                        jsonArrayFromGET_Item['REQ_headers']     = response.request.headers;
+                        jsonArrayFromGET_Item['RES_headers']     = response.headers;
+                        
+                        if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 ){
+                            $ = cheerio.load(body);
+                            jsonArrayFromGET_Item['RES_body']    = body.toString();
+                            jsonArrayFromGET_Item['method']      = response.request.method;
+                            jsonArrayFromGET.push(jsonArrayFromGET_Item);
+                            html = body;
+                            // res.end( body );
+                        }
+                        else{
+                            var responseRequestUriHref =response.request.uri.href
+                            if (  responseRequestUriHref.match('.js')) {
+                                console.log('\n\n\n---- URL ----- '+response.request.uri.href);
+                                // console.log('---- 1. Body ----- '+body);
+                                // body = '';
+                                body = body.toString();
+                                body = body.replace(/location/g,'_temp');
+                                // body = body.replace(/document\.location/g,'__temp');
+
+                                // console.log('\n\n---- 2. Body ----- '+body);
+                            }
+                            // body = body.toString();
+                            // body = body.replace(/window\.location/g,'_temp');
+
+                            if(String(response.headers['content-type']).indexOf('application/json') !== -1){
+                                if (body) {
+                                    try{
+                                        jsonArrayFromGET_Item['RES_body']   = JSON.parse(body.toString());
+                                    }
+                                    catch(e){
+                                        jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
+                                    }    
+                                }
+                                else{
+                                    jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
+                                }
+                                
+                                jsonArrayFromGET_Item['method']         = response.request.method;
+                                jsonArrayFromGET.push(jsonArrayFromGET_Item);
+
+                            }else{
+                                jsonArrayFromGET_Item['method']         = response.request.method;
+
+                                jsonArrayFromGET.push(jsonArrayFromGET_Item);
+                            }
+
+                            res.end(body);
+                        }
+                    }else{
+                        console.log('----- response.statusCode - '+response.statusCode);
+                        console.log('----- response.request.uri.href - '+response.request.uri.href);
+                        res.send('<html class="avoid-ele"><head><style>.text-wrapper{height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;}.title-ops{font-size: 4em; color: #EE4B5E;}.title{font-size: 5em; color: #EE4B5E;}.subtitle{font-size: 40px; color: #1FA9D6;}</style></head><body class="avoid-ele"><div class="text-wrapper avoid-ele"> <div class="title-ops avoid-ele">Oops!</div><div class="title avoid-ele" data-content="404"> 404 Not Found</div><div class="subtitle"> Oops, the page you are looking for does not exist. </div></div></body></html>');
+                    }
+                });
+            }catch( err ){
+                res.send('<h1 class="avoid-ele">Responce error </h1>');
+            }
+
             
-            //console.log('2 : statusCode======='+response.statusCode);
-
-            if (!error && response.statusCode == 200) {            
-                // console.log('++++++++++++++++++++++++++++++++++++>');
-                // console.log(options['url']);
-                // console.log(String(response.headers['content-type']));
-                // console.log(body.toString().length);
-                // console.log('++++++++++++++++++++++++++++++++++++>\n');
-                final_url = response.request.uri.href;
-        
-                //#================================================================RESPONSE HEADERS
-                headers = response.headers;
-                delete headers['content-length'];   //since we're going to manipulate the response content
-
-                //checking if headers do not contain invalid characters (like \u0001)
-                //this was included while parsing `https://www.hobbylobby.com/Home-Decor-Frames/Candles-Fragrance/Warmers-Wax-Melts/Pomegranate-Sorbet-Wickless-Fragrance-Cubes/p/80869733`
-                
-
-
-                //commenting below code because it stop to send header in response 200 ObjectObject
-                // if(header.validHeaderName(headers) === false){
-                //     headers = header.cleanHeaderName(headers);
-                // }
-
-                // if(header.validHeaderValue(headers) === false){
-                //     headers = header.cleanHeaderValue(headers);
-                // }
-
-                res.writeHead(200, headers);
-                //#================================================================
-
-                var jsonArrayFromGET_Item = {
-                        uri: {},
-                    };
-                    jsonArrayFromGET_Item['uri']['protocol']= response.request.uri.protocol;
-                    jsonArrayFromGET_Item['uri']['auth']    = response.request.uri.auth;
-                    jsonArrayFromGET_Item['uri']['hostname']= response.request.uri.hostname;
-                    jsonArrayFromGET_Item['uri']['port']    = response.request.uri.port;
-                    jsonArrayFromGET_Item['uri']['query']   = response.request.uri.query;
-                    jsonArrayFromGET_Item['uri']['pathname']= response.request.uri.pathname;
-                    jsonArrayFromGET_Item['uri']['path']    = response.request.uri.path;
-                    jsonArrayFromGET_Item['uri']['href']    = response.request.uri.href;
-
-                    jsonArrayFromGET_Item['REQ_headers']    = response.request.headers;
-                    jsonArrayFromGET_Item['RES_headers']    = response.headers;
-                
-                if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 ){
-                    // console.log('++++++++++++++++++++++++++++++++++++>');
-                    // console.log(options['url']);
-                    // console.log('++++++++++++++++++++++++++++++++++++>\n');
-
-                    var $ = cheerio.load(body);
-                    var splitArray = final_url.split('/');
-                    var actualHostUrl = splitArray[0] + '//' + splitArray[2];
-                    //#================================================================
-                    //  1.  get all the elements with `href` or `data-href` attribute OR elements with script, style tags
-                    //  2.  check if they belong to IGNORE_PREFIXES category
-                    //      2.a. if yes, don't modify it
-                    //      2.b. if no, add the reqired prefix
-                    //#================================================================
-
-                    //#================================================================SCRIPT
+                if ( html ) {
                     $("script").each(function(){
                         if( $(this).attr('src') && $(this).attr('src') !== ''){
                             var value = $(this).attr('src'), new_value;
@@ -574,29 +593,6 @@ app.set("view engine","pug");
                             };
                         }
                     });
-                    // //#================================================================
-
-                    //#================================================================HREF
-                    // $("*[href]").each(function(){
-                    //     var link = $(this).attr('href');
-                    //     if(!link.match(new_url)){
-                    //         if(starts_with(link, IGNORE_PREFIXES)){
-                    //             return ;
-                    //         }
-
-                    //         if(starts_with(link, REL_PREFIX) ){
-                    //             var new_link = new_url + 'https:' + link;
-                    //             $(this).attr('href', new_link);
-                    //             return ;
-                    //         }
-
-                    //         if(starts_with(link, VALID_PREFIXES)){
-                    //             var new_link = new_url + link;
-                    //             $(this).attr('href', new_link);
-                    //             return ;
-                    //         }
-                    //     }
-                    // })
                     //#================================================================
 
                     //#================================================================HREF
@@ -623,6 +619,7 @@ app.set("view engine","pug");
                             }
                         }
                     })
+
                     //#================================================================
 
                     //#================================================================DATA HREF
@@ -690,23 +687,14 @@ app.set("view engine","pug");
                                         }
                                     }
                                 });
-
-                                // if (fileSystem.existsSync(path.join(__dirname, 'storage/site_config/'+redirect_host.replace(/\./g, '_')+'_'+uid+'.json'))) {
-                                //     redirect_config= 'true';
-                                // }else{
-                                //     redirect_config = 'false';
-                                // }
-
                                 if(analyze === true){
                                     let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
                                     $(this).attr('content', url);
                                 }else{
                                     let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
                                     $(this).attr('content', url);
-                                }
-                                
+                                }                          
                             }
-                            
                         }
 
                         if($(this).attr('name') && $(this).attr('name') === 'referrer'){
@@ -717,127 +705,9 @@ app.set("view engine","pug");
                             $(this).attr('content', '_content')
                         }
                     })
-                    //#================================================================
-
-                    //#================================================================INJECT JS CODE
-                    //to disable link clicking on page
-                    // var scriptNode = '<script>window.setTimeout(function(){document.querySelectorAll("a").forEach((tag) => { if(tag.href)tag.addEventListener("click", e => {e.preventDefault(); e.stopPropagation()})});}, 5000);</script>' 
-                    // $('body').append(scriptNode);
-                    // $('body').attr('id', 'enable_right_click');
-                    //#================================================================
-
-                    //add actual url for site-config file name
-                    // $('body').attr('actual_url', final_url);
-
-                    //#================================================================INJECT CSS CODE
-                    //for hover/selection border, and css for menu
-                    // var customcss = '<link href="http://'+use_ip+'/css/from-the-page.css" rel="stylesheet">';
-                    // $('head').append(customcss);
-                    //#================================================================
-
-                    //#================================================================INJECT HTML CODE
-                    // $('body').append('<script src="http://'+use_ip+'/js/script_inject_html_code.js">');
-                    //#================================================================
-
-                    //#================================================================INJECT JS CODE
-                    // var customjs = '<script src="http://'+use_ip+'/js/script.js" ></script><script src="http://'+use_ip+'/js/jquery-3.3.1.min.js" ></script><script src="http://'+use_ip+'/js/jquery-ui.min.js" ></script><script src="http://'+use_ip+'/js/bootstrap.min.js" ></script><script src="http://'+use_ip+'/config/config.js" ></script>' 
-                    // $('body').append(customjs);
-                    //#================================================================
-
-                    //#================================================================INJECT ANALYZE FLAG
-                    // var flagDiv = '<div id="rtech_analyze" style="display:none;">'+analyze+'</div>';
-                    // $('body').append(flagDiv);
-                    //#================================================================
-                    // if(analyze == true){
-                    //     var loaderDiv = ' <div class="loader_analyze"></div>'
-                    //     $('body').append(loaderDiv);
-                    // }
-
-                    jsonArrayFromGET_Item['RES_body']   = body.toString();
-                    jsonArrayFromGET_Item['method']         = response.request.method;
-
-                    jsonArrayFromGET.push(jsonArrayFromGET_Item);
-
-                    // console.log('=======================================>');
-                    // console.log($.html());
-                    // console.log('=======================================>\n');
-
-                    //#================================================================CONFIG
-                    if(config === 'true'){
-                        //console.log("connection");
-                        connection.query("select config from config_list where user_id= ? and config_name = ?", [uid, host], function (err, results, fields) {
-                            //if (error) throw error
-                            //console.log("config");
-                            if (err){ 
-                                console.log('==Error 12: '+err);
-                            }else{
-                                if(results.length){
-                                    //console.log("config retrive" + results[0].config);
-                                    var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+results[0].config+'</script>';
-                                    $('body').append(scriptNodeWithJson);
-                                }
-                                res.end($.html());
-                            }
-                        });
-
-                        // no need to this code now we are using db to store config
-                        // obj = fileSystem.readFileSync(path.join(__dirname,'storage/site_config/'+host+'_'+uid+'.json'), 'utf8');
-                        // var scriptNodeWithJson = '<script id="scriptNodeWithJson">'+obj+'</script>';
-                        // $('body').append(scriptNodeWithJson);
-                    }else{
-                        res.end($.html());
-                    }
-                    //#================================================================
-                    
-                }else {
-                    var responseRequestUriHref =response.request.uri.href
-                    if (  responseRequestUriHref.match('.js')) {
-                        console.log('\n\n\n---- URL ----- '+response.request.uri.href);
-                        // console.log('---- 1. Body ----- '+body);
-                        // body = '';
-                        body = body.toString();
-                        body = body.replace(/location/g,'_temp');
-                        // body = body.replace(/document\.location/g,'__temp');
-
-                        // console.log('\n\n---- 2. Body ----- '+body);
-                    }
-                    // body = body.toString();
-                    // body = body.replace(/window\.location/g,'_temp');
-
-                    if(String(response.headers['content-type']).indexOf('application/json') !== -1){
-                        if (body) {
-                            try{
-                                jsonArrayFromGET_Item['RES_body']   = JSON.parse(body.toString());
-                            }
-                            catch(e){
-                                jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
-                            }    
-                        }
-                        else{
-                            jsonArrayFromGET_Item['RES_body']    = JSON.parse('{"responseContext": {}}');
-                        }
-                        
-                        jsonArrayFromGET_Item['method']         = response.request.method;
-                        jsonArrayFromGET.push(jsonArrayFromGET_Item);
-
-                    }else{
-                        jsonArrayFromGET_Item['method']         = response.request.method;
-
-                        jsonArrayFromGET.push(jsonArrayFromGET_Item);
-                    }
-
-                    res.end(body);
-                }
-                
-            }else{
-                console.log('----- response.statusCode - '+response.statusCode);
-                console.log('----- response.request.uri.href - '+response.request.uri.href);
-
-                // res.send({status: 500, error: error.reason});
-                res.send('<html class="avoid-ele"><head><style>.text-wrapper{height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;}.title-ops{font-size: 4em; color: #EE4B5E;}.title{font-size: 5em; color: #EE4B5E;}.subtitle{font-size: 40px; color: #1FA9D6;}</style></head><body class="avoid-ele"><div class="text-wrapper avoid-ele"> <div class="title-ops avoid-ele">Oops!</div><div class="title avoid-ele" data-content="404"> 404 Not Found</div><div class="subtitle"> Oops, the page you are looking for does not exist. </div></div></body></html>');
-
-            }
-        });
+                    res.end($.html());
+                }            
+        })();
     }
 
     
