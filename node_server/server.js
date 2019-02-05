@@ -473,240 +473,236 @@ app.set("view engine","pug");
                             res.end(body);
                         }
                     }else{
-                        console.log('----- response.statusCode - '+response.statusCode);
-                        console.log('----- response.request.uri.href - '+response.request.uri.href);
+                        // console.log('----- response.statusCode - '+response.statusCode);
+                        // console.log('----- response.request.uri.href - '+response.request.uri.href);
                         res.send('<html class="avoid-ele"><head><style>.text-wrapper{height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;}.title-ops{font-size: 4em; color: #EE4B5E;}.title{font-size: 5em; color: #EE4B5E;}.subtitle{font-size: 40px; color: #1FA9D6;}</style></head><body class="avoid-ele"><div class="text-wrapper avoid-ele"> <div class="title-ops avoid-ele">Oops!</div><div class="title avoid-ele" data-content="404"> 404 Not Found</div><div class="subtitle"> Oops, the page you are looking for does not exist. </div></div></body></html>');
                     }
                 });
             }catch( err ){
-                res.send('<h1 class="avoid-ele">Responce error </h1>');
+                console.log('Error - '+err);
             }
-
-            
-                if ( html ) {
-                    $("script").each(function(){
-                        if( $(this).attr('src') && $(this).attr('src') !== ''){
-                            var value = $(this).attr('src'), new_value;
-                            if(!value && starts_with(value, 'javascript:')){
-                                return;
-                            };
-                            if(starts_with(value, REL_PREFIX)){
-                                new_value = new_url + 'https:'+value;
-                                $(this).attr('src', new_value);
-                                return ;
-                            }
-                            if(starts_with(value, VALID_PREFIXES)){
-                                new_value = new_url + value;
-                                $(this).attr('src', new_value);
-                                return;
-                            };
-                            if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
-                                new_value = new_url + actualHostUrl + value;
-                                $(this).attr('href', new_value);
-                                // console.log('4.3 href - ' + $(this).attr('href'));
-                                return ;
-                            }
+            // if html variable contains the page data
+            if ( html ) {
+                $("script").each(function(){
+                    if( $(this).attr('src') && $(this).attr('src') !== ''){
+                        var value = $(this).attr('src'), new_value;
+                        if(!value && starts_with(value, 'javascript:')){
+                            return;
                         }
-                    });
-
-                    function starts_with(string, arr_or_prefix) {
-                        if (!string) { return undefined; }
-
-                        if (arr_or_prefix instanceof Array) {
-                            for (var i = 0; i < arr_or_prefix.length; i++) {
-                                if (string.indexOf(arr_or_prefix[i]) == 0) {
-                                    return arr_or_prefix[i];
-                                }
-                            }
-                        } else if (string.indexOf(arr_or_prefix) == 0) {
-                            return arr_or_prefix;
+                        if(starts_with(value, REL_PREFIX)){
+                            new_value = new_url + 'https:'+value;
+                            $(this).attr('src', new_value);
+                            return;
                         }
-
-                        return undefined;
+                        if(starts_with(value, VALID_PREFIXES)){
+                            new_value = new_url + value;
+                            $(this).attr('src', new_value);
+                            return;
+                        }
+                        if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
+                            new_value = new_url + actualHostUrl + value;
+                            $(this).attr('href', new_value);
+                            return;
+                        }
                     }
-                    // //#================================================================
+                });
 
-                    // //#================================================================STYLE
-                    $("style").each(function(){
-                        var new_text = rewrite_style($(this).html());
-                        $(this).html(new_text);
-                    })
+                function starts_with(string, arr_or_prefix) {
+                    if (!string) { return undefined; }
 
-                    function rewrite_style(value){
-                        var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
-                        var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
-                        function style_replacer(match, n1, n2, n3, offset, string) {
-                            if(rewrite_url(n2))
-                                return n1 + rewrite_url(n2) + n3;
-                            else
-                                return match + new_url
+                    if (arr_or_prefix instanceof Array) {
+                        for (var i = 0; i < arr_or_prefix.length; i++) {
+                            if (string.indexOf(arr_or_prefix[i]) == 0) {
+                                return arr_or_prefix[i];
+                            }
                         }
-                        if (!value) {
-                            return value;
-                        }
-                        if (typeof(value) === "object") {
-                            value = value.toString();
-                        }
-                        if (typeof(value) === "string") {
-                            value = value.replace(STYLE_REGEX, style_replacer);
-                            value = value.replace(IMPORT_REGEX, style_replacer);
-                        }
+                    } else if (string.indexOf(arr_or_prefix) == 0) {
+                        return arr_or_prefix;
+                    }
+
+                    return undefined;
+                }
+                // //#================================================================
+
+                // //#================================================================STYLE
+                $("style").each(function(){
+                    var new_text = rewrite_style($(this).html());
+                    $(this).html(new_text);
+                })
+
+                function rewrite_style(value){
+                    var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
+                    var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
+                    function style_replacer(match, n1, n2, n3, offset, string) {
+                        if(rewrite_url(n2))
+                            return n1 + rewrite_url(n2) + n3;
+                        else
+                            return match + new_url
+                    }
+                    if (!value) {
                         return value;
                     }
+                    if (typeof(value) === "object") {
+                        value = value.toString();
+                    }
+                    if (typeof(value) === "string") {
+                        value = value.replace(STYLE_REGEX, style_replacer);
+                        value = value.replace(IMPORT_REGEX, style_replacer);
+                    }
+                    return value;
+                }
 
-                    function rewrite_url(url){
-                        
-                        if (starts_with(url, IGNORE_PREFIXES)) {
-                            return url;
+                function rewrite_url(url){
+                    
+                    if (starts_with(url, IGNORE_PREFIXES)) {
+                        return url;
+                    }
+
+                    var new_value;
+
+                    if(starts_with(url, REL_PREFIX)){
+                        new_value = new_url + 'https:'+url;
+                        return new_value;
+                    }
+
+                    if(starts_with(url, VALID_PREFIXES)){
+                        new_value = new_url + url;
+                        return new_value;
+                    };
+                }
+                //#================================================================
+
+                //#================================================================IFRAME
+                $("iframe").each(function(){
+                    if( $(this).attr('src') && $(this).attr('src') !== ''){
+                        var value = $(this).attr('src'), new_value;
+                        if(!value && starts_with(value, 'javascript:')){
+                            return;
+                        };
+                        if(starts_with(value, REL_PREFIX)){
+                            new_value = new_url + 'https:'+value;
+                            $(this).attr('src', new_value);
+                            return;
                         }
-
-                        var new_value;
-
-                        if(starts_with(url, REL_PREFIX)){
-                            new_value = new_url + 'https:'+url;
-                            return new_value;
-                        }
-
-                        if(starts_with(url, VALID_PREFIXES)){
-                            new_value = new_url + url;
-                            return new_value;
+                        if(starts_with(value, VALID_PREFIXES)){
+                            new_value = new_url + value;
+                            $(this).attr('src', new_value);
+                            return;
                         };
                     }
-                    //#================================================================
+                });
+                //#================================================================
 
-                    //#================================================================IFRAME
-                    $("iframe").each(function(){
-                        if( $(this).attr('src') && $(this).attr('src') !== ''){
-                            var value = $(this).attr('src'), new_value;
-                            if(!value && starts_with(value, 'javascript:')){
-                                return;
-                            };
-                            if(starts_with(value, REL_PREFIX)){
-                                new_value = new_url + 'https:'+value;
-                                $(this).attr('src', new_value);
-                                return;
-                            }
-                            if(starts_with(value, VALID_PREFIXES)){
-                                new_value = new_url + value;
-                                $(this).attr('src', new_value);
-                                return;
-                            };
+                //#================================================================HREF
+                $("link").each(function(){
+                    var link = $(this).attr('href'), new_link;
+                    if(!link.match(new_url)){
+                        if(starts_with(link, IGNORE_PREFIXES)){
+                            return ;
                         }
-                    });
-                    //#================================================================
-
-                    //#================================================================HREF
-                    $("link").each(function(){
-                        var link = $(this).attr('href'), new_link;
-                        if(!link.match(new_url)){
-                            if(starts_with(link, IGNORE_PREFIXES)){
-                                return ;
-                            }
-                            if(starts_with(link, REL_PREFIX) ){
-                                new_link = new_url + 'https:' + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
-                            if(starts_with(link, VALID_PREFIXES)){
-                                new_link = new_url + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
-                            if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
-                                new_link = new_url + actualHostUrl + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
+                        if(starts_with(link, REL_PREFIX) ){
+                            new_link = new_url + 'https:' + link;
+                            $(this).attr('href', new_link);
+                            return ;
                         }
-                    })
-
-                    //#================================================================
-
-                    //#================================================================DATA HREF
-                    $("*[data-href]").each(function(){
-                        var link = $(this).attr('data-href'), new_link;
-                        if(!link.match(new_url)){
-                            if(starts_with(link, IGNORE_PREFIXES)){
-                                return ;
-                            }
-                            if(starts_with(link, REL_PREFIX) ){
-                                new_link = new_url + 'https:' + link;
-                                $(this).attr('data-href', new_link);
-                                return ;
-                            }
-                            if(starts_with(link, VALID_PREFIXES)){
-                                new_link = new_url + link;
-                                $(this).attr('data-href', new_link);
-                                return ;
-                            }
+                        if(starts_with(link, VALID_PREFIXES)){
+                            new_link = new_url + link;
+                            $(this).attr('href', new_link);
+                            return ;
                         }
-                    })
-                    //#================================================================
-
-                    //#================================================================OVERLAY
-                    $("*[class*='overlay']").each(function(){
-                        $(this).remove();
-                    })
-                    //#================================================================
-
-                    //#================================================================REMOVING LINKS FROM IMG
-                    $("img").each(function(){
-                        if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
-                            var ele = $(this)[0];
-                            var required_parent = $(this).parent().parent()[0];
-                            $(this).parent().remove();
-                            $(required_parent).append(ele);
+                        if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
+                            new_link = new_url + actualHostUrl + link;
+                            $(this).attr('href', new_link);
+                            return ;
                         }
-                    })
-                    //#================================================================
+                    }
+                })
 
-                    //#================================================================META
-                    $("meta").each(function(){
-                        if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
-                            let content = $(this).attr('content');
-                            let redirect_host = content.split('/')[2];
-                            let redirect_protocol = '';
+                //#================================================================
 
-                            if(content.indexOf('https') > -1)
-                                redirect_protocol = 'https://';
-                            else
-                                redirect_protocol = 'http://';
+                //#================================================================DATA HREF
+                $("*[data-href]").each(function(){
+                    var link = $(this).attr('data-href'), new_link;
+                    if(!link.match(new_url)){
+                        if(starts_with(link, IGNORE_PREFIXES)){
+                            return ;
+                        }
+                        if(starts_with(link, REL_PREFIX) ){
+                            new_link = new_url + 'https:' + link;
+                            $(this).attr('data-href', new_link);
+                            return ;
+                        }
+                        if(starts_with(link, VALID_PREFIXES)){
+                            new_link = new_url + link;
+                            $(this).attr('data-href', new_link);
+                            return ;
+                        }
+                    }
+                })
+                //#================================================================
 
-                            let redirect_config = 'false';
+                //#================================================================OVERLAY
+                $("*[class*='overlay']").each(function(){
+                    $(this).remove();
+                })
+                //#================================================================
 
-                            if(redirect_host){
+                //#================================================================REMOVING LINKS FROM IMG
+                $("img").each(function(){
+                    if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
+                        var ele = $(this)[0];
+                        var required_parent = $(this).parent().parent()[0];
+                        $(this).parent().remove();
+                        $(required_parent).append(ele);
+                    }
+                })
+                //#================================================================
 
-                                connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
-                                    //if (error) throw error
-                                    redirect_config = 'false';
-                                    if (err){ 
-                                        console.log('==Error 11: '+err);
-                                    }else{
-                                        if(results.length){
-                                            redirect_config= 'true';
-                                        }
-                                    }
-                                });
-                                if(analyze === true){
-                                    let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
-                                    $(this).attr('content', url);
+                //#================================================================META
+                $("meta").each(function(){
+                    if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
+                        let content = $(this).attr('content');
+                        let redirect_host = content.split('/')[2];
+                        let redirect_protocol = '';
+
+                        if(content.indexOf('https') > -1)
+                            redirect_protocol = 'https://';
+                        else
+                            redirect_protocol = 'http://';
+
+                        let redirect_config = 'false';
+
+                        if(redirect_host){
+
+                            connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
+                                //if (error) throw error
+                                redirect_config = 'false';
+                                if (err){ 
+                                    console.log('==Error 11: '+err);
                                 }else{
-                                    let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
-                                    $(this).attr('content', url);
-                                }                          
-                            }
+                                    if(results.length){
+                                        redirect_config= 'true';
+                                    }
+                                }
+                            });
+                            if(analyze === true){
+                                let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
+                                $(this).attr('content', url);
+                            }else{
+                                let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
+                                $(this).attr('content', url);
+                            }                          
                         }
-
-                        if($(this).attr('name') && $(this).attr('name') === 'referrer'){
-                            $(this).attr('content', 'no-referrer-when-downgrade')
-                        }
-
-                        if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
-                            $(this).attr('content', '_content')
-                        }
-                    })
-                    res.end($.html());
-                }            
+                    }
+                    if($(this).attr('name') && $(this).attr('name') === 'referrer'){
+                        $(this).attr('content', 'no-referrer-when-downgrade')
+                    }
+                    if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
+                        $(this).attr('content', '_content')
+                    }
+                })
+                res.end($.html());
+            }            
         })();
     }
 
