@@ -339,6 +339,7 @@ app.set("view engine","pug");
     async function sendRequest(req, res, host, uid, options, config, new_url, analyze){
         var headers, obj, finalUrl = '', html = '', response = '', actualHostUrl = '', splitArray = '' ;
         var $;
+        var allStyleArr = [], allScriptArr = [];
         //======================for the redirect urls=========================
         function redirectOn302(body, response, resolveWithFullResponse) {
             console.log('Calling function redirectOn302');
@@ -395,15 +396,28 @@ app.set("view engine","pug");
         options['resolveWithFullResponse'] = true;
         options['transform'] = redirectOn302;
         
+        function starts_with(string, arr_or_prefix) {
+            if (!string) { return undefined; }
+
+            if (arr_or_prefix instanceof Array) {
+                for (var i = 0; i < arr_or_prefix.length; i++) {
+                    if (string.indexOf(arr_or_prefix[i]) == 0) {
+                        return arr_or_prefix[i];
+                    }
+                }
+            } else if (string.indexOf(arr_or_prefix) == 0) {
+                return arr_or_prefix;
+            }
+            return undefined;
+        }
+        
+
         (async () => {
             try {
                 await request(options, function(error, response, body){
                     html = '';
 
                     if (!error && response.statusCode == 200) {
-                        finalUrl = response.request.uri.href;
-                        splitArray = finalUrl.split('/');
-                        actualHostUrl = splitArray[0] + '//' + splitArray[2];
                         //#================================================================RESPONSE HEADERS
                         headers = response.headers;
 
@@ -426,11 +440,51 @@ app.set("view engine","pug");
                         jsonArrayFromGET_Item['RES_headers']     = response.headers;
                         
                         if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 ){
+                            finalUrl = response.request.uri.href;
+                            splitArray = finalUrl.split('/');
+                            actualHostUrl = splitArray[0] + '//' + splitArray[2];
+                            console.log('-----------------------------------------');
+                            console.log('splitArray - '+splitArray);
+                            console.log('-----------------------------------------');
                             $ = cheerio.load(body);
                             jsonArrayFromGET_Item['RES_body']    = body.toString();
                             jsonArrayFromGET_Item['method']      = response.request.method;
                             jsonArrayFromGET.push(jsonArrayFromGET_Item);
                             html = body;
+
+                            $("script").each(function(){
+                                if( $(this).attr('src') && $(this).attr('src') !== ''){
+                                    var _src = $(this).attr('src');
+                                    if ( _src.match('.js') ) {
+                                        if( starts_with ( _src, REL_PREFIX ) ){
+                                            allScriptArr.push( new_url + 'https:' + _src );
+                                        }
+                                        else if( starts_with( _src, VALID_PREFIXES ) ){
+                                            allScriptArr.push( new_url + _src );
+                                        }
+                                        else if( starts_with( _src, '/') && !_src.match( actualHostUrl ) )
+                                            allScriptArr.push( actualHostUrl + _src );
+                                        $(this).remove();
+                                    }
+                                }
+                            });
+                            $("link").each(function(){
+                                if( $(this).attr('href') && $(this).attr('href') !== ''){
+                                    var _href = $(this).attr('href');
+                                    if ( _href.match('.css') ) {
+                                        if( starts_with ( _href, REL_PREFIX ) ){
+                                            allStyleArr.push( new_url + 'https:' + _href );
+                                        }
+                                        else if( starts_with( _href, VALID_PREFIXES ) ){
+                                            allStyleArr.push( new_url + _href );
+                                        }
+                                        else if( starts_with( _href, '/') && !_href.match( actualHostUrl ) )
+                                            allStyleArr.push( actualHostUrl + _href );
+                                        
+                                        $(this).remove();
+                                    }
+                                }
+                            });
                             // res.end( body );
                         }
                         else{
@@ -472,6 +526,7 @@ app.set("view engine","pug");
 
                             res.end(body);
                         }
+                        
                     }else{
                         console.log('----- response.statusCode - '+response.statusCode);
                         console.log('----- response.request.uri.href - '+response.request.uri.href);
@@ -479,52 +534,68 @@ app.set("view engine","pug");
                     }
                 });
             }catch( err ){
-                res.send('<h1 class="avoid-ele">Responce error </h1>');
+                res.send('');
             }
 
             
                 if ( html ) {
-                    $("script").each(function(){
-                        if( $(this).attr('src') && $(this).attr('src') !== ''){
-                            var value = $(this).attr('src'), new_value;
-                            if(!value && starts_with(value, 'javascript:')){
-                                return;
-                            };
-                            if(starts_with(value, REL_PREFIX)){
-                                new_value = new_url + 'https:'+value;
-                                $(this).attr('src', new_value);
-                                return ;
-                            }
-                            if(starts_with(value, VALID_PREFIXES)){
-                                new_value = new_url + value;
-                                $(this).attr('src', new_value);
-                                return;
-                            };
-                            if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
-                                new_value = new_url + actualHostUrl + value;
-                                $(this).attr('href', new_value);
-                                // console.log('4.3 href - ' + $(this).attr('href'));
-                                return ;
-                            }
+
+                    var _allScripts = '';
+                    async function fetchAllJs( _index ){
+                        if ( allScriptArr.length == _index) {
+                            return '';
                         }
-                    });
-
-                    function starts_with(string, arr_or_prefix) {
-                        if (!string) { return undefined; }
-
-                        if (arr_or_prefix instanceof Array) {
-                            for (var i = 0; i < arr_or_prefix.length; i++) {
-                                if (string.indexOf(arr_or_prefix[i]) == 0) {
-                                    return arr_or_prefix[i];
-                                }
+                        console.log('----- CSS Hitted - '+allScriptArr[ _index ]);
+                        try{
+                            var optionsJs_ = {
+                            headers: {
+                                    'connection': 'keep-alive',
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
+                                },
+                                url: allScriptArr[ _index ],
+                                encoding: null,
+                                jar: true //keep the cookies during the redirects;this was included while parsing `https://www.ulta.com/dose-of-colors-x-iluvsarahii-highlighter?productId=xlsImpprod18811035`
                             }
-                        } else if (string.indexOf(arr_or_prefix) == 0) {
-                            return arr_or_prefix;
+                            await request( optionsJs_, function( error, res, body ){
+                                _allScripts += '<script>' + res.body + '</script>';
+                            });
+                            fetchAllJs( ( _index + 1 ) );
                         }
-
-                        return undefined;
+                        catch( err_ ){    
+                            console.log( 'err_ - ' + err_ );
+                            return( '<script></script>' );
+                        }
                     }
-                    // //#================================================================
+                    
+                    await fetchAllJs( 0 );
+                    $('head').append( _allScripts );
+
+                    // $("script").each(function(){
+                    //     if( $(this).attr('src') && $(this).attr('src') !== ''){
+                    //         var value = $(this).attr('src'), new_value;
+                    //         if(!value && starts_with(value, 'javascript:')){
+                    //             return;
+                    //         };
+                    //         if(starts_with(value, REL_PREFIX)){
+                    //             new_value = new_url + 'https:'+value;
+                    //             $(this).attr('src', new_value);
+                    //             return ;
+                    //         }
+                    //         if(starts_with(value, VALID_PREFIXES)){
+                    //             new_value = new_url + value;
+                    //             $(this).attr('src', new_value);
+                    //             return;
+                    //         };
+                    //         if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
+                    //             new_value = new_url + actualHostUrl + value;
+                    //             $(this).attr('href', new_value);
+                    //             // console.log('4.3 href - ' + $(this).attr('href'));
+                    //             return ;
+                    //         }
+                    //     }
+                    // });
+
+                    
 
                     // //#================================================================STYLE
                     $("style").each(function(){
@@ -596,29 +667,61 @@ app.set("view engine","pug");
                     //#================================================================
 
                     //#================================================================HREF
-                    $("link").each(function(){
-                        var link = $(this).attr('href'), new_link;
-                        if(!link.match(new_url)){
-                            if(starts_with(link, IGNORE_PREFIXES)){
-                                return ;
-                            }
-                            if(starts_with(link, REL_PREFIX) ){
-                                new_link = new_url + 'https:' + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
-                            if(starts_with(link, VALID_PREFIXES)){
-                                new_link = new_url + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
-                            if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
-                                new_link = new_url + actualHostUrl + link;
-                                $(this).attr('href', new_link);
-                                return ;
-                            }
+                    var _allStyles = '';
+                    async function fetchAllCss( _index ){
+                        if ( allStyleArr.length == _index) {
+                            return '';
                         }
-                    })
+                        console.log('----- CSS Hitted - '+allStyleArr[ _index ]);
+                        try{
+                            var optionsCss_ = {
+                            headers: {
+                                    'connection': 'keep-alive',
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
+                                },
+                                url: allStyleArr[ _index ],
+                                encoding: null,
+                                jar: true //keep the cookies during the redirects;this was included while parsing `https://www.ulta.com/dose-of-colors-x-iluvsarahii-highlighter?productId=xlsImpprod18811035`
+                            }
+                            await request( optionsCss_, function( error, res, body ){
+                                _allStyles += '<style>' + res.body + '</style>';
+                            });
+                            fetchAllCss( ( _index + 1 ) );
+                        }
+                        catch( err_ ){    
+                            console.log( 'err_ - ' + err_ );
+                            return( '<style></style>' );
+                        }
+                    }
+                    await fetchAllCss( 0 );
+                    $('head').append( _allStyles );
+                    // console.log('\n\n\n\n\n---------------------------------------------------------------------------------------------------------');
+                    // console.log( _allStyles );
+                    // console.log('\n---------------------------------------------------------------------------------------------------------\n\n\n\n\n');
+
+                    // $("link").each(function(){
+                    //     var link = $(this).attr('href'), new_link;
+                    //     if(!link.match(new_url)){
+                    //         if(starts_with(link, IGNORE_PREFIXES)){
+                    //             return ;
+                    //         }
+                    //         if(starts_with(link, REL_PREFIX) ){
+                    //             new_link = new_url + 'https:' + link;
+                    //             $(this).attr('href', new_link);
+                    //             return ;
+                    //         }
+                    //         if(starts_with(link, VALID_PREFIXES)){
+                    //             new_link = new_url + link;
+                    //             $(this).attr('href', new_link);
+                    //             return ;
+                    //         }
+                    //         if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
+                    //             new_link = new_url + actualHostUrl + link;
+                    //             $(this).attr('href', new_link);
+                    //             return ;
+                    //         }
+                    //     }
+                    // })
 
                     //#================================================================
 
@@ -706,12 +809,12 @@ app.set("view engine","pug");
                         }
                     })
                     res.end($.html());
-                }            
+                }
         })();
     }
 
     
-    function writeLogFile(filename,logContent){     
+    function writeLogFile(filename,logContent){
         fileSystem.appendFile(path.join(__dirname, 'storage/log/log_'+filename+'.txt'), logContent, function (err) {
             if (err) throw err;
             //console.log('Saved!');
@@ -719,10 +822,10 @@ app.set("view engine","pug");
     }
 
 
-    function readLogFile(filename){             
+    function readLogFile(filename){
         if(fileSystem.existsSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'))){
             var logFileContent = fileSystem.readFileSync(path.join(__dirname, 'storage/log/log_'+filename+'.txt'), 'utf8');
-            return logFileContent.split('\n');      
+            return logFileContent.split('\n');
         }else{
             return '';
         }
@@ -732,21 +835,21 @@ app.set("view engine","pug");
     function writeSession(userId, writeSess){
         var session = readSession(userId);
 
-        if (session === ''){    
+        if (session === ''){
             session = {};
-        }       
+        }
 
         for (var key in writeSess) {
-            if (writeSess.hasOwnProperty(key)) {           
+            if (writeSess.hasOwnProperty(key)) {
                 session[key] = writeSess[key];
                 //console.log(key, writeSess[key]);
 
-            }               
-        }           
+            }
+        }
         fileSystem.writeFile(path.join(__dirname, 'storage/sess_dir/session_'+userId+'.json'), JSON.stringify(session), function (err) {
         if (err) throw err;
             //console.log('Saved!');
-        });     
+        });
     }
 
     function readSession(userId){
