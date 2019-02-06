@@ -395,6 +395,230 @@ app.set("view engine","pug");
         options['resolveWithFullResponse'] = true;
         options['transform'] = redirectOn302;
         
+        function buildPage(){
+            // if html variable contains the page data
+            if ( html ) {
+                $("script").each(function(){
+                    if( $(this).attr('src') && $(this).attr('src') !== ''){
+                        var value = $(this).attr('src'), new_value;
+                        if(!value && starts_with(value, 'javascript:')){
+                            return;
+                        }
+                        if(starts_with(value, REL_PREFIX)){
+                            new_value = new_url + 'https:'+value;
+                            $(this).attr('src', new_value);
+                            return;
+                        }
+                        if(starts_with(value, VALID_PREFIXES)){
+                            new_value = new_url + value;
+                            $(this).attr('src', new_value);
+                            return;
+                        }
+                        if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
+                            new_value = new_url + actualHostUrl + value;
+                            $(this).attr('href', new_value);
+                            return;
+                        }
+                    }
+                });
+
+                function starts_with(string, arr_or_prefix) {
+                    if (!string) { return undefined; }
+
+                    if (arr_or_prefix instanceof Array) {
+                        for (var i = 0; i < arr_or_prefix.length; i++) {
+                            if (string.indexOf(arr_or_prefix[i]) == 0) {
+                                return arr_or_prefix[i];
+                            }
+                        }
+                    } else if (string.indexOf(arr_or_prefix) == 0) {
+                        return arr_or_prefix;
+                    }
+
+                    return undefined;
+                }
+
+                //STYLE
+                $("style").each(function(){
+                    var new_text = rewrite_style($(this).html());
+                    $(this).html(new_text);
+                })
+
+                function rewrite_style(value){
+                    var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
+                    var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
+                    function style_replacer(match, n1, n2, n3, offset, string) {
+                        if(rewrite_url(n2))
+                            return n1 + rewrite_url(n2) + n3;
+                        else
+                            return match + new_url
+                    }
+                    if (!value) {
+                        return value;
+                    }
+                    if (typeof(value) === "object") {
+                        value = value.toString();
+                    }
+                    if (typeof(value) === "string") {
+                        value = value.replace(STYLE_REGEX, style_replacer);
+                        value = value.replace(IMPORT_REGEX, style_replacer);
+                    }
+                    return value;
+                }
+
+                function rewrite_url(url){
+                    
+                    if (starts_with(url, IGNORE_PREFIXES)) {
+                        return url;
+                    }
+
+                    var new_value;
+
+                    if(starts_with(url, REL_PREFIX)){
+                        new_value = new_url + 'https:'+url;
+                        return new_value;
+                    }
+
+                    if(starts_with(url, VALID_PREFIXES)){
+                        new_value = new_url + url;
+                        return new_value;
+                    };
+                }
+
+                //IFRAME
+                $("iframe").each(function(){
+                    if( $(this).attr('src') && $(this).attr('src') !== ''){
+                        var value = $(this).attr('src'), new_value;
+                        if(!value && starts_with(value, 'javascript:')){
+                            return;
+                        };
+                        if(starts_with(value, REL_PREFIX)){
+                            new_value = new_url + 'https:'+value;
+                            $(this).attr('src', new_value);
+                            return;
+                        }
+                        if(starts_with(value, VALID_PREFIXES)){
+                            new_value = new_url + value;
+                            $(this).attr('src', new_value);
+                            return;
+                        };
+                    }
+                });
+                
+                //HREF
+                $("link").each(function(){
+                    var link = $(this).attr('href'), new_link;
+                    if(!link.match(new_url)){
+                        if(starts_with(link, IGNORE_PREFIXES)){
+                            return ;
+                        }
+                        if(starts_with(link, REL_PREFIX) ){
+                            new_link = new_url + 'https:' + link;
+                            $(this).attr('href', new_link);
+                            return ;
+                        }
+                        if(starts_with(link, VALID_PREFIXES)){
+                            new_link = new_url + link;
+                            $(this).attr('href', new_link);
+                            return ;
+                        }
+                        if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
+                            new_link = new_url + actualHostUrl + link;
+                            $(this).attr('href', new_link);
+                            return ;
+                        }
+                    }
+                })
+
+                //DATA HREF
+                $("*[data-href]").each(function(){
+                    var link = $(this).attr('data-href'), new_link;
+                    if(!link.match(new_url)){
+                        if(starts_with(link, IGNORE_PREFIXES)){
+                            return ;
+                        }
+                        if(starts_with(link, REL_PREFIX) ){
+                            new_link = new_url + 'https:' + link;
+                            $(this).attr('data-href', new_link);
+                            return ;
+                        }
+                        if(starts_with(link, VALID_PREFIXES)){
+                            new_link = new_url + link;
+                            $(this).attr('data-href', new_link);
+                            return ;
+                        }
+                    }
+                })
+
+                //OVERLAY
+                $("*[class*='overlay']").each(function(){
+                    $(this).remove();
+                })
+
+                // REMOVING LINKS FROM IMG
+                // $("img").each(function(){
+                //     if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
+                //         var ele = $(this)[0];
+                //         var required_parent = $(this).parent().parent()[0];
+                //         $(this).parent().remove();
+                //         $(required_parent).append(ele);
+                //     }
+                // })
+                $("img").each(function(){
+                    if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
+                        $(this).parent().attr('href','javascript:void(0);');
+                        $(this).parent().removeAttr('onclick');
+                    }
+                })
+
+                $("meta").each(function(){
+                    if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
+                        let content = $(this).attr('content');
+                        let redirect_host = content.split('/')[2];
+                        let redirect_protocol = '';
+
+                        if(content.indexOf('https') > -1)
+                            redirect_protocol = 'https://';
+                        else
+                            redirect_protocol = 'http://';
+
+                        let redirect_config = 'false';
+
+                        if(redirect_host){
+
+                            connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
+                                //if (error) throw error
+                                redirect_config = 'false';
+                                if (err){ 
+                                    console.log('==Error 11: '+err);
+                                }else{
+                                    if(results.length){
+                                        redirect_config= 'true';
+                                    }
+                                }
+                            });
+                            if(analyze === true){
+                                let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
+                                $(this).attr('content', url);
+                            }else{
+                                let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
+                                $(this).attr('content', url);
+                            }                          
+                        }
+                    }
+                    if($(this).attr('name') && $(this).attr('name') === 'referrer'){
+                        $(this).attr('content', 'no-referrer-when-downgrade')
+                    }
+                    if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
+                        $(this).attr('content', '_content')
+                    }
+                })
+                res.end($.html());
+            }
+            else
+                res.end('');
+        }
+
         (async () => {
             try {
                 await request(options, function(error, response, body){
@@ -427,11 +651,13 @@ app.set("view engine","pug");
                         
                         if (String(response.headers['content-type']).indexOf('text/html') !== -1 && body.toString().length > 0 ){
                             $ = cheerio.load(body);
-                            jsonArrayFromGET_Item['RES_body']    = body.toString();
-                            jsonArrayFromGET_Item['method']      = response.request.method;
-                            jsonArrayFromGET.push(jsonArrayFromGET_Item);
-                            html = body;
-                            // res.end( body );
+                            setTimeout(function(){
+                                jsonArrayFromGET_Item['RES_body']    = body.toString();
+                                jsonArrayFromGET_Item['method']      = response.request.method;
+                                jsonArrayFromGET.push(jsonArrayFromGET_Item);
+                                html = body;
+                                buildPage();
+                            }, 10);
                         }
                         else{
                             var responseRequestUriHref =response.request.uri.href
@@ -481,228 +707,6 @@ app.set("view engine","pug");
             }catch( err ){
                 console.log('Error - '+err);
             }
-            // if html variable contains the page data
-            if ( html ) {
-                $("script").each(function(){
-                    if( $(this).attr('src') && $(this).attr('src') !== ''){
-                        var value = $(this).attr('src'), new_value;
-                        if(!value && starts_with(value, 'javascript:')){
-                            return;
-                        }
-                        if(starts_with(value, REL_PREFIX)){
-                            new_value = new_url + 'https:'+value;
-                            $(this).attr('src', new_value);
-                            return;
-                        }
-                        if(starts_with(value, VALID_PREFIXES)){
-                            new_value = new_url + value;
-                            $(this).attr('src', new_value);
-                            return;
-                        }
-                        if(starts_with(value, '/') && !value.match( actualHostUrl ) ){
-                            new_value = new_url + actualHostUrl + value;
-                            $(this).attr('href', new_value);
-                            return;
-                        }
-                    }
-                });
-
-                function starts_with(string, arr_or_prefix) {
-                    if (!string) { return undefined; }
-
-                    if (arr_or_prefix instanceof Array) {
-                        for (var i = 0; i < arr_or_prefix.length; i++) {
-                            if (string.indexOf(arr_or_prefix[i]) == 0) {
-                                return arr_or_prefix[i];
-                            }
-                        }
-                    } else if (string.indexOf(arr_or_prefix) == 0) {
-                        return arr_or_prefix;
-                    }
-
-                    return undefined;
-                }
-                // //#================================================================
-
-                // //#================================================================STYLE
-                $("style").each(function(){
-                    var new_text = rewrite_style($(this).html());
-                    $(this).html(new_text);
-                })
-
-                function rewrite_style(value){
-                    var STYLE_REGEX = /(url\s*\(\s*[\\"']*)([^)'"]+)([\\"']*\s*\))/gi;
-                    var IMPORT_REGEX = /(@import\s+[\\"']*)([^)'";]+)([\\"']*\s*;?)/gi;
-                    function style_replacer(match, n1, n2, n3, offset, string) {
-                        if(rewrite_url(n2))
-                            return n1 + rewrite_url(n2) + n3;
-                        else
-                            return match + new_url
-                    }
-                    if (!value) {
-                        return value;
-                    }
-                    if (typeof(value) === "object") {
-                        value = value.toString();
-                    }
-                    if (typeof(value) === "string") {
-                        value = value.replace(STYLE_REGEX, style_replacer);
-                        value = value.replace(IMPORT_REGEX, style_replacer);
-                    }
-                    return value;
-                }
-
-                function rewrite_url(url){
-                    
-                    if (starts_with(url, IGNORE_PREFIXES)) {
-                        return url;
-                    }
-
-                    var new_value;
-
-                    if(starts_with(url, REL_PREFIX)){
-                        new_value = new_url + 'https:'+url;
-                        return new_value;
-                    }
-
-                    if(starts_with(url, VALID_PREFIXES)){
-                        new_value = new_url + url;
-                        return new_value;
-                    };
-                }
-                //#================================================================
-
-                //#================================================================IFRAME
-                $("iframe").each(function(){
-                    if( $(this).attr('src') && $(this).attr('src') !== ''){
-                        var value = $(this).attr('src'), new_value;
-                        if(!value && starts_with(value, 'javascript:')){
-                            return;
-                        };
-                        if(starts_with(value, REL_PREFIX)){
-                            new_value = new_url + 'https:'+value;
-                            $(this).attr('src', new_value);
-                            return;
-                        }
-                        if(starts_with(value, VALID_PREFIXES)){
-                            new_value = new_url + value;
-                            $(this).attr('src', new_value);
-                            return;
-                        };
-                    }
-                });
-                //#================================================================
-
-                //#================================================================HREF
-                $("link").each(function(){
-                    var link = $(this).attr('href'), new_link;
-                    if(!link.match(new_url)){
-                        if(starts_with(link, IGNORE_PREFIXES)){
-                            return ;
-                        }
-                        if(starts_with(link, REL_PREFIX) ){
-                            new_link = new_url + 'https:' + link;
-                            $(this).attr('href', new_link);
-                            return ;
-                        }
-                        if(starts_with(link, VALID_PREFIXES)){
-                            new_link = new_url + link;
-                            $(this).attr('href', new_link);
-                            return ;
-                        }
-                        if(starts_with(link, '/') && !link.match( actualHostUrl ) ){
-                            new_link = new_url + actualHostUrl + link;
-                            $(this).attr('href', new_link);
-                            return ;
-                        }
-                    }
-                })
-
-                //#================================================================
-
-                //#================================================================DATA HREF
-                $("*[data-href]").each(function(){
-                    var link = $(this).attr('data-href'), new_link;
-                    if(!link.match(new_url)){
-                        if(starts_with(link, IGNORE_PREFIXES)){
-                            return ;
-                        }
-                        if(starts_with(link, REL_PREFIX) ){
-                            new_link = new_url + 'https:' + link;
-                            $(this).attr('data-href', new_link);
-                            return ;
-                        }
-                        if(starts_with(link, VALID_PREFIXES)){
-                            new_link = new_url + link;
-                            $(this).attr('data-href', new_link);
-                            return ;
-                        }
-                    }
-                })
-                //#================================================================
-
-                //#================================================================OVERLAY
-                $("*[class*='overlay']").each(function(){
-                    $(this).remove();
-                })
-                //#================================================================
-
-                //#================================================================REMOVING LINKS FROM IMG
-                $("img").each(function(){
-                    if($(this).parent()[0] && $(this).parent()[0].tagName === 'a'){
-                        var ele = $(this)[0];
-                        var required_parent = $(this).parent().parent()[0];
-                        $(this).parent().remove();
-                        $(required_parent).append(ele);
-                    }
-                })
-                //#================================================================
-
-                //#================================================================META
-                $("meta").each(function(){
-                    if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'refresh'){
-                        let content = $(this).attr('content');
-                        let redirect_host = content.split('/')[2];
-                        let redirect_protocol = '';
-
-                        if(content.indexOf('https') > -1)
-                            redirect_protocol = 'https://';
-                        else
-                            redirect_protocol = 'http://';
-
-                        let redirect_config = 'false';
-
-                        if(redirect_host){
-
-                            connection.query("select id from config_list where user_id= ? and config_name = ?", [user_id, filename], function (err, results, fields) {
-                                //if (error) throw error
-                                redirect_config = 'false';
-                                if (err){ 
-                                    console.log('==Error 11: '+err);
-                                }else{
-                                    if(results.length){
-                                        redirect_config= 'true';
-                                    }
-                                }
-                            });
-                            if(analyze === true){
-                                let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_')+'&analyze='+analyze;
-                                $(this).attr('content', url);
-                            }else{
-                                let url     = content.replace(redirect_protocol + redirect_host, 'http://' + use_ip) + '&config='+redirect_config+'&host='+redirect_host.replace(/\./g, '_');
-                                $(this).attr('content', url);
-                            }                          
-                        }
-                    }
-                    if($(this).attr('name') && $(this).attr('name') === 'referrer'){
-                        $(this).attr('content', 'no-referrer-when-downgrade')
-                    }
-                    if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
-                        $(this).attr('content', '_content')
-                    }
-                })
-                res.end($.html());
-            }            
         })();
     }
 
