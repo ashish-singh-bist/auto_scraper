@@ -163,7 +163,7 @@ function myFunction(){
     $('#config_page').contents().find('*').mouseover(function(event){
         targetElement = event.target;
         if(event.target.closest(".avoid-ele") == null){
-            if(event.target.className.indexOf('option-selected') < 0)
+            if( event.target.className.length != undefined && event.target.className.indexOf('option-selected') < 0)
                 event.target.classList.add('hover-selected');
 
             $('#tag_info_block').show();
@@ -278,10 +278,10 @@ function myFunction(){
     function checkElement(childElement){
         var parentElement = childElement.parentElement;
         if ( parentElement != null) {
-            if(childElement.className.indexOf('option-selected') >= 0)
+            if( childElement.className.length != undefined && childElement.className.indexOf('option-selected') >= 0)
                 return true;
             else if(parentElement.className && parentElement.className !== ''){
-                if(parentElement.className.indexOf('option-selected') >= 0)
+                if( parentElement.className.length != undefined && parentElement.className.indexOf('option-selected') >= 0)
                     return true
                 else
                     return false

@@ -663,16 +663,10 @@ app.set("view engine","pug");
                             var responseRequestUriHref =response.request.uri.href
                             if (  responseRequestUriHref.match('.js')) {
                                 console.log('\n\n\n---- URL ----- '+response.request.uri.href);
-                                // console.log('---- 1. Body ----- '+body);
-                                // body = '';
                                 body = body.toString();
-                                body = body.replace(/location/g,'_temp');
-                                // body = body.replace(/document\.location/g,'__temp');
-
-                                // console.log('\n\n---- 2. Body ----- '+body);
+                                body = body.replace(/top\.location\.href/g,'var _temp');
+                                body = body.replace(/top\.location/g,'var _temp');
                             }
-                            // body = body.toString();
-                            // body = body.replace(/window\.location/g,'_temp');
 
                             if(String(response.headers['content-type']).indexOf('application/json') !== -1){
                                 if (body) {
