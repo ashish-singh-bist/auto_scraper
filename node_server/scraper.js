@@ -394,19 +394,26 @@ async function startHTMLParsing(site_config,html,puppeteer_enabled)
             // var res_ = candidateElement.src? candidateElement.src.replace(imgUrlRegExpObj, ''): candidateElement.textContent? candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim() : candidateElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2')
             // console.log( res_ );
             // console.log( '1 - propertyObj - ', propertyObj.key);
-            if ( candidateElement.tagName.toLowerCase() === 'img' ){
+            // if ( candidateElement.tagName.toLowerCase() === 'img' ){
                 // console.log( '2 - propertyObj - ', propertyObj.key);
-               return candidateElement.getAttribute('src');
-            }
+               // return candidateElement.getAttribute('src');
+            // }
 
             // else if( candidateElement === 'a' ){
             //    return element.getAttribute('href');
             // }
 
-            else {
+            // else {
                 // console.log( '3 - propertyObj - ', propertyObj.key);
-                return candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
-            }
+                // return candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim();
+            // }
+
+            if( candidateElement.src )
+                return candidateElement.src.replace(imgUrlRegExpObj, '');
+            else if( candidateElement.textContent )
+                return candidateElement.textContent.replace(/[\n\t\r]/g, '').replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2').trim()
+            else if( candidateElement.value )
+                return candidateElement.value.replace(/([a-z]{1})([A-Z]{1})/g, '$1, $2');
         }
 
         /* to extract and create a list of the element's attributes */

@@ -258,7 +258,7 @@ table tbody{
 }
 /* bootstrap style codes*/
 .alert {
-    padding: 7.5px 15px;
+    padding: 7.5px 25px 7.5px 10px;
     margin-bottom: 5px;
     border: 1px solid transparent;
     border-radius: 4px;
