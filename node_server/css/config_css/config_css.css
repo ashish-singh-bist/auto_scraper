@@ -69,6 +69,7 @@ table tbody{
     border: 0;
     width: 100%;
     height: calc(100vh - 5px);
+    background-color: white;
 }
 .mb-0{ margin-bottom: 0 !important; }
 .mr-10{ margin-right: 10px !important; }

@@ -33,7 +33,7 @@
                         </div>
                         <div class="box-footer">
                             <button id="submit_btn" disabled="" class="btn btn-primary parse-btn" title="Click process urls">Process Urls</button>
-                            <button style="display: none;" id="analysis_btn" disabled="" class="btn btn-primary parse-btn" title="Click process urls">Analysis Url</button>
+                            <button id="analysis_btn" disabled="" class="btn btn-primary parse-btn" title="Click process urls">Analysis Url</button>
                         </div>
                     </div>            
                 </form>

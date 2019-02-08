@@ -168,18 +168,23 @@ $( document ).ready(function(){
 	}
 
 	
+	// function proceedForAnalysis(){
+	// 	var split_url_arr = extracted_host_name.split('/');
+	// 	let url_ = windowOpenWith;
+	// 	var str = url_+'?config=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
+	// 	window.open(str,'_blank');
+	// }
 	function proceedForAnalysis(){
-		var split_url_arr = extracted_host_name.split('/');
-		let url_ = windowOpenWith;
-		var str = url_+'?config=false'+'&host='+process_host_name+'&uid='+USER_ID+'&analyze=true';
-		window.open(str,'_blank');
-	}
-
-	function proceedForConfig(editmode = false){
-		var split_url_arr = extracted_host_name.split('/');
 		let url_ = windowOpenWith;
 		url_post_part = url_post_part.replace(/\/\/+/g, '/');
-		var str = url_+'/config?config='+flag+'&host='+process_host_name+'&uid='+USER_ID+'&url_post_part='+encodeURIComponent(url_post_part);
+		var str = url_+'/analyze/?host='+process_host_name+'&uid='+USER_ID+'&url_post_part='+encodeURIComponent(url_post_part);
+		window.open(str,'_blank');		
+	}
+
+	function proceedForConfig(){
+		let url_ = windowOpenWith;
+		url_post_part = url_post_part.replace(/\/\/+/g, '/');
+		var str = url_+'/config/?config='+flag+'&host='+process_host_name+'&uid='+USER_ID+'&url_post_part='+encodeURIComponent(url_post_part);
 		window.open(str,'_blank');
 	}
 
@@ -200,7 +205,7 @@ $( document ).ready(function(){
 						text: 'Yes!',
 						btnClass: 'btn-warning',
 						action: function(){
-							proceedForConfig(true);		//case: config exists and we have to edit config
+							proceedForConfig();		//case: config exists and we have to edit config
 						}
 					},
 					ContinueParsing: {

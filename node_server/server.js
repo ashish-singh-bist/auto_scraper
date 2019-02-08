@@ -69,9 +69,10 @@ app.set("view engine","pug");
 
 //#================================================================
 //#================================================================GET
+    console.log('Server JS Start');
     //this will send the sttaus of the scrapper, whether completed or not
     app.get('/config/*', (req, res) => {
-        // const {config, host, uid, analyze}  = req.query;
+        console.log('config route');
         const { config, host, uid, url_post_part, prtocol } = req.query;
         if(config === 'true'){
             connection.query("select config from config_list where user_id= ? and config_name = ?", [uid, host], function (err, results, fields) {
@@ -90,7 +91,13 @@ app.set("view engine","pug");
         }
     })
     
-    app.post('/rtech/api/check_scrape', (req, res) => {     
+    app.get('/analyze/*', (req, res) => {
+        console.log('analyze route');
+        const {  host, uid, url_post_part } = req.query;
+        res.render('analyze', { root_port: rtech_config.root_port, root_ip: rtech_config.root_ip, host: host, uid: uid, url_post_part: url_post_part })
+    })
+
+    app.post('/rtech/api/check_scrape', (req, res) => {
         var user_id = req.body.user_id;     
         var logFileContent;
         var filename  = req.body.host_name+'_'+user_id;
@@ -176,7 +183,7 @@ app.set("view engine","pug");
 
     //this will handle all the GET requests we have redirected from the website's page to our server
     app.get('/*', (req, res) => {
-
+        console.log('Star route');
         const {headers, url, method} = req;
         const {config, host, uid, analyze}  = req.query;
 
@@ -612,7 +619,7 @@ app.set("view engine","pug");
                     if($(this).attr('http-equiv') && $(this).attr('http-equiv') === 'content-security-policy'){
                         $(this).attr('content', '_content')
                     }
-                })
+                })                
                 res.end($.html());
             }
             else
