@@ -16,7 +16,7 @@ const thread_count = config.thread_count;
 var host_slug = '';         //'www_youtube_com'
 var source = '';            //'Youtube'
 var site_config;
-var puppeteer_enabled = 0;
+var puppeteer_enabled = 1;
 
 if (parsing_mode == 'databasemode') {
     host_slug =  process.argv[3];
